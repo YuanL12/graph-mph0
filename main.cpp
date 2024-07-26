@@ -4,7 +4,8 @@
     Algorithm 1: Collapse local collapsible edges
     Assumption: g1 and g2 are the same when passed. We will only modify g2. 
 */
-std::unordered_map<int, int> localCollapse(const Graph& g1, Graph& g2) {
+template<typename Poset>
+std::unordered_map<int, int> localCollapse(const Graph<Poset>& g1, Graph<Poset>& g2) {
     // Initialize dictionary φ with identity map
     // Initialize empty set visited
     std::unordered_map<int, int> vertex_dict;
@@ -14,6 +15,8 @@ std::unordered_map<int, int> localCollapse(const Graph& g1, Graph& g2) {
         visited[v] = false;
     }
     // Initialize an new edge list
+    using VEdges = typename Graph<Poset>::VEdges;
+
     VEdges new_E = g1.get_edge_values();
 
     std::tuple<int, double, std::string> myTuple(1, 3.14, "Hello");
@@ -64,10 +67,8 @@ std::unordered_map<int, int> localCollapse(const Graph& g1, Graph& g2) {
     return vertex_dict;
 }
 
-
-
-int main() {
-    Graph g(3); 
+void test1(){
+    Graph<double> g(3); 
 
     g.add_vertex(0, 1.0);
     g.add_vertex(1, 1.0);
@@ -85,7 +86,7 @@ int main() {
     std::cout << "\nDepth-First Search starting from vertex 0:" << std::endl;
     g.DFS(0);
 
-    Graph new_g = Graph(g);
+    Graph<double> new_g = Graph<double>(g);
     std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
 
     std::cout << "Graph adjacency list representation:" << std::endl;
@@ -97,6 +98,46 @@ int main() {
     for (auto& p: vert_dict){
         std::cout << p.first << " -> " << p.second << std::endl;
     }
+}
+
+
+
+void test2(){
+    Graph<double> g(3); 
+
+    g.add_vertex(0, 1.0);
+    g.add_vertex(1, 1.0);
+    g.add_vertex(2, 1.0);
+
+    g.add_edge(0, 1, 1.0);
+    g.add_edge(0, 2, 1.0);
+    g.add_edge(1, 2, 1.0);
+
+    std::cout << "Graph adjacency list representation:" << std::endl;
+    g.print_adjacency();
+    std::cout << "Graph filtration values:" << std::endl;
+    g.print_filtrataion_value();
+
+    std::cout << "\nDepth-First Search starting from vertex 0:" << std::endl;
+    g.DFS(0);
+
+    Graph<double> new_g = Graph<double>(g);
+    std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
+
+    std::cout << "Graph adjacency list representation:" << std::endl;
+    new_g.print_adjacency();
+    std::cout << "Graph filtration values:" << std::endl;
+    new_g.print_filtrataion_value();
+
+    std::cout << "Vertex Dictionary" << std::endl;
+    for (auto& p: vert_dict){
+        std::cout << p.first << " -> " << p.second << std::endl;
+    }
+}
+
+
+int main() {
+    test1();
 
     return 0;
 }

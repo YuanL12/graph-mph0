@@ -16,7 +16,6 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Add the executable
 # Add the source files
 set(SOURCES
-    graph.cpp
     main.cpp
 )
 add_executable(out ${SOURCES})
