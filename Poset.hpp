@@ -1,40 +1,40 @@
 #include <iostream>
 #include <utility> // for std::pair
 
-class Coordinate {
+class R2 {
 public:
     // Constructors
-    Coordinate() : x(0.0), y(0.0) {}
-    Coordinate(double x, double y) : x(x), y(y) {}
+    R2() : x(0.0), y(0.0) {}
+    R2(double x, double y) : x(x), y(y) {}
 
     // Accessor methods
     double getX() const { return x; }
     double getY() const { return y; }
 
     // Comparison operators
-    bool operator<(const Coordinate& other) const {
+    bool operator<(const R2& other) const {
         // Compare first by x, then by y if x's are equal
         return x <= other.x && y <= other.y;
     }
 
-    bool operator>(const Coordinate& other) const {
+    bool operator>(const R2& other) const {
         return other < *this;
     }
 
-    bool operator==(const Coordinate& other) const {
+    bool operator==(const R2& other) const {
         return x == other.x && y == other.y;
     }
 
-    bool operator!=(const Coordinate& other) const {
+    bool operator!=(const R2& other) const {
         return !(*this == other);
     }
 
-    bool operator<=(const Coordinate& other) const {
+    bool operator<=(const R2& other) const {
         return *this < other || *this == other;
     }
 
     // Output operator
-    friend std::ostream& operator<<(std::ostream& os, const Coordinate& coord) {
+    friend std::ostream& operator<<(std::ostream& os, const R2& coord) {
         os << "(" << coord.x << ", " << coord.y << ")";
         return os;
     }
@@ -44,13 +44,13 @@ private:
 };
 
 // int main() {
-//     Coordinate c1(1.0, 2.0);
-//     Coordinate c2(1.0, 3.0);
-//     Coordinate c3(2.0, 1.0);
+//     R2 c1(1.0, 2.0);
+//     R2 c2(1.0, 3.0);
+//     R2 c3(2.0, 1.0);
 
-//     std::cout << "Coordinate c1: " << c1 << std::endl;
-//     std::cout << "Coordinate c2: " << c2 << std::endl;
-//     std::cout << "Coordinate c3: " << c3 << std::endl;
+//     std::cout << "R2 c1: " << c1 << std::endl;
+//     std::cout << "R2 c2: " << c2 << std::endl;
+//     std::cout << "R2 c3: " << c3 << std::endl;
 
 //     std::cout << "c1 < c2: " << (c1 < c2) << std::endl;
 //     std::cout << "c2 < c3: " << (c2 < c3) << std::endl;

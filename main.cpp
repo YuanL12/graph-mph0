@@ -1,11 +1,12 @@
-#include "graph.hpp"
-#include "poset.hpp"
+#include "Graph.hpp"
+#include "Poset.hpp"
+#include <set>
 /*
     Algorithm 1: Collapse local collapsible edges
     Assumption: g1 and g2 are the same when passed. We will only modify g2. 
 */
 template<typename FT>
-std::unordered_map<int, int> localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
+void localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
     // Initialize dictionary φ with identity map
     // Initialize empty set visited
     std::unordered_map<int, int> vertex_dict;
@@ -14,17 +15,14 @@ std::unordered_map<int, int> localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
         vertex_dict[v] = v;
         visited[v] = false;
     }
-    // Initialize an new edge list
-    using VEdges = typename Graph<FT>::VEdges;
 
-    VEdges new_E = g1.get_edge_values();
-
-    typedef std::tuple<int, Edge, int> VEV; // type of (vertex, edge, vertex)
+    // type of (vertex, edge, vertex)
+    using VEV = std::tuple<int, Edge, int>; 
     
     for (auto v: g1.get_vertices() ) {
         std::stack<VEV> stack;
         // Push the starting VEV onto the stack
-        VEV a(v, NULL_EDGE, v);
+        VEV a(v, Edge::NULL_EDGE, v);
         stack.push(a);
 
         while (!stack.empty()) {
@@ -37,34 +35,107 @@ std::unordered_map<int, int> localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
             if (!visited[u]) {
                 // std::cout << "Visit " << u << std::endl;
                 visited[u] = true;
-                if (e != NULL_EDGE){
+                if (e != Edge::NULL_EDGE){
                     vertex_dict[u] = v;
                     g2.remove_edge(e);
+                    std::cout << "Remove "<< e << std::endl;
                 }
                 // local collapsible
-                for (const auto& pair : g2.get_edge_values()) {
-                    Edge e = pair.first;
-                    FT fe = pair.second;
-                    int e0, e1;
-                    std::tie(e0, e1) = e;
-                    if (e0 == u || e1 == u){
-                        int x = (e0 == u) ? e1 : e0;
-                        FT fx, fu;
-                        fx = g2.get_vertex_value(x);
-                        fu = g2.get_vertex_value(u);
-                        if (fe == fx && fx == fu){
-                            stack.push(VEV(v, e, x));
-                        }
+                for (const auto& neighbour: g1.get_adj(u)){
+                    EdgeId eid_local = neighbour.second;
+                    Vertex x = neighbour.first;
+                    FT fx, fu, fe;
+                    fx = g1.get_vertex_value(x);
+                    fu = g1.get_vertex_value(u);
+                    fe = g1.get_edge_values(eid_local);
+                    if (fe == fx && fx == fu){
+                        stack.push(VEV(v, g1.get_edge(eid_local), x));
                     }
                 }
             }
-
-            // Print the stack after visiting a node
-            // printStack(stack);
         }
     }
-    return vertex_dict;
+    // update vertices 
+    g2.remove_vertices(vertex_dict);
 }
+
+
+// /*
+//     Algorithm 2: Collapse to vertex-minimal graph
+//     Assumption: g1 and g2 are the same when passed. We will only modify g2. 
+// */
+// template<typename FT>
+// Graph<FT> collapse_to_vertex_minimal(const Graph<FT>& g) {
+//     Graph<R2> g1 = Graph<R2>(g);
+//     localCollapse(g, g1);
+//     Graph<R2> g2 = Graph<R2>(g1); // return g2
+
+//     // Initialize dictionary φ with identity map
+//     // Initialize empty set visited
+//     std::unordered_map<int, int> vertex_dict;
+//     std::set<int> visited;
+//     for (auto v: g1.get_vertices() ) {
+//         vertex_dict[v] = v;
+//     }
+//     // Initialize an new edge list
+//     using VEdges = typename Graph<FT>::VEdges;
+//     VEdges new_E = g1.get_edge_values();
+
+//     // Define (vertex, edge, vertex) type 
+//     using VEV = std::tuple<int, Edge, int>; // type of (vertex, edge, vertex)
+//     // typedef std::tuple<int, Edge, int> VEV; 
+
+//     // Run depth-first search from minimal vertices
+//     for (auto v: g1.get_vertices() ) {
+//         std::list<int> adj_v = g1.get_adj(v);
+//         for (const auto& u : adj_v) {
+//             FT fe = g1.get_edge_value();
+//         }
+//         std::stack<VEV> stack;
+//         // Push the starting VEV onto the stack
+//         VEV a(v, NULL_EDGE, v);
+//         stack.push(a);
+
+//         while (!stack.empty()) {
+//             int v_; Edge e; int u;
+//             std::tie(v_, e, u) = stack.top();
+//             assert(v == v_);
+//             stack.pop();
+
+//             // If the vertex has not been visited, mark it as visited and process it
+//             if (visited.find(elementToCheck) == visited.end()) {
+//                 // std::cout << "Visit " << u << std::endl;
+//                 visited.insert(u);
+//                 if (e != NULL_EDGE){
+//                     vertex_dict[u] = v;
+//                     g2.remove_edge(e);
+//                 }
+//                 // local collapsible
+//                 for (const auto& pair : g2.get_edge_values()) {
+//                     Edge e = pair.first;
+//                     FT fe = pair.second;
+//                     int e0, e1;
+//                     std::tie(e0, e1) = e;
+//                     if (e0 == u || e1 == u){
+//                         int x = (e0 == u) ? e1 : e0;
+//                         FT fx, fu;
+//                         fx = g2.get_vertex_value(x);
+//                         fu = g2.get_vertex_value(u);
+//                         if (fe == fx && fx == fu){
+//                             stack.push(VEV(v, e, x));
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+
+//     // update vertices 
+//     g2.remove_vertices(vertex_dict);
+//     return g2;
+// }
+
+
 
 void test1(){
     Graph<double> g(3); 
@@ -87,52 +158,50 @@ void test1(){
 
     Graph<double> new_g = Graph<double>(g);
     std::cout << "Collapse locally" << std::endl;
-    std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
+    localCollapse(g, new_g);
 
     std::cout << "Graph adjacency list representation:" << std::endl;
     new_g.print_adjacency();
     std::cout << "Graph filtration values:" << std::endl;
     new_g.print_filtrataion_value();
-
-    std::cout << "Vertex Dictionary" << std::endl;
-    for (auto& p: vert_dict){
-        std::cout << p.first << " -> " << p.second << std::endl;
-    }
 }
 
 
 
 void test2(){
-    Graph<Coordinate> g(3); 
+    Graph<R2> g(6); 
+    g.add_vertex(1, R2(6,2)); // x1
+    g.add_vertex(2, R2(6,2)); // x2
+    g.add_vertex(3, R2(6,2)); // x3
+    g.add_vertex(4, R2(1,3)); // u
+    g.add_vertex(5, R2(2,1)); // v 
+    g.add_vertex(6, R2(2,6)); // w
 
-    g.add_vertex(0, Coordinate(6,2));
-    g.add_vertex(1, Coordinate(6,2));
-    g.add_vertex(2, Coordinate(6,2));
-
-    g.add_edge(0, 1, Coordinate(6,2));
-    g.add_edge(0, 2, Coordinate(6,2));
-    g.add_edge(1, 2, Coordinate(6,2));
+    g.add_edge(1, 2, R2(6,2)); // d1 = (x1,x2)
+    g.add_edge(1, 3, R2(6,2)); // d2 = (x2,x3)
+    g.add_edge(2, 3, R2(6,2)); // d3 = (x1,x3)
+    g.add_edge(4, 5, R2(3,5)); // e1 = (u,v)
+    g.add_edge(4, 5, R2(5,3)); // e2 = (u,v)
+    g.add_edge(5, 1, R2(6,2)); // h1 = (v, x1)
+    g.add_edge(4, 6, R2(2,6)); // h2 = (u, w)
+    g.add_edge(6, 3, R2(6,6)); // e3 = (w, x3)
 
     std::cout << "Graph adjacency list representation:" << std::endl;
     g.print_adjacency();
     std::cout << "Graph filtration values:" << std::endl;
     g.print_filtrataion_value();
 
-    std::cout << "\nDepth-First Search starting from vertex 0:" << std::endl;
-    g.DFS(0);
+    std::cout << "Collapse locally now" << std::endl;
+    Graph<R2> g2 = Graph<R2>(g); 
+    localCollapse(g, g2);
 
-    Graph<Coordinate> new_g = Graph<Coordinate>(g);
-    std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
+    // std::cout << "Collapse the graph to vertex minimal" << std::endl;
+    // Graph<R2> g3 = collapse_to_vertex_minimal(g);
+    // std::cout << "Graph adjacency list representation:" << std::endl;
+    // g3.print_adjacency();
+    // std::cout << "Graph filtration values:" << std::endl;
+    // g3.print_filtrataion_value();
 
-    std::cout << "Graph adjacency list representation:" << std::endl;
-    new_g.print_adjacency();
-    std::cout << "Graph filtration values:" << std::endl;
-    new_g.print_filtrataion_value();
-
-    std::cout << "Vertex Dictionary" << std::endl;
-    for (auto& p: vert_dict){
-        std::cout << p.first << " -> " << p.second << std::endl;
-    }
 }
 
 
