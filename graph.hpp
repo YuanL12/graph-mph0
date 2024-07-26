@@ -15,11 +15,11 @@ using Edge = std::pair<int, int>;
 
 const Edge NULL_EDGE = {std::numeric_limits<int>::max(), std::numeric_limits<int>::max()};
 
-template<typename Poset>
+template<typename FT>
 class Graph {
 public:
 
-    using VEdges = std::unordered_map<Edge, Poset, boost::hash<std::pair<int, int>>>;
+    using VEdges = std::unordered_map<Edge, FT, boost::hash<std::pair<int, int>>>;
 
     // Constructor reserve sizes 
     Graph(int n);
@@ -37,16 +37,16 @@ public:
     inline VEdges get_edge_values() const {return edge_values;};
 
     // get the filtration value of a single vertex
-    double get_vertex_value(int v) const;
+    FT get_vertex_value(int v) const;
 
     // Method to add an edge to the graph
-    void add_edge(int v, int w, double value);
+    void add_edge(int v, int w, FT value);
     
     // Overloaded method to add an edge with default value 0.0
     void add_edge(int v, int w);
 
     // Method to set the value of a vertex
-    void add_vertex(int v, double value);
+    void add_vertex(int v, FT value);
 
     // Method to print the graph
     void print_adjacency() const;
@@ -66,7 +66,7 @@ private:
     std::vector<int> vertices; // vertices
     int nvertices; // Number of vertices
     std::unordered_map<int, std::list<int>> adj_list; // Adjacency list
-    std::unordered_map<int, double> vert_values; // Values for vertices
+    std::unordered_map<int, FT> vert_values; // Values for vertices
     VEdges edge_values; // Values for edges
 
     // Method to print the stack
@@ -75,25 +75,27 @@ private:
 
 
 
+
+
 // Constructor
-template<typename Poset>
-Graph<Poset>::Graph(int n): nvertices(n) {vertices.reserve(n);}
+template<typename FT>
+Graph<FT>::Graph(int n): nvertices(n) {vertices.reserve(n);}
 
 // Copy Constructor
-template<typename Poset>
-Graph<Poset>::Graph(const Graph& other) 
+template<typename FT>
+Graph<FT>::Graph(const Graph& other) 
     : vertices(other.vertices),
       nvertices(other.nvertices), 
       adj_list(other.adj_list), 
       vert_values(other.vert_values), 
       edge_values(other.edge_values) 
 {}
-template<typename Poset>
-int Graph<Poset>::get_nvertices() const{ return nvertices;}
+template<typename FT>
+int Graph<FT>::get_nvertices() const{ return nvertices;}
 
 // Method to add an edge to the graph
-template<typename Poset>
-void Graph<Poset>::add_edge(int v1, int v2, double value) {
+template<typename FT>
+void Graph<FT>::add_edge(int v1, int v2, FT value) {
     int v, w;
     if (v1 <= v2){
         v = v1; w = v2;
@@ -108,13 +110,13 @@ void Graph<Poset>::add_edge(int v1, int v2, double value) {
 }
 
 // Overloaded method to add an edge with default value 0.0
-template<typename Poset>
-void Graph<Poset>::add_edge(int v, int w) {
+template<typename FT>
+void Graph<FT>::add_edge(int v, int w) {
     add_edge(v, w, 0.0);
 }
 
-template<typename Poset>
-double Graph<Poset>::get_vertex_value(int v) const {
+template<typename FT>
+FT Graph<FT>::get_vertex_value(int v) const {
     auto it = vert_values.find(v);
     
     if(it == vert_values.end()){
@@ -126,8 +128,8 @@ double Graph<Poset>::get_vertex_value(int v) const {
     
 
 // Remove edge e
-template<typename Poset>
-void Graph<Poset>::remove_edge(Edge e){
+template<typename FT>
+void Graph<FT>::remove_edge(Edge e){
     // Check if the key exists using find
     auto it = edge_values.find(e);
     if (it != edge_values.end()) {
@@ -139,8 +141,8 @@ void Graph<Poset>::remove_edge(Edge e){
     }
 }
 
-template<typename Poset>
-void Graph<Poset>::remove_edge(int v1, int v2){
+template<typename FT>
+void Graph<FT>::remove_edge(int v1, int v2){
     int v, w;
     if (v1 <= v2){
         v = v1; w = v2;
@@ -152,15 +154,15 @@ void Graph<Poset>::remove_edge(int v1, int v2){
 
 
 // Method to set the value of a vertex
-template<typename Poset>
-void Graph<Poset>::add_vertex(int v, double value) {
+template<typename FT>
+void Graph<FT>::add_vertex(int v, FT value) {
     vertices.emplace_back(v);
     vert_values[v] = value;
 }
 
 // Method to print the graph
-template<typename Poset>
-void Graph<Poset>::print_adjacency() const {
+template<typename FT>
+void Graph<FT>::print_adjacency() const {
     // Iterate and print the adjacency list map
     for (const auto& pair : adj_list) {
         int v = pair.first; // vertex
@@ -173,8 +175,8 @@ void Graph<Poset>::print_adjacency() const {
 }
 
 // Method to print the graph
-template<typename Poset>
-void Graph<Poset>::print_filtrataion_value() const {
+template<typename FT>
+void Graph<FT>::print_filtrataion_value() const {
     // Iterate and print the adjacency list map
     std::cout << "Vertices:" << std::endl;
     for (const auto& v : vertices) {
@@ -188,8 +190,8 @@ void Graph<Poset>::print_filtrataion_value() const {
 }
 
 // Method to print the stack
-template<typename Poset>
-void Graph<Poset>::printStack(const std::stack<int>& stack) const {
+template<typename FT>
+void Graph<FT>::printStack(const std::stack<int>& stack) const {
     std::stack<int> tempStack = stack;
     std::vector<int> elements;
     while (!tempStack.empty()) {
@@ -205,8 +207,8 @@ void Graph<Poset>::printStack(const std::stack<int>& stack) const {
 }
 
 // Method for Depth-First Search
-template<typename Poset>
-void Graph<Poset>::DFS(int startVertex) const {
+template<typename FT>
+void Graph<FT>::DFS(int startVertex) const {
     std::unordered_map<int, bool> visited;
     for (int vertex : vertices) {
         visited[vertex] = false;

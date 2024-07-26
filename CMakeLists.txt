@@ -22,3 +22,5 @@ add_executable(out ${SOURCES})
 
 # Link Boost libraries
 target_link_libraries(out ${Boost_LIBRARIES})
+
+# add_executable(poset poset.cpp)

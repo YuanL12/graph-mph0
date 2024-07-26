@@ -1,11 +1,11 @@
 #include "graph.hpp"
-
+#include "poset.hpp"
 /*
     Algorithm 1: Collapse local collapsible edges
     Assumption: g1 and g2 are the same when passed. We will only modify g2. 
 */
-template<typename Poset>
-std::unordered_map<int, int> localCollapse(const Graph<Poset>& g1, Graph<Poset>& g2) {
+template<typename FT>
+std::unordered_map<int, int> localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
     // Initialize dictionary φ with identity map
     // Initialize empty set visited
     std::unordered_map<int, int> vertex_dict;
@@ -15,11 +15,10 @@ std::unordered_map<int, int> localCollapse(const Graph<Poset>& g1, Graph<Poset>&
         visited[v] = false;
     }
     // Initialize an new edge list
-    using VEdges = typename Graph<Poset>::VEdges;
+    using VEdges = typename Graph<FT>::VEdges;
 
     VEdges new_E = g1.get_edge_values();
 
-    std::tuple<int, double, std::string> myTuple(1, 3.14, "Hello");
     typedef std::tuple<int, Edge, int> VEV; // type of (vertex, edge, vertex)
     
     for (auto v: g1.get_vertices() ) {
@@ -45,15 +44,15 @@ std::unordered_map<int, int> localCollapse(const Graph<Poset>& g1, Graph<Poset>&
                 // local collapsible
                 for (const auto& pair : g2.get_edge_values()) {
                     Edge e = pair.first;
-                    double fe = pair.second;
+                    FT fe = pair.second;
                     int e0, e1;
                     std::tie(e0, e1) = e;
                     if (e0 == u || e1 == u){
                         int x = (e0 == u) ? e1 : e0;
-                        double fx, fu;
+                        FT fx, fu;
                         fx = g2.get_vertex_value(x);
                         fu = g2.get_vertex_value(u);
-                        if (fe == fx == fu){
+                        if (fe == fx && fx == fu){
                             stack.push(VEV(v, e, x));
                         }
                     }
@@ -87,6 +86,7 @@ void test1(){
     g.DFS(0);
 
     Graph<double> new_g = Graph<double>(g);
+    std::cout << "Collapse locally" << std::endl;
     std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
 
     std::cout << "Graph adjacency list representation:" << std::endl;
@@ -103,15 +103,15 @@ void test1(){
 
 
 void test2(){
-    Graph<double> g(3); 
+    Graph<Coordinate> g(3); 
 
-    g.add_vertex(0, 1.0);
-    g.add_vertex(1, 1.0);
-    g.add_vertex(2, 1.0);
+    g.add_vertex(0, Coordinate(6,2));
+    g.add_vertex(1, Coordinate(6,2));
+    g.add_vertex(2, Coordinate(6,2));
 
-    g.add_edge(0, 1, 1.0);
-    g.add_edge(0, 2, 1.0);
-    g.add_edge(1, 2, 1.0);
+    g.add_edge(0, 1, Coordinate(6,2));
+    g.add_edge(0, 2, Coordinate(6,2));
+    g.add_edge(1, 2, Coordinate(6,2));
 
     std::cout << "Graph adjacency list representation:" << std::endl;
     g.print_adjacency();
@@ -121,7 +121,7 @@ void test2(){
     std::cout << "\nDepth-First Search starting from vertex 0:" << std::endl;
     g.DFS(0);
 
-    Graph<double> new_g = Graph<double>(g);
+    Graph<Coordinate> new_g = Graph<Coordinate>(g);
     std::unordered_map<int, int> vert_dict = localCollapse(g, new_g);
 
     std::cout << "Graph adjacency list representation:" << std::endl;
@@ -137,7 +137,7 @@ void test2(){
 
 
 int main() {
-    test1();
+    test2();
 
     return 0;
 }
