@@ -16,6 +16,11 @@ public:
     Vertex get_v1() const { return v1; }
     EdgeId get_id() const { return id; }
 
+    Vertex& get_v0() { return v0; }
+    Vertex& get_v1() { return v1; }
+    EdgeId& get_id() { return id; }
+
+
     // Overload the output operator
     friend std::ostream& operator<<(std::ostream& os, const Edge& edge) {
         os << "Edge(" << edge.v0 << ", " << edge.v1 << ", id = " << edge.id << ")";
@@ -30,10 +35,20 @@ public:
         switch (index) {
             case 0: return v0;
             case 1: return v1;
-            case 2: return id;
             default: throw std::out_of_range("Index out of range for Edge");
         }
     }
+
+    // Overload the index operator (non-const version for write access)
+    int& operator[](int index) {
+        switch (index) {
+            case 0: return v0;
+            case 1: return v1;
+            default: throw std::out_of_range("Index out of range for Edge");
+        }
+    }
+
+
 
     bool operator==(const Edge& other) const {
         return v0 == other.v0 && v1 == other.v1 && id == other.id;

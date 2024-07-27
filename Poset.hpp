@@ -14,7 +14,7 @@ public:
     // Comparison operators
     bool operator<(const R2& other) const {
         // Compare first by x, then by y if x's are equal
-        return x <= other.x && y <= other.y;
+        return x <= other.x && y <= other.y && !(x == other.x && y == other.y);
     }
 
     bool operator>(const R2& other) const {

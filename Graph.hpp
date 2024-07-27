@@ -15,7 +15,7 @@ class Graph {
 public:
 
     // using VEdges = std::unordered_map<Edge, std::vector<FT>, boost::hash<std::pair<int, int>>>;
-    using VAdj = std::vector<std::pair<Vertex, EdgeId>>; // single vertex adjacency
+    using VAdj = std::vector<EdgeId>; // single vertex adjacency
     // Constructor reserve sizes 
     Graph(int n);
 
@@ -38,7 +38,7 @@ public:
     inline std::unordered_map<EdgeId, FT> get_edges_values() const {return edge_values;};
 
     //  get edge value 
-    inline FT get_edge_values(EdgeId i) const {return edge_values.at(i);};
+    inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};
 
     // get the filtration value of a single vertex
     FT get_vertex_value(int v) const;
@@ -64,26 +64,34 @@ public:
     // Remove vertices based on dictionary
     void remove_vertices(std::unordered_map<int, int> vert_dict);
 
+    // Update graph based on dictionary
+    void update_graph(std::unordered_map<int, int> vert_dict);
+
+
     // Method for Depth-First Search
     void DFS(int startVertex) const;
 
     // Helper function to remove an edge from the adjacency hash map
     void remove_from_adjacency(Vertex v, EdgeId edgeId) {
-        if (adjacency.find(v) != adjacency.end()) {
-            auto& neighbors = adjacency[v];
-            neighbors.erase(
-                std::remove_if(neighbors.begin(), neighbors.end(),
-                    [edgeId](const std::tuple<Vertex, EdgeId>& neighbor) {
-                        return std::get<1>(neighbor) == edgeId;
-                    }),
-                neighbors.end()
-            );
-        }
+        // Check if the key exists in the map
+        auto it = adjacency.find(v);
+        assert(it != adjacency.end() && "vertex not found in adjacency.");
+
+        // Get reference to the vector
+        std::vector<EdgeId>& vec = it->second;
+
+        // Find the element in the vector
+        auto vec_it = std::find(vec.begin(), vec.end(), edgeId);
+        assert(vec_it != vec.end() && "edge not found in the vector.");
+
+        // Erase the element
+        vec.erase(vec_it);
+        
     }
 
 private:
-    EdgeId edge_id_assign = 0; 
-    std::vector<Vertex> vertices; //
+    EdgeId edge_id_assign = 0; // used to assign each edge an unique identity
+    std::vector<Vertex> vertices; 
     std::unordered_map<Vertex, FT> vert_values;
     std::unordered_map<EdgeId, Edge> edges;
     std::unordered_map<EdgeId, FT> edge_values; 
@@ -105,7 +113,9 @@ Graph<FT>::Graph(int n) {vertices.reserve(n);}
 // Copy Constructor
 template<typename FT>
 Graph<FT>::Graph(const Graph& other) 
-    : vertices(other.vertices),
+    : edge_id_assign(other.edge_id_assign),
+      vert_values(other.vert_values),
+      vertices(other.vertices),
       edges(other.edges), 
       edge_values(other.edge_values), 
       adjacency(other.adjacency)
@@ -121,8 +131,8 @@ void Graph<FT>::add_edge(int v, int w, FT value) {
     Edge edge = Edge(v, w, edge_id_assign);
     edges[edge_id_assign] = edge;
     edge_values[edge_id_assign] = value;
-    adjacency[v].emplace_back(w, edge_id_assign);
-    adjacency[w].emplace_back(v, edge_id_assign);
+    adjacency[v].emplace_back(edge_id_assign);
+    adjacency[w].emplace_back(edge_id_assign);
 }
 
 // Overloaded method to add an edge with default value 0.0
@@ -175,6 +185,52 @@ void Graph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
     vertices = new_vertices;
 }
 
+// merge vector of key1 to the vector of key2 and delete key1 later 
+void mergeKeys(std::unordered_map<int, std::vector<size_t>>& map, int key1, int key2) {
+    // Check if both keys exist in the map
+    auto it1 = map.find(key1);
+    auto it2 = map.find(key2);
+
+    assert(it1 != map.end() && "Key1 not found in the map.");
+    assert(it2 != map.end() && "Key2 not found in the map.");
+
+    // Append the vector of key1 to the vector of key2
+    it2->second.insert(it2->second.end(), it1->second.begin(), it1->second.end());
+
+    // Optionally, you can erase key1 from the map if it's no longer needed
+    map.erase(it1);
+}
+
+
+template<typename FT> // unsafe b/c we don't check if edge use the vertex to be removed 
+void Graph<FT>::update_graph(std::unordered_map<int, int> vert_dict){
+    // update vertices
+    std::vector<int> new_vertices;
+    new_vertices.reserve(vertices.size());
+    for (const auto& p: vert_dict){
+        if (p.first == p.second){
+            new_vertices.emplace_back(p.first);
+        }else{
+            vert_values.erase(p.first);
+        }
+    }
+    vertices = new_vertices;
+
+    // update edges 
+    for (auto& p: edges){
+        Edge& e = p.second;
+        e[0] = vert_dict[e[0]];
+        e[1] = vert_dict[e[1]];
+    }
+
+    // update adjacency by merging elements in two keys
+    for (const auto& p: vert_dict){
+        if (p.first != p.second){
+            mergeKeys(adjacency, p.first, p.second);
+        }
+    }
+
+}
 
 
 // Method to set the value of a vertex
@@ -192,8 +248,8 @@ void Graph<FT>::print_adjacency() const {
     for (const auto& pair : adjacency) {
         int v = pair.first; // vertex
         std::cout << "v = " << v <<": ";
-        for (const auto& neighbor : pair.second) {
-            std::cout << neighbor.first <<" ";
+        for (const auto& eid : pair.second) {
+            std::cout << get_edge(eid) <<" ";
         }
         std::cout << std::endl;
     }
@@ -202,7 +258,7 @@ void Graph<FT>::print_adjacency() const {
 // Method to print the graph
 template<typename FT>
 void Graph<FT>::print_filtrataion_value() const {
-    // Iterate and print the adjacency list map
+    std::cout << "Graph filtration values:" << std::endl;
     std::cout << "Vertices:" << std::endl;
     for (const auto& v : vertices) {
         std::cout << "f(" << v <<") = "<< vert_values.at(v)<<std::endl;
@@ -254,9 +310,11 @@ void Graph<FT>::DFS(int startVertex) const {
 
             // Get all adjacent vertices of the popped vertex
             // If an adjacent vertex has not been visited, push it onto the stack
-            for (const auto& nbrs : adjacency.at(vertex)) {
-                if (!visited[nbrs.first]) {
-                    stack.push(nbrs.first);
+            for (const auto& eid : adjacency.at(vertex)) {
+                Edge e = get_edge(eid);
+                Vertex u = (e[0] == vertex) ? e[1]: e[0];
+                if (!visited[u]) {
+                    stack.push(u);
                 }
             }
         }
