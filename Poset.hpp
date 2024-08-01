@@ -1,8 +1,20 @@
 #include <iostream>
 #include <utility> // for std::pair
 
+
+// General template for filtration type(Poset) hash functor
+template <typename T>
+struct FTHash {
+    std::size_t operator()(const T& t) const {
+        return std::hash<T>{}(t);
+    }
+};
+
+
 class R2 {
 public:
+    static const double CoordinateMax;
+    using CoordinateTP = double;
     // Constructors
     R2() : x(0.0), y(0.0) {}
     R2(double x, double y) : x(x), y(y) {}
@@ -10,6 +22,15 @@ public:
     // Accessor methods
     double getX() const { return x; }
     double getY() const { return y; }
+
+    // Overload the index operator
+    int operator[](int index) const {
+        switch (index) {
+            case 0: return x;
+            case 1: return y;
+            default: throw std::out_of_range("Index out of range for R2");
+        }
+    }
 
     // Comparison operators
     bool operator<(const R2& other) const {
@@ -42,6 +63,31 @@ public:
 private:
     double x, y;
 };
+
+
+// Definition and initialization of the static constant
+const double R2::CoordinateMax = std::numeric_limits<double>::max();
+
+
+// Specialization of MyHash for R2
+template <>
+struct FTHash<R2> {
+    std::size_t operator()(const R2& r2) const {
+        std::size_t hx = std::hash<double>{}(r2.getX());
+        std::size_t hy = std::hash<double>{}(r2.getY());
+        return hx ^ (hy << 1); // Combine the two hash values
+    }
+};
+
+
+struct LexicographicalCompareR2 {
+    bool operator()(const R2& lhs, const R2& rhs) const {
+        if (lhs.getX() < rhs.getX()) return true;
+        if (lhs.getX() == rhs.getX() && lhs.getY() < rhs.getY()) return true;
+        return false;
+    }
+};
+
 
 // int main() {
 //     R2 c1(1.0, 2.0);

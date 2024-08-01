@@ -26,7 +26,7 @@ public:
     inline int get_nvertices() const {return vertices.size();};
 
     //  get all vertices
-    inline std::vector<int>  get_vertices() const {return vertices;};
+    inline std::vector<int> get_vertices() const {return vertices;};
 
     //  get adjacency list at vertex v
     inline VAdj get_adj(Vertex v) const {return adjacency.at(v);};
@@ -36,6 +36,9 @@ public:
 
     //  get all edge values 
     inline std::unordered_map<EdgeId, FT> get_edges_values() const {return edge_values;};
+
+    //  get all vertices values 
+    inline std::unordered_map<Vertex, FT> get_vert_values() const {return vert_values;};
 
     //  get edge value 
     inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};

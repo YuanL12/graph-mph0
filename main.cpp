@@ -1,5 +1,6 @@
 #include "Graph.hpp"
 #include "Poset.hpp"
+#include "Dendrogram.hpp"
 #include <set>
 /*
     Algorithm 1: Collapse local collapsible edges
@@ -141,6 +142,103 @@ Graph<FT> collapse_to_vertex_minimal(const Graph<FT>& g) {
     return g2;
 }
 
+template<typename FT>
+std::set<FT> collect_grade_pts_from_graph(const Graph<FT> g){
+    std::set<FT> grade_pts;
+    std::unordered_map<EdgeId, FT> g_edges_values = g.get_edges_values();
+    std::unordered_map<Vertex, FT> g_vert_values = g.get_vert_values();
+    size_t n = g_edges_values.size() + g_vert_values.size();
+    
+    grade_pts.resize(n);
+    // loop over vertex values
+    grade_pts.emplace_back();
+    // loop over edge values
+
+
+    return grade_pts;
+}
+
+// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
+// Return: 4 vectors as Betti tables, 1 sparse Matrix as presentation
+template<typename FT>
+std::tuple<
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<std::tuple<size_t, size_t, int>>
+> compute_MPH0(const Graph<FT>& g) {
+    std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
+    
+    Graph<FT> g1 = collapse_to_vertex_minimal(g);
+    // typename FT::CoordinateTP;
+    Dendrogram<typename FT::CoordinateTP> D(g1.get_vertices());
+
+    std::vector<std::tuple<size_t, size_t, int>> M;
+    std::unordered_map<Vertex, size_t> row_idx;
+
+    // get f of graph  
+    std::unordered_map<EdgeId, FT> g1_edges_values = g1.get_edges_values();
+    std::unordered_map<Vertex, FT> g1_vert_values = g1.get_vert_values();
+
+    // Construct the dictionary mapping R2 to a tuple of vectors(vertices and edges' ids)
+    std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
+    // Define a set of R2 objects using the custom comparator for lexicographical ordering
+    std::set<R2, LexicographicalCompareR2> gd_points;
+
+    for (const auto& pair : g1_vert_values) {
+        Vertex v = pair.first;
+        const FT& fv = pair.second;
+        // push it to the first element of the tuple
+        std::get<0>(FT_2_vertex_edges_id[fv]).push_back(v);
+        gd_points.emplace(fv);
+    }
+
+    for (const auto& pair : g1_edges_values) {
+        EdgeId eid = pair.first;
+        const FT& fe = pair.second;
+        // push it to the first element of the tuple
+        std::get<1>(FT_2_vertex_edges_id[fe]).push_back(eid);
+        gd_points.emplace(fe);
+    }
+
+
+    for (const auto& gd_point : gd_points) {
+        std::cout << gd_point << std::endl;
+        // All vertices belong to the projective cover
+        std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
+        if (verts_gd.size()!= 0){
+            betti_0.emplace_back(gd_point);
+            for (const auto& v: verts_gd){
+                // row_idx[v] ← |β0|
+                row_idx[v] = betti_0.size();
+            }
+        }
+        // Check edges
+        std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
+        for (const auto& eid: edges_ids_gd){
+            Vertex e_0, e_1;
+            auto e = g1.get_edge(eid);
+            e_0 = e[0]; e_1 = e[1];
+            auto s = D.time_of_merge(e_0, e_1); // y-coordinate
+            auto y = gd_point.getY();
+            auto x = gd_point.getX();
+            D.merge_at_time(e_0, e_1, y);
+            if (s <= y){
+                betti_0_1.emplace_back(gd_point); // The edge is deletable, so it only affects H1
+            }else{ // Edge is not deletable, so belongs to relations in resolution
+                betti_1.emplace_back(gd_point);
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
+                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+                if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                    betti_2.emplace_back(x,s);
+                    betti_0_1.emplace_back(x,s);
+                }
+            }
+        }
+    }
+    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+}
 
 
 void test1(){
@@ -209,7 +307,29 @@ void test2(){
 
 
 int main() {
-    test2();
+    // test2();
+    Graph<R2> g(6); 
+    g.add_vertex(1, R2(6,2)); // x1
+    g.add_vertex(2, R2(6,2)); // x2
+    g.add_vertex(3, R2(6,2)); // x3
+    g.add_vertex(4, R2(1,3)); // u
+    g.add_vertex(5, R2(2,1)); // v 
+    g.add_vertex(6, R2(2,6)); // w
+
+    g.add_edge(1, 2, R2(6,2)); // d1 = (x1, x2)
+    g.add_edge(1, 3, R2(6,2)); // d2 = (x2,x3)
+    g.add_edge(2, 3, R2(6,2)); // d3 = (x1,x3)
+    g.add_edge(4, 5, R2(3,5)); // e1 = (u,v)
+    g.add_edge(4, 5, R2(5,3)); // e2 = (u,v)
+    g.add_edge(5, 1, R2(6,2)); // h1 = (v, x1)
+    g.add_edge(4, 6, R2(2,6)); // h2 = (u, w)
+    g.add_edge(6, 3, R2(6,6)); // e3 = (w, x3)
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0<R2>(g);
+
+    for (const auto& val : betti_0) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
 
     return 0;
 }
