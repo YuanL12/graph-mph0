@@ -15,12 +15,12 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 # Add the executable
 # Add the source files
-set(SOURCES
-    main.cpp
-)
-add_executable(out ${SOURCES})
+# set(SOURCES
+#     dt.cpp
+# )
+# add_executable(out ${SOURCES})
 
-# Link Boost libraries
-target_link_libraries(out ${Boost_LIBRARIES})
+# # Link Boost libraries
+# target_link_libraries(out ${Boost_LIBRARIES})
 
-# add_executable(poset poset.cpp)
+add_executable(test test.cpp)
