@@ -18,6 +18,15 @@ struct Node {
         left(nullptr), right(nullptr), parent() {}
 };
 
+
+// Overload the << operator outside the class
+std::ostream& operator<<(std::ostream& os, const Node& node) {
+    os << "Node(value: " << node.value << ", label: " << node.label << ")";
+    return os;
+}
+
+
+
 // Function to swap the values of two nodes
 void swapValues(std::shared_ptr<Node> node1, std::shared_ptr<Node> node2) {
     std::swap(node1->value, node2->value);
@@ -116,7 +125,7 @@ std::shared_ptr<Node> findLCA(std::shared_ptr<Node> node1, std::shared_ptr<Node>
     std::reverse(path2.begin(), path2.end());
     std::shared_ptr<Node> lca = nullptr;
     for (size_t i = 0; i < std::min(path1.size(), path2.size()); ++i) {
-        if (path1[i] == path2[i]) {
+        if (path1[i].first == path2[i].first) {
             lca = path1[i].first;
         } else {
             break;

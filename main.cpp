@@ -171,6 +171,8 @@ std::tuple<
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
+    std::cout << "Done with Algo 2" << std::endl;
+    
     // typename FT::CoordinateTP;
     Dendrogram<typename FT::CoordinateTP> D(g1.get_vertices());
 
@@ -204,7 +206,6 @@ std::tuple<
 
 
     for (const auto& gd_point : gd_points) {
-        std::cout << gd_point << std::endl;
         // All vertices belong to the projective cover
         std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
         if (verts_gd.size()!= 0){
@@ -220,10 +221,17 @@ std::tuple<
             Vertex e_0, e_1;
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
-            auto s = D.time_of_merge(e_0, e_1); // y-coordinate
+            auto s = D.time_of_merge_double(e_0, e_1); // y-coordinate
             auto y = gd_point.getY();
             auto x = gd_point.getX();
-            D.merge_at_time(e_0, e_1, y);
+            if (e_0 == e_1){
+                betti_0_1.emplace_back(x,y);
+                continue; // self loop only affects betti_0_1
+            }
+            else{
+                D.merge_at_time(e_0, e_1, eid, y);
+            }
+
             if (s <= y){
                 betti_0_1.emplace_back(gd_point); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
@@ -325,11 +333,30 @@ int main() {
     g.add_edge(4, 6, R2(2,6)); // h2 = (u, w)
     g.add_edge(6, 3, R2(6,6)); // e3 = (w, x3)
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0<R2>(g);
-
+    
+    std::cout << "Final Results: " << std::endl;
+    std::cout << "betti_0:" << std::endl;
     for (const auto& val : betti_0) {
         std::cout << val << " ";
     }
     std::cout << std::endl;
 
+    std::cout << "betti_1:" << std::endl;
+    for (const auto& val : betti_1) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "betti_2:" << std::endl;
+    for (const auto& val : betti_2) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "betti_0_1:" << std::endl;
+    for (const auto& val : betti_0_1) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
     return 0;
 }
