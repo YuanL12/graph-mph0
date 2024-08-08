@@ -190,7 +190,9 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
     }
 
     // Append the remaining nodes from path1 or path2
-    // set parent and child relation for the ending node
+    // there are two key steps: 
+    // 1. delete the child from the unfinished path
+    // 2. make the parent-child relation between the ending node of merged path and first of unfinished path
     auto ending_node_pair = mergedPath.back();
     if (i < path1.size()) { 
         // first delete the child relation in the unfinished path
