@@ -13,6 +13,17 @@ find_package(Boost REQUIRED)
 # Include Boost headers
 include_directories(${Boost_INCLUDE_DIRS})
 
+
+# Use Dynamic Tree
+# Add the submodule's source directory to the include path
+include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
+
+# Add the submodule's source files to your project
+add_library(ST_Tree STATIC
+    ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/ST_Tree.cpp
+)
+
+
 # Add the executable
 # Add the source files
 set(SOURCES
@@ -20,7 +31,7 @@ set(SOURCES
 )
 add_executable(out ${SOURCES})
 
-# Link Boost libraries
-target_link_libraries(out ${Boost_LIBRARIES})
+# Link libraries
+target_link_libraries(out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # add_executable(test test.cpp)
