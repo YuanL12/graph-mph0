@@ -17,6 +17,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 # Use Dynamic Tree
 # Add the submodule's source directory to the include path
 include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add the submodule's source files to your project
 add_library(ST_Tree STATIC
