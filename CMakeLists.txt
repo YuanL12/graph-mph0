@@ -7,17 +7,15 @@ project(MPH0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Find Boost
+# Include all hpp files
+include_directories(${CMAKE_SOURCE_DIR}/include)
+# Find Boost and Include Boost headers
 find_package(Boost REQUIRED)
-
-# Include Boost headers
 include_directories(${Boost_INCLUDE_DIRS})
-
 
 # Use Dynamic Tree
 # Add the submodule's source directory to the include path
 include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
-include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Add the submodule's source files to your project
 add_library(ST_Tree STATIC
@@ -35,4 +33,6 @@ add_executable(out ${SOURCES})
 # Link libraries
 target_link_libraries(out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
-# add_executable(test test.cpp)
+# -------------------------------------------------
+# build binding for python 
+add_subdirectory(binding)
