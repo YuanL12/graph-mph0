@@ -19,6 +19,7 @@ This is a project about computing Multiparemeter Persistence at dimension 0 for 
 `conda install pydantic -c conda-forge`
 
 ### Build python lib
+Make sure you have activated your desired conda env first, then 
 `cmake -DPYTHON_EXECUTABLE=$(which python) -DPYTHON_LIBRARY=$(which python) ..`
 
 Note: data from igl will be stored by default in your root or user path like `/root/.dgl`, remove them if they are not used in the future. 

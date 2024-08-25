@@ -13,7 +13,7 @@ void test1(){
 
     std::cout << "Graph adjacency list representation:" << std::endl;
     g.print_adjacency();
-    g.print_filtrataion_value();
+    g.print_filtration_value();
 
     std::cout << "\nDepth-First Search starting from vertex 0:" << std::endl;
     g.DFS(0);
@@ -25,7 +25,7 @@ void test1(){
     std::cout << "Graph adjacency list representation:" << std::endl;
     new_g.print_adjacency();
     std::cout << "Graph filtration values:" << std::endl;
-    new_g.print_filtrataion_value();
+    new_g.print_filtration_value();
 }
 
 
@@ -50,7 +50,7 @@ void test2(){
 
     std::cout << "Graph adjacency list representation:" << std::endl;
     g.print_adjacency();
-    g.print_filtrataion_value();
+    g.print_filtration_value();
 
     // std::cout << "Collapse locally now" << std::endl;
     // Graph<R2> g2 = Graph<R2>(g); 
@@ -159,7 +159,43 @@ int test_figure1_DTree() {
 }
 
 
+int test_3() {
+    Graph<R2> g(2); 
+    g.add_vertex(0, R2(1,2)); // x1
+    g.add_vertex(1, R2(3,4)); // x2
+
+    g.add_edge(0, 1, R2(5,6)); // d1 = (x1, x2)
+    g.add_edge(0, 1, R2(7,8)); // d2 = (x2,x3)
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
+    
+    std::cout << "Final Results: " << std::endl;
+    std::cout << "betti_0:" << std::endl;
+    for (const auto& val : betti_0) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "betti_1:" << std::endl;
+    for (const auto& val : betti_1) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "betti_2:" << std::endl;
+    for (const auto& val : betti_2) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "betti_0_1:" << std::endl;
+    for (const auto& val : betti_0_1) {
+        std::cout << val << " ";
+    }
+    std::cout << std::endl;
+    return 0;
+}
+
 int main() {
-    test_figure1_DTree();
+    test_3();
     return 0;
 }

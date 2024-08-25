@@ -13,6 +13,7 @@ struct FTHash {
 
 class R2 {
 public:
+    double x, y;
     static const double CoordinateMax;
     using CoordinateTP = double;
     // Constructors
@@ -59,9 +60,7 @@ public:
         os << "(" << coord.x << ", " << coord.y << ")";
         return os;
     }
-
-private:
-    double x, y;
+    
 };
 
 

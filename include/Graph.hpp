@@ -22,6 +22,54 @@ public:
     // Copy Constructor
     Graph(const Graph& other);
 
+    // vector constructor
+    Graph(const std::vector<int>& node_labels, 
+          const std::vector<FT>& node_features, 
+          const std::vector<std::pair<int, int>>& edges_input, 
+          const std::vector<FT>& edge_features) {
+        
+        std::cout << "Check input of Graph constructor:" << std::endl;
+        std::cout << "node_labels:" << std::endl;
+        for (auto k: node_labels){
+            std::cout << " " << k;
+        }
+        std::cout<< std::endl;
+
+        std::cout << "node_features:" << std::endl;
+        for (auto k: node_features){
+            std::cout << " " << k;
+        }
+        std::cout<< std::endl;
+
+        std::cout << "edges_input:" << std::endl;
+        for (auto k: edges_input){
+            std::cout << " (" << k.first << ","<<k.second<<")";
+        }
+        std::cout<< std::endl;
+
+        std::cout << "edge_features:" << std::endl;
+        for (auto k: edge_features){
+            std::cout << " " << k;
+        }
+        std::cout<< std::endl;
+
+        // Initialize vertices
+        for (size_t i = 0; i < node_labels.size(); ++i) {
+            add_vertex(node_labels[i], node_features[i]);
+        }
+
+        // Initialize edges
+        for (size_t i = 0; i < edges_input.size(); ++i) {
+            add_edge(edges_input[i].first, edges_input[i].second, edge_features[i]);
+        }
+        // std::cout << "Print adjacency from C++" << std::endl;
+        // print_adjacency();
+        // std::cout << "Print filtration value from C++" << std::endl;
+        // print_filtration_value();
+    }
+
+
+
     // get # of vertices
     inline int get_nvertices() const {return vertices.size();};
 
@@ -59,7 +107,7 @@ public:
     void print_adjacency() const;
 
     // Method to print the graph
-    void print_filtrataion_value() const;
+    void print_filtration_value() const;
     
     // Remove edge e
     void remove_edge(Edge e);
@@ -141,7 +189,7 @@ void Graph<FT>::add_edge(int v, int w, FT value) {
 // Overloaded method to add an edge with default value 0.0
 template<typename FT>
 void Graph<FT>::add_edge(int v, int w) {
-    add_edge(v, w, 0.0);
+    add_edge(v, w, FT());
 }
 
 template<typename FT>
@@ -260,7 +308,7 @@ void Graph<FT>::print_adjacency() const {
 
 // Method to print the graph
 template<typename FT>
-void Graph<FT>::print_filtrataion_value() const {
+void Graph<FT>::print_filtration_value() const {
     std::cout << "Graph filtration values:" << std::endl;
     std::cout << "Vertices:" << std::endl;
     for (const auto& v : vertices) {

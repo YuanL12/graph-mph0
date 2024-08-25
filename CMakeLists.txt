@@ -21,7 +21,8 @@ include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
 add_library(ST_Tree STATIC
     ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/ST_Tree.cpp
 )
-
+# Ensure -fPIC is used for the static library
+set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # Add the executable
 # Add the source files

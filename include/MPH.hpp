@@ -140,7 +140,7 @@ Graph<FT> collapse_to_vertex_minimal(const Graph<FT>& g) {
 
     // update vertices 
     g2.update_graph(vertex_dict);
-    g2.print_filtrataion_value();
+    // g2.print_filtration_value();
     return g2;
 }
 
