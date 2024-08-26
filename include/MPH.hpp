@@ -264,9 +264,10 @@ std::tuple<
 > compute_MPH0_DTree(const Graph<FT>& g) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     
-    Graph<FT> g1 = collapse_to_vertex_minimal(g);
-    std::cout << "Done with Algo 2" << std::endl;
-    
+    // Graph<FT> g1 = collapse_to_vertex_minimal(g);
+    // std::cout << "Done with Algo 2" << std::endl;
+    Graph<FT> g1 = g;
+
     // typename FT::CoordinateTP;
     DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices());
 
@@ -274,13 +275,15 @@ std::tuple<
     std::unordered_map<Vertex, size_t> row_idx;
 
     // get f of graph  
-    std::unordered_map<EdgeId, FT> g1_edges_values = g1.get_edges_values();
-    std::unordered_map<Vertex, FT> g1_vert_values = g1.get_vert_values();
+    const auto& g1_edges_values = g1.get_edges_values();
+    const auto& g1_vert_values = g1.get_vert_values();
 
     // Construct the dictionary mapping R2 to a tuple of vectors(vertices and edges' ids)
     std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
     // Define a set of R2 objects using the custom comparator for lexicographical ordering
     std::set<R2, LexicographicalCompareR2> gd_points;
+    
+    std::cout << "Finish Intialization" << std::endl;
 
     for (const auto& pair : g1_vert_values) {
         Vertex v = pair.first;
@@ -298,8 +301,10 @@ std::tuple<
         gd_points.emplace(fe);
     }
 
+    std::cout << "Add all grade points" << std::endl;
 
     for (const auto& gd_point : gd_points) {
+        std::cout << "Loop over gd_point:"<< gd_point << std::endl;
         // All vertices belong to the projective cover
         std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
         if (verts_gd.size()!= 0){
@@ -309,6 +314,7 @@ std::tuple<
                 row_idx[v] = betti_0.size();
             }
         }
+        std::cout << "Checking edges" << std::endl;
         // Check edges
         std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
         for (const auto& eid: edges_ids_gd){
@@ -318,6 +324,7 @@ std::tuple<
             auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
             auto y = gd_point.getY();
             auto x = gd_point.getX();
+            std::cout << "Inside edge loop e_0 = " << e_0 << ", e_1 = "<< e_1 << std::endl;
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x,y);
                 continue; // self loop only affects betti_0_1
@@ -325,7 +332,7 @@ std::tuple<
             else{
                 DT.merge_at_time(e_0, e_1, y);
             }
-
+            std::cout << "Merge Tree Success" << std::endl;
             if (s <= y){
                 betti_0_1.emplace_back(gd_point); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
@@ -337,8 +344,10 @@ std::tuple<
                     betti_0_1.emplace_back(x,s);
                 }
             }
+            std::cout << "Store Betti" << std::endl;
         }
     }
+    std::cout << "End for big for loop" << std::endl;
     return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
 }
 

@@ -15,7 +15,7 @@ class R2 {
 public:
     double x, y;
     static const double CoordinateMax;
-    using CoordinateTP = double;
+    using CoordinateTP = double; // todo: check double float with python
     // Constructors
     R2() : x(0.0), y(0.0) {}
     R2(double x, double y) : x(x), y(y) {}

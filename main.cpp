@@ -155,6 +155,18 @@ int test_figure1_DTree() {
         std::cout << val << " ";
     }
     std::cout << std::endl;
+
+    /*
+    Expect Final Results: 
+        betti_0:
+        (1, 3) (2, 1) 
+        betti_1:
+        (3, 5) (5, 3) 
+        betti_2:
+        (5, 5) 
+        betti_0_1:
+        (5, 5) (6, 2) (6, 6) 
+    */
     return 0;
 }
 
@@ -164,8 +176,12 @@ int test_3() {
     g.add_vertex(0, R2(1,2)); // x1
     g.add_vertex(1, R2(3,4)); // x2
 
-    g.add_edge(0, 1, R2(5,6)); // d1 = (x1, x2)
-    g.add_edge(0, 1, R2(7,8)); // d2 = (x2,x3)
+    g.add_edge(0, 1, R2(5,6)); 
+    g.add_edge(0, 1, R2(7,8)); 
+    std::cout << "print_adjacency " << std::endl;
+    g.print_adjacency();
+    std::cout << "print_filtration_value" << std::endl;
+    g.print_filtration_value();
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
     
     std::cout << "Final Results: " << std::endl;

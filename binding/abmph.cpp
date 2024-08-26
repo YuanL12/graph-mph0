@@ -144,8 +144,9 @@ PYBIND11_MODULE(_abmph, m) {
 
 	m.def("compute_MPH0_DTree", [](const Graph<R2>& g) {
             // Call the C++ function and unpack the tuple
-			std::cout << "\ninto the fucntion compute_MPH0_DTree" << std::endl;
+			std::cout << "Into the fucntion compute_MPH0_DTree in Pybind11" << std::endl;
             auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
+            std::cout << "Finish compute_MPH0_DTree, and return to Pybind11 " << std::endl;
 			auto py_betti_0 = to_pylist(betti_0);
 			auto py_betti_1 = to_pylist(betti_1);
 			auto py_betti_2 = to_pylist(betti_2);

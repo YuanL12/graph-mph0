@@ -62,10 +62,10 @@ public:
         for (size_t i = 0; i < edges_input.size(); ++i) {
             add_edge(edges_input[i].first, edges_input[i].second, edge_features[i]);
         }
-        // std::cout << "Print adjacency from C++" << std::endl;
-        // print_adjacency();
-        // std::cout << "Print filtration value from C++" << std::endl;
-        // print_filtration_value();
+        std::cout << "Print adjacency from C++" << std::endl;
+        print_adjacency();
+        std::cout << "Print filtration value from C++" << std::endl;
+        print_filtration_value();
     }
 
 
@@ -74,7 +74,7 @@ public:
     inline int get_nvertices() const {return vertices.size();};
 
     //  get all vertices
-    inline std::vector<int> get_vertices() const {return vertices;};
+    inline const std::vector<int>& get_vertices() const {return vertices;};
 
     //  get adjacency list at vertex v
     inline VAdj get_adj(Vertex v) const {return adjacency.at(v);};
@@ -83,10 +83,10 @@ public:
     inline Edge get_edge(EdgeId id) const {return edges.at(id);};
 
     //  get all edge values 
-    inline std::unordered_map<EdgeId, FT> get_edges_values() const {return edge_values;};
+    inline const std::unordered_map<EdgeId, FT>& get_edges_values() const {return edge_values;};
 
     //  get all vertices values 
-    inline std::unordered_map<Vertex, FT> get_vert_values() const {return vert_values;};
+    inline const std::unordered_map<Vertex, FT>& get_vert_values() const {return vert_values;};
 
     //  get edge value 
     inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};
@@ -314,7 +314,12 @@ void Graph<FT>::print_filtration_value() const {
     for (const auto& v : vertices) {
         std::cout << "f(" << v <<") = "<< vert_values.at(v)<<std::endl;
     }
-    std::cout << "Edges:" << std::endl;
+    std::cout << "edges:" << std::endl;
+    for (const auto& eid_value : edges) {
+        Edge e = edges.at(eid_value.first);
+        std::cout << "e = " << e << ", eid = "<< eid_value.first <<", f(e)= "<< eid_value.second << std::endl;
+    }
+    std::cout << "edge_values:" << std::endl;
     for (const auto& eid_value : edge_values) {
         Edge e = edges.at(eid_value.first);
         std::cout << "e = " << e << ", f(e)= "<< eid_value.second << std::endl;
