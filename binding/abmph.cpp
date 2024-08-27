@@ -43,10 +43,55 @@ void init_R2(py::module& m){
 void init_graph(py::module& m){
 	py::class_<Graph<R2>>(m, "Graph")
         .def(py::init<int>())  // Existing constructor
+        .def(py::init([](const std::vector<int>& node_labels, 
+                         const std::vector<std::vector<double>>& node_features_, 
+                         const std::vector<std::vector<int>>& edges_input, 
+                         const std::vector<std::vector<double>>& edge_features_) {
+			std::cout<< "call from the first constructor of graph" <<std::endl;
+            // Convert node_features (2D array) to std::vector<R2>
+            std::vector<R2> node_features;
+            node_features.reserve(node_features_.size());
+            for (const auto& inner_vec : node_features_) {
+                if (inner_vec.size() == 2) {
+                    node_features.emplace_back(inner_vec[0], inner_vec[1]);
+                } else {
+                    // Handle the case where inner_vec does not have exactly 2 elements
+                    throw std::runtime_error("Each inner vector of node_features_ must have exactly 2 elements.");
+                }
+            }
+
+            // Convert edges_input to std::vector<std::pair<int, int>>
+            std::vector<std::pair<int, int>> edges;
+            edges.reserve(edges_input.size());
+            for (const auto& inner_vec : edges_input) {
+                if (inner_vec.size() == 2) {
+                    edges.emplace_back(inner_vec[0], inner_vec[1]);
+                } else {
+                    // Handle the case where inner_vec does not have exactly 2 elements
+                    throw std::runtime_error("Each inner vector of edges must have exactly 2 elements.");
+                }
+            }
+            
+            // Convert edge_features (2D array) to std::vector<R2>
+            std::vector<R2> edge_features;
+            edge_features.reserve(edge_features_.size());
+            for (const auto& inner_vec : edge_features_) {
+                if (inner_vec.size() == 2) {
+                    edge_features.emplace_back(inner_vec[0], inner_vec[1]);
+                } else {
+                    // Handle the case where inner_vec does not have exactly 2 elements
+                    throw std::runtime_error("Each inner vector of edge_features must have exactly 2 elements.");
+                }
+            }
+
+            // Call the Graph constructor
+            return Graph<R2>(node_labels, node_features, edges, edge_features);
+		}))
 		.def(py::init([](const py::array_t<int>& node_labels, 
                  const py::array_t<double>& node_features, 
                  const py::array_t<int>& edges_input, 
                  const py::array_t<double>& edge_features) {
+            std::cout<< "call from the second constructor of graph" <<std::endl;
 			// Convert numpy arrays to std::vector
             auto node_labels_unchecked = node_labels.unchecked<1>();
             auto node_features_unchecked = node_features.unchecked<2>();

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/root/Codes/graph-mph0/build')
+sys.path.append('../build')
 import abmph
 import numpy as np
 
