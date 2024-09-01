@@ -8,6 +8,7 @@
 #include <unordered_map> // Include this for edge values
 #include <boost/functional/hash.hpp> // Include this for Boost hash
 #include <utility> // Include this for std::pair
+#include <icecream.hpp>
 
 template<typename FT>
 class Graph {
@@ -27,6 +28,8 @@ public:
           const std::vector<std::pair<int, int>>& edges_input, 
           const std::vector<FT>& edge_features) {
         
+        // IC(node_features);
+        // IC(edges_input);
         // Initialize vertices
         for (size_t i = 0; i < node_labels.size(); ++i) {
             add_vertex(node_labels[i], node_features[i]);

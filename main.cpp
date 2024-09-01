@@ -1,4 +1,5 @@
 #include "MPH.hpp"
+#include <icecream.hpp>
 
 void test1(){
     Graph<double> g(3); 
