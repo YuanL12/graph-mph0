@@ -20,9 +20,9 @@ namespace py = pybind11;
 // Example of adding print statements
 auto to_pylist = [](const std::vector<R2>& vec) {
     py::list py_list;
-    std::cout << "Converting vector of size: " << vec.size() << std::endl;
+    // std::cout << "Converting vector of size: " << vec.size() << std::endl;
     for (const auto& item : vec) {
-        std::cout << "Item: (" << item.x << ", " << item.y << ")" << std::endl;
+        // std::cout << "Item: (" << item.x << ", " << item.y << ")" << std::endl;
         py_list.append(py::make_tuple(item.x, item.y));
     }
     return py_list;
@@ -47,7 +47,7 @@ void init_graph(py::module& m){
                          const std::vector<std::vector<double>>& node_features_, 
                          const std::vector<std::vector<int>>& edges_input, 
                          const std::vector<std::vector<double>>& edge_features_) {
-			std::cout<< "call from the first constructor of graph" <<std::endl;
+			// std::cout<< "call from the first constructor of graph" <<std::endl;
             // Convert node_features (2D array) to std::vector<R2>
             std::vector<R2> node_features;
             node_features.reserve(node_features_.size());
@@ -87,72 +87,53 @@ void init_graph(py::module& m){
             // Call the Graph constructor
             return Graph<R2>(node_labels, node_features, edges, edge_features);
 		}))
-		.def(py::init([](const py::array_t<int>& node_labels, 
-                 const py::array_t<double>& node_features, 
-                 const py::array_t<int>& edges_input, 
-                 const py::array_t<double>& edge_features) {
-            std::cout<< "call from the second constructor of graph" <<std::endl;
-			// Convert numpy arrays to std::vector
-            auto node_labels_unchecked = node_labels.unchecked<1>();
-            auto node_features_unchecked = node_features.unchecked<2>();
-            auto edges_input_unchecked = edges_input.unchecked<2>();
-            auto edge_features_unchecked = edge_features.unchecked<2>();
-
-			std::vector<int> labels(node_labels_unchecked.size());
-            for (ssize_t i = 0; i < node_labels_unchecked.size(); ++i) {
-                labels[i] = node_labels_unchecked(i);
-            }
-
-			// std::cout << "labels:" << std::endl;
-			// for (auto k: labels){
-			// 	std::cout << " " << k;
-			// }
-			// std::cout<< std::endl;
-
-			// Convert node_features (2D array) to std::vector<R2>
-            std::vector<R2> features;
-            features.reserve(node_features_unchecked.shape(0));
-            for (ssize_t i = 0; i < node_features_unchecked.shape(0); ++i) {
-                features.emplace_back(node_features_unchecked(i, 0), 
-                                      node_features_unchecked(i, 1));
-            }
-
-			// std::cout << "features:" << std::endl;
-			// for (auto k: features){
-			// 	std::cout << " (" << k[0] << "," << k[1] << ")";
-			// }
-			// std::cout<< std::endl;
-
-            // Convert edges_input to std::vector<std::pair<int, int>>
-            std::vector<std::pair<int, int>> edges;
-            for (ssize_t i = 0; i < edges_input_unchecked.shape(0); ++i) {
-                edges.emplace_back(edges_input_unchecked(i, 0), 
-                                   edges_input_unchecked(i, 1));
-            }
-
-			// std::cout << "edges:" << std::endl;
-			// for (auto k: edges){
-			// 	std::cout << " (" << k.first << "," << k.second << ")";
-			// }
-			// std::cout<< std::endl;
-
-
-            // Convert edge_features (2D array) to std::vector<R2>
-            std::vector<R2> edge_feats;
-            edge_feats.reserve(edge_features_unchecked.shape(0));
-            for (ssize_t i = 0; i < edge_features_unchecked.shape(0); ++i) {
-                edge_feats.emplace_back(edge_features_unchecked(i, 0), 
-                                        edge_features_unchecked(i, 1));
-            }
-
-            // Call the Graph constructor
-            return Graph<R2>(labels, features, edges, edge_feats);
-		}))
         .def("add_vertex", &Graph<R2>::add_vertex)
 		.def("add_edge", py::overload_cast<int, int, R2>(&Graph<R2>::add_edge), "Add edge with filtration value specified")
 		.def("add_edge", py::overload_cast<int, int>(&Graph<R2>::add_edge), "Add edge without filtration value")
 		.def("print_adjacency", &Graph<R2>::print_adjacency)
         .def("print_filtration_value", &Graph<R2>::print_filtration_value)
+        // .def(py::init([](const py::array_t<int>& node_labels, 
+        //          const py::array_t<double>& node_features, 
+        //          const py::array_t<int>& edges_input, 
+        //          const py::array_t<double>& edge_features) {
+        //     // std::cout<< "call from the second constructor of graph" <<std::endl;
+		// 	// Convert numpy arrays to std::vector
+        //     auto node_labels_unchecked = node_labels.unchecked<1>();
+        //     auto node_features_unchecked = node_features.unchecked<2>();
+        //     auto edges_input_unchecked = edges_input.unchecked<2>();
+        //     auto edge_features_unchecked = edge_features.unchecked<2>();
+
+		// 	std::vector<int> labels(node_labels_unchecked.size());
+        //     for (ssize_t i = 0; i < node_labels_unchecked.size(); ++i) {
+        //         labels[i] = node_labels_unchecked(i);
+        //     }
+
+		// 	// Convert node_features (2D array) to std::vector<R2>
+        //     std::vector<R2> features;
+        //     features.reserve(node_features_unchecked.shape(0));
+        //     for (ssize_t i = 0; i < node_features_unchecked.shape(0); ++i) {
+        //         features.emplace_back(node_features_unchecked(i, 0), 
+        //                               node_features_unchecked(i, 1));
+        //     }
+
+        //     // Convert edges_input to std::vector<std::pair<int, int>>
+        //     std::vector<std::pair<int, int>> edges;
+        //     for (ssize_t i = 0; i < edges_input_unchecked.shape(0); ++i) {
+        //         edges.emplace_back(edges_input_unchecked(i, 0), 
+        //                            edges_input_unchecked(i, 1));
+        //     }
+
+        //     // Convert edge_features (2D array) to std::vector<R2>
+        //     std::vector<R2> edge_feats;
+        //     edge_feats.reserve(edge_features_unchecked.shape(0));
+        //     for (ssize_t i = 0; i < edge_features_unchecked.shape(0); ++i) {
+        //         edge_feats.emplace_back(edge_features_unchecked(i, 0), 
+        //                                 edge_features_unchecked(i, 1));
+        //     }
+
+        //     // Call the Graph constructor
+        //     return Graph<R2>(labels, features, edges, edge_feats);
+		// }))
 		;
 }
 
@@ -171,7 +152,7 @@ PYBIND11_MODULE(_abmph, m) {
 	
 
 
-	m.def("compute_MPH0_Dengrogram", [](const Graph<R2>& g) {
+	m.def("compute_MPH0_Dengrogram_CXX", [](const Graph<R2>& g) {
             // Call the C++ function and unpack the tuple
             auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_Dengrogram<R2>(g);
             // Return the tuple to Python
@@ -187,11 +168,9 @@ PYBIND11_MODULE(_abmph, m) {
 			// 						M);
         }, "Compute the absolute MPH0 by Dendrogram and return the results as a tuple of vectors.");
 
-	m.def("compute_MPH0_DTree", [](const Graph<R2>& g) {
+	m.def("compute_MPH0_DTree_CXX", [](const Graph<R2>& g) {
             // Call the C++ function and unpack the tuple
-			std::cout << "Into the fucntion compute_MPH0_DTree in Pybind11" << std::endl;
             auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
-            std::cout << "Finish compute_MPH0_DTree, and return to Pybind11 " << std::endl;
 			auto py_betti_0 = to_pylist(betti_0);
 			auto py_betti_1 = to_pylist(betti_1);
 			auto py_betti_2 = to_pylist(betti_2);

@@ -1,3 +1,15 @@
+# Manually set the Python executable and library paths
+set(PYTHON_EXECUTABLE /root/miniconda3/envs/dl/bin/python)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+# Ensure CMake uses the specified Python executable
+set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
+
+# Optionally, you can print the paths to confirm
+message(STATUS "Python executable: ${Python3_EXECUTABLE}")
+message(STATUS "Python library: ${Python3_LIBRARIES}")
+
 # Copy the abmph folder into the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/abmph DESTINATION ${CMAKE_BINARY_DIR})
 

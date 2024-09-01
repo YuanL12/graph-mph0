@@ -50,19 +50,21 @@ public:
     };
     
     void merge_at_time(Vertex v, Vertex w, T time){
-        std::cout << "v = "<< v << ", w = "<< w << ", time = "<< time << std::endl;
         // key assumption: v has been the root of the tree containing v
-        std::cout << "vert2node[w] = " << vert2node[w] << std::endl;
-        int mincost_node = ST.mincost(vert2node[w]);
-        std::cout << "mincost = "<< mincost_node << std::endl;
-        T time_of_merge = -ST.cost(mincost_node);
+
+        // std::cout << "ST.root(vert2node[w]) = " << ST.root(vert2node[w]) << std::endl;
+        // std::cout << "vert2node[w] = " << vert2node[w] << std::endl;
+        // int mincost_node = ST.mincost(vert2node[w]);
+        // std::cout << "mincost = "<< mincost_node << std::endl;
+        // T time_of_merge = -ST.cost(mincost_node);
+        // std::cout << "time_of_merge = "<< time_of_merge << std::endl;
         
-        std::cout << "time_of_merge = "<< time_of_merge << std::endl;
         // if they are in the separte tree
         if (ST.root(vert2node[w]) !=  vert2node[v]){
-            std::cout << "linking" << std::endl;
             ST.link(vert2node[w], vert2node[v], -time); // TODO: check what if v has two child already
         }else{ // same tree
+            int mincost_node = ST.mincost(vert2node[w]);
+            T time_of_merge = -ST.cost(mincost_node);
             if (time_of_merge >= time){ // do nothing
                 return;
             }else{

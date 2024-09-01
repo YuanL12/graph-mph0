@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Edge.hpp"
 #include <iostream>
 #include <vector>
@@ -28,31 +27,6 @@ public:
           const std::vector<std::pair<int, int>>& edges_input, 
           const std::vector<FT>& edge_features) {
         
-        std::cout << "Check input of Graph constructor:" << std::endl;
-        std::cout << "node_labels:" << std::endl;
-        for (auto k: node_labels){
-            std::cout << " " << k;
-        }
-        std::cout<< std::endl;
-
-        std::cout << "node_features:" << std::endl;
-        for (auto k: node_features){
-            std::cout << " " << k;
-        }
-        std::cout<< std::endl;
-
-        std::cout << "edges_input:" << std::endl;
-        for (auto k: edges_input){
-            std::cout << " (" << k.first << ","<<k.second<<")";
-        }
-        std::cout<< std::endl;
-
-        std::cout << "edge_features:" << std::endl;
-        for (auto k: edge_features){
-            std::cout << " " << k;
-        }
-        std::cout<< std::endl;
-
         // Initialize vertices
         for (size_t i = 0; i < node_labels.size(); ++i) {
             add_vertex(node_labels[i], node_features[i]);
@@ -62,13 +36,7 @@ public:
         for (size_t i = 0; i < edges_input.size(); ++i) {
             add_edge(edges_input[i].first, edges_input[i].second, edge_features[i]);
         }
-        std::cout << "Print adjacency from C++" << std::endl;
-        print_adjacency();
-        std::cout << "Print filtration value from C++" << std::endl;
-        print_filtration_value();
     }
-
-
 
     // get # of vertices
     inline int get_nvertices() const {return vertices.size();};
@@ -151,6 +119,16 @@ private:
     
     // Method to print the stack
     void printStack(const std::stack<int>& stack) const;
+
+    void security_check_adjacency_map(){
+        for (const auto& vertex : vertices) {
+            // Check if the vertex is in the adjacency_map
+            if (adjacency.find(vertex) == adjacency.end()) {
+                // If not, add the vertex with an empty vector as the value
+                adjacency[vertex] = std::vector<EdgeId>();
+            }
+        }
+    }
 };
 
 
@@ -184,6 +162,7 @@ void Graph<FT>::add_edge(int v, int w, FT value) {
     edge_values[edge_id_assign] = value;
     adjacency[v].emplace_back(edge_id_assign);
     adjacency[w].emplace_back(edge_id_assign);
+    security_check_adjacency_map();
 }
 
 // Overloaded method to add an edge with default value 0.0
@@ -313,11 +292,6 @@ void Graph<FT>::print_filtration_value() const {
     std::cout << "Vertices:" << std::endl;
     for (const auto& v : vertices) {
         std::cout << "f(" << v <<") = "<< vert_values.at(v)<<std::endl;
-    }
-    std::cout << "edges:" << std::endl;
-    for (const auto& eid_value : edges) {
-        Edge e = edges.at(eid_value.first);
-        std::cout << "e = " << e << ", eid = "<< eid_value.first <<", f(e)= "<< eid_value.second << std::endl;
     }
     std::cout << "edge_values:" << std::endl;
     for (const auto& eid_value : edge_values) {

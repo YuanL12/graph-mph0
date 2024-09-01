@@ -178,9 +178,8 @@ int test_3() {
 
     g.add_edge(0, 1, R2(5,6)); 
     g.add_edge(0, 1, R2(7,8)); 
-    std::cout << "print_adjacency " << std::endl;
+    std::cout << "Input Graph: " << std::endl;
     g.print_adjacency();
-    std::cout << "print_filtration_value" << std::endl;
     g.print_filtration_value();
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
     
