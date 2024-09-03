@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <icecream.hpp>
 using Vertex = int;
 
 /* 
@@ -51,26 +52,23 @@ public:
     
     void merge_at_time(Vertex v, Vertex w, T time){
         // key assumption: v has been the root of the tree containing v
-
-        // std::cout << "ST.root(vert2node[w]) = " << ST.root(vert2node[w]) << std::endl;
-        // std::cout << "vert2node[w] = " << vert2node[w] << std::endl;
-        // int mincost_node = ST.mincost(vert2node[w]);
-        // std::cout << "mincost = "<< mincost_node << std::endl;
-        // T time_of_merge = -ST.cost(mincost_node);
-        // std::cout << "time_of_merge = "<< time_of_merge << std::endl;
-        
         // if they are in the separte tree
         if (ST.root(vert2node[w]) !=  vert2node[v]){
-            ST.link(vert2node[w], vert2node[v], -time); // TODO: check what if v has two child already
+            // make sure w is the root for safety link, o.w. w can have multiple parents which is terrible
+            ST.evert(vert2node[w]); 
+             // make v the parent of w
+            ST.link(vert2node[w], vert2node[v], -time);
         }else{ // same tree
             int mincost_node = ST.mincost(vert2node[w]);
             T time_of_merge = -ST.cost(mincost_node);
-            if (time_of_merge >= time){ // do nothing
+            if (time_of_merge <= time){ // no need to update the tree 
                 return;
-            }else{
+            }else{ // current time (edge weight) < time of merge (max one in the tree), need to update/remove the max one 
                 // cut the max edge first 
                 ST.cut(mincost_node);
-                // link the edge v, w
+                // make sure w is the root for safety link, o.w. w can have multiple parents
+                ST.evert(vert2node[w]); 
+                // link the edge v and w, such that v is the parent of w 
                 ST.link(vert2node[w], vert2node[v], -time);
             }
         }

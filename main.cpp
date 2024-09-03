@@ -52,16 +52,8 @@ void test2(){
     std::cout << "Graph adjacency list representation:" << std::endl;
     g.print_adjacency();
     g.print_filtration_value();
-
-    // std::cout << "Collapse locally now" << std::endl;
-    // Graph<R2> g2 = Graph<R2>(g); 
-    // localCollapse(g, g2);
-
     std::cout << "Collapse the graph to vertex minimal" << std::endl;
     Graph<R2> g3 = collapse_to_vertex_minimal(g);
-
-    // std::cout << "Graph adjacency list representation:" << std::endl;
-    // g3.print_adjacency();
 
 }
 
@@ -86,29 +78,7 @@ int test_figure1_dendrogram() {
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_Dengrogram<R2>(g);
     
     std::cout << "Final Results: " << std::endl;
-    std::cout << "betti_0:" << std::endl;
-    for (const auto& val : betti_0) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_1:" << std::endl;
-    for (const auto& val : betti_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_2:" << std::endl;
-    for (const auto& val : betti_2) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_0_1:" << std::endl;
-    for (const auto& val : betti_0_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
     return 0;
 }
 
@@ -133,29 +103,7 @@ int test_figure1_DTree() {
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
     
     std::cout << "Final Results: " << std::endl;
-    std::cout << "betti_0:" << std::endl;
-    for (const auto& val : betti_0) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_1:" << std::endl;
-    for (const auto& val : betti_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_2:" << std::endl;
-    for (const auto& val : betti_2) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_0_1:" << std::endl;
-    for (const auto& val : betti_0_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
 
     /*
     Expect Final Results: 
@@ -185,33 +133,40 @@ int test_3() {
     auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
     
     std::cout << "Final Results: " << std::endl;
-    std::cout << "betti_0:" << std::endl;
-    for (const auto& val : betti_0) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
 
-    std::cout << "betti_1:" << std::endl;
-    for (const auto& val : betti_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_2:" << std::endl;
-    for (const auto& val : betti_2) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-
-    std::cout << "betti_0_1:" << std::endl;
-    for (const auto& val : betti_0_1) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
     return 0;
 }
 
+void test_4() {
+    Graph<R2> g(3); 
+    g.add_vertex(1, R2(0,0)); // x1
+    g.add_vertex(2, R2(0,0)); // x2
+    g.add_vertex(3, R2(0,0)); // x3
+
+    g.add_edge(1, 2, R2(1,4)); 
+    g.add_edge(1, 2, R2(4,1)); 
+    g.add_edge(2, 3, R2(3,3)); 
+    g.add_edge(1, 3, R2(2,2)); 
+    std::cout << "Input Graph: " << std::endl;
+    g.print_adjacency();
+    g.print_filtration_value();
+    {
+    std::cout << "Dengrogram:" << std::endl;
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_Dengrogram<R2>(g);
+    std::cout << "Final Results: " << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
+    std::cout << "\n";
+    }
+    {
+    std::cout << "DTree" << std::endl;
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
+    std::cout << "Final Results: " << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
+    }
+}
+
 int main() {
-    test_3();
+    test_4();
     return 0;
 }
