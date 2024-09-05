@@ -25,23 +25,36 @@ private:
     std::unordered_map<Vertex, int> vert2node; // map vertex to tree node label
     ST_Tree ST;
     GraphManager graph_manager;
+    int op_num = 0;
+    bool visual = false; // wheather show the graph after each operation
+    std::string graph_save_folder_name = "DT_graph_results";
 public:
     // Construct with vertices
-    DynamicTree(const std::vector<Vertex>& vertices_)
+    DynamicTree(const std::vector<Vertex>& vertices_, bool visual_ = false)
         : ST(true, vertices_.size(), 0),   // Initialize ST_Tree directly in the initializer list
-          graph_manager(vertices_.size()){
+          graph_manager(vertices_.size()),
+          visual(visual_){
         int i = 1;
         for(const auto& v: vertices_){
             vert2node[v] = i;
             i++;
         }
-        int op_num = 0;
+        if (visual){
+            std::cout << "call the remove and mkdir function" << std::endl;
+            std::string command = "rm -rf " + graph_save_folder_name + " && mkdir " + graph_save_folder_name;
+            system(command.c_str());
+        }
     };
 
 
     // T time_of_merge(Vertex v, Vertex w);
-    T time_of_merge_double(Vertex v, Vertex w){
+    T time_of_merge_double(Vertex v, Vertex w, bool visual = false){
         ST.evert(vert2node[v]); // make v the root of the tree containing v
+        if(visual) {
+            std::string op_name = "evert_"+std::to_string(vert2node[v]);
+            displayGraph(op_name);
+        }
+        
         int rt_w = ST.root(vert2node[w]);// root of w
         // if not in the same tree, i.e., root of w is not v
         if (vert2node[v] != rt_w) return std::numeric_limits<T>::max();
@@ -55,9 +68,22 @@ public:
         // if they are in the separte tree
         if (ST.root(vert2node[w]) !=  vert2node[v]){
             // make sure w is the root for safety link, o.w. w can have multiple parents which is terrible
-            ST.evert(vert2node[w]); 
-             // make v the parent of w
+            ST.evert(vert2node[w]);
+            if(visual) {
+                std::string op_name = "evert_"+std::to_string(vert2node[w]);
+                displayGraph(op_name);
+            }
+
+            // make v the parent of w
             ST.link(vert2node[w], vert2node[v], -time);
+            if(visual){
+                std::ostringstream oss;
+                oss << std::fixed << std::setprecision(3) << -time;
+                std::string op_name = "link_"+std::to_string(vert2node[w])+
+                                        "_" + std::to_string(vert2node[v]) +
+                                        "_" + oss.str();
+                displayGraph(op_name); 
+            }
         }else{ // same tree
             int mincost_node = ST.mincost(vert2node[w]);
             T time_of_merge = -ST.cost(mincost_node);
@@ -68,9 +94,30 @@ public:
                 ST.cut(mincost_node);
                 // make sure w is the root for safety link, o.w. w can have multiple parents
                 ST.evert(vert2node[w]); 
+                if(visual) {
+                    std::string op_name = "evert_"+std::to_string(vert2node[w]);
+                    displayGraph(op_name); 
+                }
                 // link the edge v and w, such that v is the parent of w 
                 ST.link(vert2node[w], vert2node[v], -time);
+                if(visual){
+                    std::ostringstream oss;
+                    oss << std::fixed << std::setprecision(3) << -time;
+                    std::string op_name = "link_"+std::to_string(vert2node[w])+
+                                            "_" + std::to_string(vert2node[v]) +
+                                            "_" + oss.str();
+                    displayGraph(op_name); 
+                }
             }
         }
     }; 
+
+    // only show the integer part of edge weight
+    void displayGraph(std::string operation_name){
+        std::string filename = graph_save_folder_name+ "/"+std::to_string(++op_num)+ "_" + operation_name;
+        std::vector<std::vector<int> > boldEdges = ST.getAllEdges(); // get all bold edges
+        std::vector<std::vector<int> > dashedEdges = ST.getAllDashEdges(); // get all dashed edges
+        int mode = 1;
+        graph_manager.displayCombinedGraph(boldEdges, dashedEdges, filename, mode); // display the graph
+    };
 };

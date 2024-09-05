@@ -20,6 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
 # Add the submodule's source files to your project
 add_library(ST_Tree STATIC
     ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/ST_Tree.cpp
+    ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/visualise.cpp
 )
 # Ensure -fPIC is used for the static library
 set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)

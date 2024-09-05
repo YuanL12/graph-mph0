@@ -79,6 +79,13 @@ int test_figure1_dendrogram() {
     
     std::cout << "Final Results: " << std::endl;
     IC(betti_0, betti_1, betti_2, betti_0_1);
+    /*
+    Expect Final Results: 
+        betti_0: (1, 3) (2, 1) 
+        betti_1: (3, 5) (5, 3) 
+        betti_2: (5, 5) 
+        betti_0_1: (5, 5) (6, 2) (6, 6) 
+    */
     return 0;
 }
 
@@ -107,14 +114,10 @@ int test_figure1_DTree() {
 
     /*
     Expect Final Results: 
-        betti_0:
-        (1, 3) (2, 1) 
-        betti_1:
-        (3, 5) (5, 3) 
-        betti_2:
-        (5, 5) 
-        betti_0_1:
-        (5, 5) (6, 2) (6, 6) 
+        betti_0: (1, 3) (2, 1) 
+        betti_1: (3, 5) (5, 3) 
+        betti_2: (5, 5) 
+        betti_0_1: (5, 5) (6, 2) (6, 6) 
     */
     return 0;
 }
@@ -134,7 +137,13 @@ int test_3() {
     
     std::cout << "Final Results: " << std::endl;
     IC(betti_0, betti_1, betti_2, betti_0_1);
-
+    /*
+    Expected Result:
+    betti_0: [(1, 2), (3, 4)]
+    betti_1: [(5, 6)]
+    betti_2: []
+    betti_0_1: [(7, 8)]
+    */
     return 0;
 }
 
@@ -166,7 +175,35 @@ void test_4() {
     }
 }
 
+
+int test_5() {
+    Graph<R2> g(2); 
+    g.add_vertex(0, R2(1,2)); // x1
+    g.add_vertex(1, R2(3,4)); // x2
+
+    g.add_edge(0, 1, R2(7.2,5.8)); 
+    g.add_edge(0, 1, R2(9.8,5.9)); 
+    std::cout << "Input Graph: " << std::endl;
+    g.print_adjacency();
+    g.print_filtration_value();
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g, true);
+    
+    std::cout << "Final Results: " << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
+    /*
+    Expected Result:
+    betti_0: [(1, 2), (3, 4)]
+    betti_1: [(5, 6)]
+    betti_2: []
+    betti_0_1: [(7, 8)]
+    */
+    return 0;
+}
+
+
 int main() {
-    test_4();
+    // test_figure1_dendrogram();
+    // test_3();
+    test_5();
     return 0;
 }

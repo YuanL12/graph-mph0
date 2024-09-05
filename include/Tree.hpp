@@ -32,67 +32,44 @@ void swapValues(std::shared_ptr<Node> node1, std::shared_ptr<Node> node2) {
     std::swap(node1->value, node2->value);
 }
 
-
-// // Insert a value into the heap, ensuring heap order is maintained
-// std::shared_ptr<Node> insert(std::shared_ptr<Node>& root, double value) {
-//     if (!root) {
-//         root = std::make_shared<Node>(value, "root");
-//         return root;
-//     }
-
-//     // Use a queue to perform level-order traversal to find the correct position.
-//     // It means that the new node is inserted at the first available position 
-//     // in a level-order manner, maintaining the complete binary tree property.
-//     std::vector<std::shared_ptr<Node>> queue = {root};
-//     std::shared_ptr<Node> newNode;
-
-//     while (!queue.empty()) {
-//         std::shared_ptr<Node> current = queue.front();
-//         queue.erase(queue.begin());
-
-//         if (!current->left) {
-//             current->left = std::make_shared<Node>(value);
-//             current->left->parent = current;
-//             newNode = current->left;
-//             break;
-//         } else {
-//             queue.push_back(current->left);
-//         }
-
-//         if (!current->right) {
-//             current->right = std::make_shared<Node>(value);
-//             current->right->parent = current;
-//             newNode = current->right;
-//             break;
-//         } else {
-//             queue.push_back(current->right);
-//         }
-//     }
-
-//     // Heapify up to maintain the heap property
-//     while (newNode->parent.lock() && newNode->value > newNode->parent.lock()->value) {
-//         swapValues(newNode, newNode->parent.lock());
-//         newNode = newNode->parent.lock();
-//     }
-
-//     return newNode;
-// }
-
 // Print the tree (level-order traversal)
-void printTree(std::shared_ptr<Node> root) {
-    if (!root) return;
-
-    std::vector<std::shared_ptr<Node>> queue = {root};
-    while (!queue.empty()) {
-        std::shared_ptr<Node> current = queue.front();
-        queue.erase(queue.begin());
-
-        std::cout << current->value << " ";
-
-        if (current->left) queue.push_back(current->left);
-        if (current->right) queue.push_back(current->right);
+void printTree(const std::shared_ptr<Node>& node, int indent = 0) {
+    if (node) {
+        if (node->right) {
+            printTree(node->right, indent + 4);
+        }
+        if (indent) {
+            std::cout << std::string(indent, ' ');
+        }
+        if (node->right) std::cout << " /\n" << std::string(indent, ' ');
+        std::cout << node->label << "\n ";
+        if (node->left) {
+            std::cout << std::string(indent, ' ') << " \\\n";
+            printTree(node->left, indent + 4);
+        }
     }
-    std::cout << std::endl;
+}
+
+void printBT(const std::string& prefix, const std::shared_ptr<Node>& node, bool isLeft)
+{
+    if( node != nullptr )
+    {
+        std::cout << prefix;
+
+        std::cout << (isLeft ? "├──" : "└──" );
+
+        // print the value of the node
+        std::cout << node->label << std::endl;
+
+        // enter the next tree level - left and right branch
+        printBT( prefix + (isLeft ? "│   " : "    "), node->left, true);
+        printBT( prefix + (isLeft ? "│   " : "    "), node->right, false);
+    }
+}
+
+void printBT(const std::shared_ptr<Node>& node)
+{
+    printBT("", node, false);    
 }
 
 
@@ -117,6 +94,23 @@ std::vector<std::pair<std::shared_ptr<Node>, bool>> getPathToRoot(std::shared_pt
     return path;
 }
 
+
+
+// Retrieve the path from a given node to the root(bottom-to-top, i.e., ascending order)
+// true for left, false for right
+std::shared_ptr<Node> getRoot(std::shared_ptr<Node> node) {
+    if (!node) {
+        return nullptr;  // If the node is null, return null
+    }
+    std::shared_ptr<Node> currentNode = node;
+    while (currentNode->parent.lock()) {
+        currentNode = currentNode->parent.lock();
+    }
+    return currentNode;
+}
+
+
+
 // Find the lowest common ancestor (LCA) of two nodes
 std::shared_ptr<Node> findLCA(std::shared_ptr<Node> node1, std::shared_ptr<Node> node2) {
     auto path1 = getPathToRoot(node1);
@@ -133,46 +127,3 @@ std::shared_ptr<Node> findLCA(std::shared_ptr<Node> node1, std::shared_ptr<Node>
     }
     return lca;
 }
-
-// std::shared_ptr<Node> mergePaths(std::shared_ptr<Node> node1, std::shared_ptr<Node> node2) {
-//     std::vector<std::shared_ptr<Node>> path1 = getPathToRoot(node1);
-//     std::vector<std::shared_ptr<Node>> path2 = getPathToRoot(node2);
-
-//     // New path vector to hold the merged path
-//     std::vector<std::shared_ptr<Node>> mergedPath;
-
-//     // Merging two paths, ensuring the heap property
-//     size_t i = 0, j = 0;
-//     while (i < path1.size() && j < path2.size()) {
-//         if (path1[i]->value >= path2[j]->value) {
-//             mergedPath.push_back(path1[i++]);
-//         } else {
-//             mergedPath.push_back(path2[j++]);
-//         }
-//     }
-
-//     // Append the remaining nodes from path1 or path2
-//     while (i < path1.size()) mergedPath.push_back(path1[i++]);
-//     while (j < path2.size()) mergedPath.push_back(path2[j++]);
-
-//     // Now we need to set the parent-child relationships correctly in the merged path
-//     for (size_t k = 0; k < mergedPath.size() - 1; ++k) {
-//         if (mergedPath[k]->left) mergedPath[k]->left->parent.reset();  // Reset old parent
-//         if (mergedPath[k]->right) mergedPath[k]->right->parent.reset(); // Reset old parent
-
-//         if (!mergedPath[k]->left) {
-//             mergedPath[k]->left = mergedPath[k + 1];
-//         } else if (!mergedPath[k]->right) {
-//             mergedPath[k]->right = mergedPath[k + 1];
-//         } else {
-//             // Both child positions are occupied; this should not happen if the path is correct
-//             // Need to handle this case appropriately, possibly restructuring the tree
-//         }
-
-//         mergedPath[k + 1]->parent = mergedPath[k];
-//     }
-
-//     // Return the root of the new merged path
-//     return mergedPath.front();
-// }
-

@@ -4,6 +4,8 @@
 #include "Poset.hpp"
 #include "Dendrogram.hpp"
 #include <set>
+#include <icecream.hpp>
+
 /*
     Algorithm 1: Collapse local collapsible edges
     Assumption: g1 and g2 are the same when passed. We will only modify g2. 
@@ -216,11 +218,11 @@ std::tuple<
         std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
         for (const auto& eid: edges_ids_gd){
             Vertex e_0, e_1;
+            auto y = gd_point.getY();
+            auto x = gd_point.getX();            
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
             auto s = D.time_of_merge_double(e_0, e_1); // y-coordinate
-            auto y = gd_point.getY();
-            auto x = gd_point.getX();
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x,y);
                 continue; // self loop only affects betti_0_1
@@ -256,13 +258,13 @@ std::tuple<
     std::vector<FT>,
     std::vector<FT>,
     std::vector<std::tuple<size_t, size_t, int>>
-> compute_MPH0_DTree(const Graph<FT>& g) {
+> compute_MPH0_DTree(const Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
 
     // typename FT::CoordinateTP;
-    DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices());
+    DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices(), visual_DT);
 
     std::vector<std::tuple<size_t, size_t, int>> M;
     std::unordered_map<Vertex, size_t> row_idx;

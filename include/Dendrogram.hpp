@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <cassert>
 #include <sstream>
+#include <icecream.hpp>
 using Vertex = int;
 // IDEA:
 /*
@@ -27,7 +28,9 @@ public:
     // Construct with vertices
     Dendrogram(const std::vector<Vertex>& vertices_){
         for(const auto& v: vertices_){
-            leaf_nodes_map[v] = std::make_shared<Node>(0.0, std::to_string(v));
+            // Create vertex node label (v)
+            std::string vertex_label =  "(" + std::to_string(v)+ ")"; 
+            leaf_nodes_map[v] = std::make_shared<Node>(0.0, vertex_label);
         }
     };
 
@@ -134,8 +137,11 @@ void insert_edge_node_into_path(std::vector<std::pair<std::shared_ptr<Node>, boo
     }
 }
 
-
-// Path 1 and 2 are stored in an increasing/ascending order (node to root)
+/*
+Path 1 and 2 are stored in an increasing/ascending order (node to root)
+Assumption: 1. Path 1 has an empty child 
+            2. path 2 
+*/             
 void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1, 
                  std::vector<std::pair<std::shared_ptr<Node>, bool>>& path2){
     // reverse them to gaurentee decreasing order 
@@ -148,7 +154,7 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
 
     // New path vector to hold the merged path
     std::vector<std::pair<std::shared_ptr<Node>, bool>> mergedPath;
-    // Merging two paths, ensuring the heap property
+    // Merging two paths
     size_t i = 0, j = 0;
     std::shared_ptr<Node> dummy_node = std::make_shared<Node>(0.0, "dummy");
     mergedPath.push_back(std::make_pair(dummy_node, true));
@@ -160,45 +166,53 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
             // same node different child direction
             if (path1[i].first == path2[j].first){ // choose either one direction
                 mergedPath.push_back(std::make_pair(path1[i].first, true));
-                // path1[i].first->right = nullptr;
+                path1[i].first->right = nullptr;
                 i++; j++;
             } else if (path1[i].first->value >= path2[j].first->value){
                 // insert the larger one
-                auto last_pair = mergedPath.back();
-                if (last_pair.second){//insert to the left child
-                    last_pair.first->left = path1[i].first;
+                auto& waiting_node = path1[i].first; // node to be inserted
+                auto& last_pair = mergedPath.back();
+                // if second is true means left child was found in the path, 
+                // we need to insert to the left child
+                if (last_pair.second){ 
+                    last_pair.first->left = waiting_node;
                 }else{
-                    last_pair.first->right = path1[i].first;
+                    last_pair.first->right = waiting_node;
                 }
-                path1[i].first->parent = last_pair.first; 
+                waiting_node->parent = last_pair.first; 
                 mergedPath.push_back(path1[i]);
                 i++;
             }else{
                 // insert the larger one
-                auto last_pair = mergedPath.back();
+                auto& waiting_node = path2[j].first; // node to be inserted
+                auto& last_pair = mergedPath.back();
                 if (last_pair.second){//insert to the left child
-                    last_pair.first->left = path2[j].first;
+                    last_pair.first->left = waiting_node;
                 }else{
-                    last_pair.first->right = path2[j].first;
+                    last_pair.first->right = waiting_node;
                 }
-                path2[j].first->parent = last_pair.first;
+                waiting_node->parent = last_pair.first;
                 mergedPath.push_back(path2[j]);
                 j++;
             }
         }
     }
+    // std::cout << "Either one of i or j is ended, mergedPath:" << std::endl;
+    // for (const auto& [node, isLeft] : mergedPath) {
+    //     std::cout << "Node label: " << node->label << ", Is Left: " << isLeft << std::endl;
+    // }
 
     // Append the remaining nodes from path1 or path2
     // there are two key steps: 
     // 1. delete the child from the unfinished path
     // 2. make the parent-child relation between the ending node of merged path and first of unfinished path
-    auto ending_node_pair = mergedPath.back();
+    auto& ending_node_pair = mergedPath.back();
     if (i < path1.size()) { 
-        // first delete the child relation in the unfinished path
-        if (i != 0){
-            if(path1[i-1].second) {path1[i-1].first->left = nullptr;}
-            else {path1[i-1].first->right = nullptr;}
-        }
+        // // first delete the child relation in the unfinished path
+        // if (i != 0){
+        //     if(path1[i-1].second) {path1[i-1].first->left = nullptr;}
+        //     else {path1[i-1].first->right = nullptr;}
+        // }
         // next connect merged_path[-1] with the first in the unfinished path
         path1[i].first->parent = ending_node_pair.first;
         if (ending_node_pair.first->left){ // left is available
@@ -216,15 +230,22 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
     }
     while (i < path1.size()) mergedPath.push_back(path1[i++]);
 
+    // std::cout << "Finish the rest i, mergedPath:" << std::endl;
+    // for (const auto& [node, isLeft] : mergedPath) {
+    //     std::cout << "Node label: " << node->label << ", Is Left: " << isLeft << std::endl;
+    // }
+
+
     if (j < path2.size()) {
         // first delete the child relation in the unfinished path
-        if (j != 0){
-            if(path2[j-1].second) {path2[j-1].first->left = nullptr;}
-            else {path2[j-1].first->right = nullptr;}
-        }
+        // if (j != 0){
+        //     if(path2[j-1].second) {path2[j-1].first->left = nullptr;}
+        //     else {path2[j-1].first->right = nullptr;}
+        // }// TODO: check here to see if it's needed
+
         // next connect merged_path[-1] with the first in the unfinished path
         path2[j].first->parent = ending_node_pair.first;
-        if (ending_node_pair.first->left){ // left is available
+        if (ending_node_pair.first->left){ // left is occupied, use the right child 
             ending_node_pair.first->right = path2[j].first;
             ending_node_pair.second = false;
         }else if(ending_node_pair.first->right){
@@ -238,33 +259,52 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
             ending_node_pair.first->left = path2[j].first;
             ending_node_pair.second = true;
         }
-
     }
     while (j < path2.size()) mergedPath.push_back(path2[j++]);
-
+    // std::cout << "Finish the rest j, mergedPath:" << std::endl;
+    // for (const auto& [node, isLeft] : mergedPath) {
+    //     std::cout << "Node label: " << node->label << ", Is Left: " << isLeft << std::endl;
+    // }
+    // printBT(mergedPath.front().first);
     // erase the dummy node and reset the parent 
     mergedPath.erase(mergedPath.begin());
     mergedPath.front().first->parent.reset();
+    // std::cout << "Final mergedPath:" << std::endl;
+    // for (const auto& [node, isLeft] : mergedPath) {
+    //     std::cout << "Node label: " << node->label << ", Is Left: " << isLeft << std::endl;
+    // }
+    // printBT(mergedPath.front().first);
 }
 
 
 template<typename T>
 void Dendrogram<T>::merge_at_time(Vertex v, Vertex w, size_t eid, T t){
+    // IC(edge_nodes_map);
+    // std::cout << "call merge_at_time()" << std::endl;
+    // IC(v, w, eid, t);
+    // std::cout << "before merge, Tree with v" << std::endl;
+    // printBT(getRoot(leaf_nodes_map[v]));
+    // std::cout << "before merge, Tree with w" << std::endl;
+    // printBT(getRoot(leaf_nodes_map[w]));
+
     // Create edge node label (v,w)
-    std::string edge_label =  "(" + std::to_string(v) + "," + std::to_string(w) + ","+ std::to_string(eid) + ")"; 
+    std::string edge_label =  "(e_"+ std::to_string(eid) + ")"; 
     // Create an new disjoint edge node
     std::shared_ptr<Node> edge_node = std::make_shared<Node>(t, edge_label);
     edge_nodes_map[eid] = edge_node;
 
-    // if (leaf_nodes_map[v]->parent.expired()){
-    //     std::cerr << "Parent node of v is expired." << std::endl;
-    // }
     // Merge the egde node to the path from v to its root
     std::vector<std::pair<std::shared_ptr<Node>, bool>> path_v = getPathToRoot(leaf_nodes_map[v]);
     insert_edge_node_into_path(path_v, edge_node);
+    // std::cout << "insert edge node into path of v to its root, Tree with v" << std::endl;
+    // printBT(getRoot(leaf_nodes_map[v]));
 
     // Merge two paths
     std::vector<std::pair<std::shared_ptr<Node>, bool>> path_h = getPathToRoot(edge_node);
     std::vector<std::pair<std::shared_ptr<Node>, bool>> path_w = getPathToRoot(leaf_nodes_map[w]);
+    // IC(path_h);
+    // IC(path_w);
     merge_paths(path_h, path_w);
+    // std::cout << "after merge, Tree is" << std::endl;
+    // printBT(getRoot(leaf_nodes_map[v]));
 }
