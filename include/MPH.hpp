@@ -260,7 +260,7 @@ std::tuple<
     std::vector<std::tuple<size_t, size_t, int>>
 > compute_MPH0_DTree(const Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
-    
+
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
 
     // typename FT::CoordinateTP;
@@ -298,8 +298,8 @@ std::tuple<
         // All vertices belong to the projective cover
         std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
         if (verts_gd.size()!= 0){
-            betti_0.emplace_back(gd_point);
             for (const auto& v: verts_gd){
+                betti_0.emplace_back(gd_point);
                 // row_idx[v] ← |β0|
                 row_idx[v] = betti_0.size();
             }
@@ -340,4 +340,106 @@ std::tuple<
 }
 
 
+
+
+// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
+// Return: 4 vectors as Betti tables, 1 sparse Matrix as presentation
+template<typename FT>
+std::tuple<
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<FT>,
+    std::vector<std::tuple<size_t, size_t, int>>
+> compute_MPH0_DTree_debug(const Graph<FT>& g, bool visual_DT = false) {
+    std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
+    // Egde matchings for debug
+    std::unordered_map<std::string, std::vector<std::tuple<EdgeId, EdgeId>>> edge_matchings;
+    // Initialize with 2 empty vectors
+    edge_matchings["b_2"] = std::vector<std::tuple<size_t, size_t>>{};
+    edge_matchings["b_0_1"] = std::vector<std::tuple<size_t, size_t>>{};
+
+    Graph<FT> g1 = collapse_to_vertex_minimal(g);
+
+    // typename FT::CoordinateTP;
+    DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices(), visual_DT);
+
+    std::vector<std::tuple<size_t, size_t, int>> M;
+    std::unordered_map<Vertex, size_t> row_idx;
+
+    // get f of graph  
+    const auto& g1_edges_values = g1.get_edges_values();
+    const auto& g1_vert_values = g1.get_vert_values();
+
+    // Construct the dictionary mapping R2 to a tuple of vectors(vertices and edges' ids)
+    std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
+    // Define a set of R2 objects using the custom comparator for lexicographical ordering
+    std::set<R2, LexicographicalCompareR2> gd_points;
+
+    for (const auto& pair : g1_vert_values) {
+        Vertex v = pair.first;
+        const FT& fv = pair.second;
+        // push it to the first element of the tuple
+        std::get<0>(FT_2_vertex_edges_id[fv]).push_back(v);
+        gd_points.emplace(fv);
+    }
+
+    for (const auto& pair : g1_edges_values) {
+        EdgeId eid = pair.first;
+        const FT& fe = pair.second;
+        // push it to the first element of the tuple
+        std::get<1>(FT_2_vertex_edges_id[fe]).push_back(eid);
+        gd_points.emplace(fe);
+    }
+
+    for (const auto& gd_point : gd_points) {
+        // All vertices belong to the projective cover
+        std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
+        if (verts_gd.size()!= 0){
+            for (const auto& v: verts_gd){
+                betti_0.emplace_back(gd_point);
+                // row_idx[v] ← |β0|
+                row_idx[v] = betti_0.size();
+            }
+        }
+
+        // Check edges
+        std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
+        for (const auto& eid: edges_ids_gd){
+            Vertex e_0, e_1;
+            auto e = g1.get_edge(eid);
+            e_0 = e[0]; e_1 = e[1];
+            // TODO: return the edge ID of the merge 
+            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate 
+            auto y = gd_point.getY();
+            auto x = gd_point.getX();
+            if (e_0 == e_1){
+                betti_0_1.emplace_back(x,y);
+                edge_matchings["b_0_1"].emplace_back(eid, eid);
+                continue; // self loop only affects betti_0_1
+            }
+            else{
+                DT.merge_at_time(e_0, e_1, y);
+            }
+            
+            if (s <= y){
+                betti_0_1.emplace_back(gd_point); // The edge is deletable, so it only affects H1
+                edge_matchings["b_0_1"].emplace_back(eid, eid);
+            }else{ // Edge is not deletable, so belongs to relations in resolution
+                betti_1.emplace_back(gd_point);
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
+                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+                if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                    betti_2.emplace_back(x,s);
+                    betti_0_1.emplace_back(x,s);
+                    // TODO: change the second e_id to s 
+                    edge_matchings["b_2"].emplace_back(eid, eid); 
+                    edge_matchings["b_0_1"].emplace_back(eid, eid);
+                }
+            }        
+
+        }// End loop for each edge at gd_point 
+    } // End loop for all grid points
+    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+}
 
