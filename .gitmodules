@@ -1,6 +1,6 @@
 [submodule "DynamicTrees_NF"]
 	path = DynamicTrees_NF
-	url = https://github.com/Musab1Blaser/DynamicTrees_NF.git
+	url = https://github.com/YuanL12/DynamicTrees_NF.git
 [submodule "binding/pybind11"]
 	path = binding/pybind11
 	url = git@github.com:pybind/pybind11.git
