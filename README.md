@@ -4,18 +4,18 @@ This is a project about computing Multiparemeter Persistence at dimension 0 for 
 ## Install 
 
 ### Common questions
-1. Python package not found
+1. Python: package not found
 
-Solution: Make sure you have activated your desired conda env first, then 
+Solution: Make sure you have activated your desired conda environment first, then 
 ```bash
 cmake -DPYTHON_EXECUTABLE=$(which python) -DPYTHON_LIBRARY=$(which python) ..
 ```
 
-2. gcc lib cannot find.  
+2. Python: cannot find gcc lib.  
 
 `ImportError: libstdc++.so.6: version 'GLIBCXX_3.4.32' not found (required by graph-mph0/build/abmph/_abmph.cpython-311-x86_64-linux-gnu.so)`
 
-Solution: https://github.com/pybind/pybind11/discussions/3453 Basically you will need to copy system GLIBCXX_3.4.32 to the conda directory. Here is the commands
+Solution: (https://github.com/pybind/pybind11/discussions/3453) you will need to first remove the one in your conda environment and then copy/link system GLIBCXX_3.4.32 to the conda directory. Here are the commands
 ```bash
 # find the path of your system CXX lib
 find /usr -name "libstdc++.so*" 2>/dev/null
@@ -32,14 +32,11 @@ ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 ~/miniconda3/envs/your_package_na
 
 
 
-### Build python lib
-
-Note: data from igl will be stored by default in your root or user path like `/root/.dgl`, remove them if they are not used in the future. 
-
-
 ## Usage
 1. Use non-negative integer to label vertices due to node-printing need in Dendrogram
 
+
+Note: data from igl will be stored by default in your root or user path like `/root/.dgl`, remove them if they are not used in the future. 
 
 ### Reference
 

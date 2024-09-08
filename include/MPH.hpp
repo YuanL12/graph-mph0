@@ -208,8 +208,8 @@ std::tuple<
         // All vertices belong to the projective cover
         std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
         if (verts_gd.size()!= 0){
-            betti_0.emplace_back(gd_point);
             for (const auto& v: verts_gd){
+                betti_0.emplace_back(gd_point);
                 // row_idx[v] ← |β0|
                 row_idx[v] = betti_0.size();
             }
