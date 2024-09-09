@@ -39,6 +39,7 @@ public:
         for (size_t i = 0; i < edges_input.size(); ++i) {
             add_edge(edges_input[i].first, edges_input[i].second, edge_features[i]);
         }
+        security_check_adjacency_map();
     }
 
     // get # of vertices
@@ -48,10 +49,10 @@ public:
     inline const std::vector<int>& get_vertices() const {return vertices;};
 
     //  get adjacency list at vertex v
-    inline VAdj get_adj(Vertex v) const {return adjacency.at(v);};
+    VAdj get_adj(Vertex v) const;
 
     //  get edge by its id
-    inline Edge get_edge(EdgeId id) const {return edges.at(id);};
+    Edge get_edge(EdgeId id) const;
 
     //  get all edge values 
     inline const std::unordered_map<EdgeId, FT>& get_edges_values() const {return edge_values;};
@@ -175,13 +176,33 @@ void Graph<FT>::add_edge(int v, int w) {
 }
 
 template<typename FT>
-FT Graph<FT>::get_vertex_value(int v) const {
+FT Graph<FT>::get_vertex_value(Vertex v) const {
     auto it = vert_values.find(v);
     if(it == vert_values.end()){
         std::cout << "vertex not found when trying to get its filtration value" << std::endl;
     }
     assert(it != vert_values.end());
     return vert_values.at(v);
+}
+
+template<typename FT>
+typename Graph<FT>::VAdj Graph<FT>::get_adj(Vertex v) const {
+    auto it = adjacency.find(v);
+    if(it == adjacency.end()){
+        std::cout << "vertex not found when trying to get its adjacency list" << std::endl;
+    }
+    assert(it != adjacency.end());
+    return adjacency.at(v);
+}
+
+template<typename FT>
+Edge Graph<FT>::get_edge(EdgeId id) const {
+    auto it = edges.find(id);
+    if(it == edges.end()){
+        std::cout << "id not found when trying to get the edge" << std::endl;
+    }
+    assert(it != edges.end());
+    return edges.at(id);
 }
     
 

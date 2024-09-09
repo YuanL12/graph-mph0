@@ -260,13 +260,12 @@ std::tuple<
     std::vector<std::tuple<size_t, size_t, int>>
 > compute_MPH0_DTree(const Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
-
+    std::vector<std::tuple<size_t, size_t, int>> M;
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
 
     // typename FT::CoordinateTP;
     DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices(), visual_DT);
 
-    std::vector<std::tuple<size_t, size_t, int>> M;
     std::unordered_map<Vertex, size_t> row_idx;
 
     // get f of graph  
