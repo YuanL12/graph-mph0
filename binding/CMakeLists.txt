@@ -1,14 +1,14 @@
-# # Manually set the Python executable and library paths
-# set(PYTHON_EXECUTABLE /root/miniconda3/envs/dl/bin/python)
+# If you use Vscode and want to use the debug feature 
+# you need to 
+# 1. manually set the Python executable and library paths here
+# 2. set the debug mode of CMake 
+# 3. set the launch.jason 
+# set(PYTHON_EXECUTABLE /root/miniconda3/envs/pyg/bin/python)
+# set(PYTHON_LIBRARY /root/miniconda3/envs/pyg/bin/python)
 
-# find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-
-# # Ensure CMake uses the specified Python executable
-# set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
-
-# # Optionally, you can print the paths to confirm
-# message(STATUS "Python executable: ${Python3_EXECUTABLE}")
-# message(STATUS "Python library: ${Python3_LIBRARIES}")
+# Optionally, you can print the paths to confirm
+message(STATUS "Caution: Python executable: ${PYTHON_EXECUTABLE}")
+message(STATUS "Caution: Python library: ${PYTHON_EXECUTABLE}")
 
 # Copy the abmph folder into the build directory
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/abmph DESTINATION ${CMAKE_BINARY_DIR})

@@ -1,3 +1,7 @@
+/*
+Still underdeveloped, can be used to break ties of input filtration values.
+*/
+
 #pragma once
 #include "Edge.hpp"
 #include <iostream>
@@ -11,36 +15,46 @@
 #include <icecream.hpp>
 
 template<typename FT>
-class Graph {
+class FilGraph {// filtered Graph
 public:
-
     // using VEdges = std::unordered_map<Edge, std::vector<FT>, boost::hash<std::pair<int, int>>>;
     using VAdj = std::vector<EdgeId>; // single vertex adjacency
+    using SimplexID = size_t;
+
     // Constructor reserve sizes 
-    Graph(int n);
+    FilGraph(int n);
 
     // Copy Constructor
-    Graph(const Graph& other);
+    FilGraph(const FilGraph& other);
 
     // vector constructor
-    Graph(const std::vector<int>& node_labels, 
+    FilGraph(const std::vector<int>& node_labels, 
           const std::vector<FT>& node_features, 
           const std::vector<std::pair<int, int>>& edges_input, 
           const std::vector<FT>& edge_features) {
         
+        // Input shape check 
+        assert(node_labels.size() == node_features.size() &&"node_labels.size()!= node_features.size()");
+        assert(node_labels.size() == node_features.size() &&"node_labels.size()!= node_features.size()");
+        
         // IC(node_features);
         // IC(edges_input);
-        // Initialize vertices
-        for (size_t i = 0; i < node_labels.size(); ++i) {
-            add_vertex(node_labels[i], node_features[i]);
-        }
+        filtered_simplices.reserve(node_labels.size()+edges_input.size());
 
-        // Initialize edges
-        for (size_t i = 0; i < edges_input.size(); ++i) {
-            add_edge(edges_input[i].first, edges_input[i].second, edge_features[i]);
+        // veritcies first
+        size_t dim = 0;
+        for (size_t i = 0; i < node_labels.size(); ++i) {
+            filtered_simplices.emplace_back(std::make_tuple(dim, i, node_features[i]));
+            vertices_labels.emplace_back(v);
         }
-        security_check_adjacency_map();
-        security_check_shapes();
+        vertex_id_assign = node_labels.size();
+
+        // edges second
+        dim = 1;
+        for (size_t i = 0; i < edges_input.size(); ++i) {
+            filtered_simplices.emplace_back(std::make_tuple(1, i, edge_features[i]));
+        }
+        edge_id_assign = edges_input.size();
     }
 
     // get # of vertices
@@ -55,19 +69,13 @@ public:
     //  get edge by its id
     Edge get_edge(EdgeId id) const;
 
-    //  get all edge values 
-    inline const std::unordered_map<EdgeId, FT>& get_edges_values() const {return edge_values;};
-
-    //  get all vertices values 
-    inline const std::unordered_map<Vertex, FT>& get_vert_values() const {return vert_values;};
-
     //  get edge value 
     inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};
 
     // get the filtration value of a single vertex
     FT get_vertex_value(int v) const;
 
-    // Method to add an edge to the graph
+    // Method to add an edge to the FilGraph
     void add_edge(int v, int w, FT value);
     
     // Overloaded method to add an edge with default value 0.0
@@ -76,10 +84,10 @@ public:
     // Method to set the value of a vertex
     void add_vertex(int v, FT value);
 
-    // Method to print the graph
+    // Method to print the FilGraph
     void print_adjacency() const;
 
-    // Method to print the graph
+    // Method to print the FilGraph
     void print_filtration_value() const;
     
     // Remove edge e
@@ -88,42 +96,27 @@ public:
     // Remove vertices based on dictionary
     void remove_vertices(std::unordered_map<int, int> vert_dict);
 
-    // Update graph based on dictionary
+    // Update FilGraph based on dictionary
     void update_graph(std::unordered_map<int, int> vert_dict);
 
-
-    // Method for Depth-First Search
-    void DFS(int startVertex) const;
-
-    // Helper function to remove an edge from the adjacency hash map
-    void remove_from_adjacency(Vertex v, EdgeId edgeId) {
-        // Check if the key exists in the map
-        auto it = adjacency.find(v);
-        assert(it != adjacency.end() && "vertex not found in adjacency.");
-
-        // Get reference to the vector
-        std::vector<EdgeId>& vec = it->second;
-
-        // Find the element in the vector
-        auto vec_it = std::find(vec.begin(), vec.end(), edgeId);
-        assert(vec_it != vec.end() && "edge not found in the vector.");
-
-        // Erase the element
-        vec.erase(vec_it);
-        
-    }
-
 private:
-    EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
-    std::vector<Vertex> vertices; 
-    std::unordered_map<Vertex, FT> vert_values;
-    std::unordered_map<EdgeId, Edge> edges;
-    std::unordered_map<EdgeId, FT> edge_values; 
+    // an unique identity can be assigned to the next edge 
+    SimplexID edge_id_assign = 0;
+    // an unique identity can be assigned to the next vertex 
+    SimplexID vertex_id_assign = 0; 
+
+    // a vector of filtered simplices stored as dimension, index(ID), its filtration value
+    std::vector<std::tuple<size_t, size_t, FT>> filtered_simplices;
+    
+    // a vector that maps a vertex ID to a vertex
+    std::vector<Vertex> vertices_labels;
+
+    // a vector that maps an edge ID to an edge
+    std::vector<SimplexID> Edges;
+
     // Adjacency list to represent the graph, map vertex to edge Id  
     std::unordered_map<Vertex, VAdj> adjacency;
     
-    // Method to print the stack
-    void printStack(const std::stack<int>& stack) const;
 
     void security_check_adjacency_map(){
         for (const auto& vertex : vertices) {
@@ -148,11 +141,11 @@ private:
 
 // Constructor
 template<typename FT>
-Graph<FT>::Graph(int n) {vertices.reserve(n);}
+FilGraph<FT>::FilGraph(int n) {vertices.reserve(n);}
 
 // Copy Constructor
 template<typename FT>
-Graph<FT>::Graph(const Graph& other) 
+FilGraph<FT>::FilGraph(const FilGraph& other) 
     : edge_id_assign(other.edge_id_assign),
       vert_values(other.vert_values),
       vertices(other.vertices),
@@ -161,29 +154,29 @@ Graph<FT>::Graph(const Graph& other)
       adjacency(other.adjacency)
 {security_check_shapes();}
 
-// Method to add an edge to the graph
+// Method to add an edge to the FilGraph
 template<typename FT>
-void Graph<FT>::add_edge(int v, int w, FT value) {
+void FilGraph<FT>::add_edge(int v, int w, FT value) {
     if (v > w) {
         std::swap(v, w);
     }
+    edge_id_assign++;
     Edge edge = Edge(v, w, edge_id_assign);
     edges[edge_id_assign] = edge;
     edge_values[edge_id_assign] = value;
     adjacency[v].emplace_back(edge_id_assign);
     adjacency[w].emplace_back(edge_id_assign);
-    edge_id_assign++;
     security_check_adjacency_map();
 }
 
 // Overloaded method to add an edge with default value 0.0
 template<typename FT>
-void Graph<FT>::add_edge(int v, int w) {
+void FilGraph<FT>::add_edge(int v, int w) {
     add_edge(v, w, FT());
 }
 
 template<typename FT>
-FT Graph<FT>::get_vertex_value(Vertex v) const {
+FT FilGraph<FT>::get_vertex_value(Vertex v) const {
     auto it = vert_values.find(v);
     if(it == vert_values.end()){
         std::cout << "vertex not found when trying to get its filtration value" << std::endl;
@@ -193,7 +186,7 @@ FT Graph<FT>::get_vertex_value(Vertex v) const {
 }
 
 template<typename FT>
-typename Graph<FT>::VAdj Graph<FT>::get_adj(Vertex v) const {
+typename FilGraph<FT>::VAdj FilGraph<FT>::get_adj(Vertex v) const {
     auto it = adjacency.find(v);
     if(it == adjacency.end()){
         std::cout << "vertex not found when trying to get its adjacency list" << std::endl;
@@ -203,7 +196,7 @@ typename Graph<FT>::VAdj Graph<FT>::get_adj(Vertex v) const {
 }
 
 template<typename FT>
-Edge Graph<FT>::get_edge(EdgeId id) const {
+Edge FilGraph<FT>::get_edge(EdgeId id) const {
     auto it = edges.find(id);
     if(it == edges.end()){
         std::cout << "id not found when trying to get the edge" << std::endl;
@@ -215,7 +208,7 @@ Edge Graph<FT>::get_edge(EdgeId id) const {
 
 // Remove edge e 
 template<typename FT>
-void Graph<FT>::remove_edge(Edge e){
+void FilGraph<FT>::remove_edge(Edge e){
     Vertex v0 = e.get_v0();
     Vertex v1 = e.get_v1();
     EdgeId id = e.get_id();
@@ -232,7 +225,7 @@ void Graph<FT>::remove_edge(Edge e){
 
 
 template<typename FT> // unsafe b/c we don't check if edge use the vertex to be removed 
-void Graph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
+void FilGraph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
     std::vector<int> new_vertices;
     new_vertices.reserve(vertices.size());
     for (const auto& p: vert_dict){
@@ -247,8 +240,7 @@ void Graph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
 }
 
 // merge vector of key1 to the vector of key2 and delete key1 later 
-template<typename keyT, typename VectT>
-void merge_keys_vectors(std::unordered_map<keyT, std::vector<VectT>>& map, keyT key1, keyT key2) {
+void mergeKeys(std::unordered_map<int, std::vector<size_t>>& map, int key1, int key2) {
     // Check if both keys exist in the map
     auto it1 = map.find(key1);
     auto it2 = map.find(key2);
@@ -266,7 +258,7 @@ void merge_keys_vectors(std::unordered_map<keyT, std::vector<VectT>>& map, keyT 
 
 // unsafe b/c we don't check if edge use the vertex to be removed 
 template<typename FT> 
-void Graph<FT>::update_graph(std::unordered_map<int, int> vert_dict){
+void FilGraph<FT>::update_graph(std::unordered_map<int, int> vert_dict){
     // update vertices
     std::vector<int> new_vertices;
     new_vertices.reserve(vertices.size());
@@ -289,7 +281,7 @@ void Graph<FT>::update_graph(std::unordered_map<int, int> vert_dict){
     // update adjacency by merging elements in two keys
     for (const auto& p: vert_dict){
         if (p.first != p.second){
-            merge_keys_vectors(adjacency, p.first, p.second);
+            mergeKeys(adjacency, p.first, p.second);
         }
     }
 
@@ -298,14 +290,14 @@ void Graph<FT>::update_graph(std::unordered_map<int, int> vert_dict){
 
 // Method to set the value of a vertex
 template<typename FT>
-void Graph<FT>::add_vertex(int v, FT value) {
-    vertices.emplace_back(v);
-    vert_values[v] = value;
+void FilGraph<FT>::add_vertex(int v, FT value) {
+    vertices_labels.emplace_back(v);
+    filtered_simplices.emplace_back(std::make_tuple(0, vertex_id_assign++, value));
 }
 
-// Method to print the graph
+// Method to print the FilGraph
 template<typename FT>
-void Graph<FT>::print_adjacency() const {
+void FilGraph<FT>::print_adjacency() const {
     std::cout << "Print Adjacency" << std::endl;
     // Iterate and print the adjacency list map
     for (const auto& pair : adjacency) {
@@ -320,7 +312,7 @@ void Graph<FT>::print_adjacency() const {
 
 // Method to print the graph
 template<typename FT>
-void Graph<FT>::print_filtration_value() const {
+void FilGraph<FT>::print_filtration_value() const {
     std::cout << "Graph filtration values:" << std::endl;
     std::cout << "Vertices:" << std::endl;
     for (const auto& v : vertices) {
@@ -332,58 +324,3 @@ void Graph<FT>::print_filtration_value() const {
         std::cout << "e = " << e << ", f(e)= "<< eid_value.second << std::endl;
     }
 }
-
-// Method to print the stack
-template<typename FT>
-void Graph<FT>::printStack(const std::stack<int>& stack) const {
-    std::stack<int> tempStack = stack;
-    std::vector<int> elements;
-    while (!tempStack.empty()) {
-        elements.push_back(tempStack.top());
-        tempStack.pop();
-    }
-    std::reverse(elements.begin(), elements.end());
-    std::cout << "Current stack: ";
-    for (const int& elem : elements) {
-        std::cout << elem << " ";
-    }
-    std::cout << std::endl;
-}
-
-// Method for Depth-First Search
-template<typename FT>
-void Graph<FT>::DFS(int startVertex) const {
-    std::unordered_map<int, bool> visited;
-    for (int vertex : vertices) {
-        visited[vertex] = false;
-    }
-    std::stack<int> stack;
-
-    // Push the starting vertex onto the stack
-    stack.push(startVertex);
-
-    while (!stack.empty()) {
-        int vertex = stack.top();
-        stack.pop();
-
-        // If the vertex has not been visited, mark it as visited and process it
-        if (!visited[vertex]) {
-            std::cout << "Visited " << vertex << std::endl;
-            visited[vertex] = true;
-
-            // Get all adjacent vertices of the popped vertex
-            // If an adjacent vertex has not been visited, push it onto the stack
-            for (const auto& eid : adjacency.at(vertex)) {
-                Edge e = get_edge(eid);
-                Vertex u = (e[0] == vertex) ? e[1]: e[0];
-                if (!visited[u]) {
-                    stack.push(u);
-                }
-            }
-        }
-
-        // Print the stack after visiting a node
-        printStack(stack);
-    }
-}
-

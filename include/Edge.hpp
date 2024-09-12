@@ -4,8 +4,10 @@
 #include <tuple>
 
 // Define type
-using EdgeId = size_t;
+using EdgeId = int;
+using VertexID = size_t;
 using Vertex = int;
+
 class Edge {
 public:
     Edge(){}
@@ -49,8 +51,6 @@ public:
         }
     }
 
-
-
     bool operator==(const Edge& other) const {
         return v0 == other.v0 && v1 == other.v1 && id == other.id;
     }
@@ -67,7 +67,7 @@ private:
 
 // Define NULL_EDGE
 const Edge Edge::NULL_EDGE = Edge(
-    std::numeric_limits<int>::max(), 
-    std::numeric_limits<int>::max(), 
-    std::numeric_limits<size_t>::max()
+    std::numeric_limits<Vertex>::max(), 
+    std::numeric_limits<Vertex>::max(), 
+    std::numeric_limits<EdgeId>::max()
 );

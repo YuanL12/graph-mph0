@@ -25,6 +25,8 @@ private:
     std::unordered_map<Vertex, std::shared_ptr<Node>> leaf_nodes_map;
     std::unordered_map<size_t, std::shared_ptr<Node>> edge_nodes_map;
 public:
+    double max_edge_weight = 1e10; // maximum edge weight
+
     // Construct with vertices
     Dendrogram(const std::vector<Vertex>& vertices_){
         for(const auto& v: vertices_){
@@ -36,6 +38,12 @@ public:
 
     std::shared_ptr<Node> get_vertex_node(Vertex v){return leaf_nodes_map[v];};
 
+    void update_max_edge_weight(T y){
+        if (y > max_edge_weight){
+            max_edge_weight = y + 10;
+        }
+    }
+
     // returns the smallest t ∈ [0, ∞) such that [v] = [w] ∈ π0(G,f)(r), 
     // or ∞ if [v] != [w] ∈ π0(G,f)(r) for all r ∈ [0,∞).
     // i.e. nearest common ancestor (nca)
@@ -43,7 +51,7 @@ public:
     double time_of_merge_double(Vertex v, Vertex w){
         auto lca_node = findLCA(leaf_nodes_map[v], leaf_nodes_map[w]);
         if (lca_node) return lca_node->value;
-        return std::numeric_limits<double>::max();
+        return max_edge_weight;
     };
     
     /*

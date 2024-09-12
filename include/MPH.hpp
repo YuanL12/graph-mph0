@@ -43,7 +43,7 @@ void localCollapse(const Graph<FT>& g1, Graph<FT>& g2) {
                 if (e != Edge::NULL_EDGE){
                     vertex_dict[u] = v;
                     g2.remove_edge(e);
-                    std::cout << "Remove "<< e << std::endl;
+                    // std::cout << "Remove "<< e << std::endl;
                 }
                 // local collapsible
                 for (const auto& eid_local: g1.get_adj(u)){
@@ -215,11 +215,12 @@ std::tuple<
             }
         }
         // Check edges
+        auto y = gd_point.getY();
+        auto x = gd_point.getX();
+        D.update_max_edge_weight(y);
         std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
         for (const auto& eid: edges_ids_gd){
-            Vertex e_0, e_1;
-            auto y = gd_point.getY();
-            auto x = gd_point.getX();            
+            Vertex e_0, e_1;           
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
             auto s = D.time_of_merge_double(e_0, e_1); // y-coordinate
@@ -237,7 +238,7 @@ std::tuple<
                 betti_1.emplace_back(gd_point);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
-                if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                if (s < D.max_edge_weight){ // The edge is cycle-creating
                     betti_2.emplace_back(x,s);
                     betti_0_1.emplace_back(x,s);
                 }
@@ -305,14 +306,15 @@ std::tuple<
         }
 
         // Check edges
+        auto y = gd_point.getY();
+        auto x = gd_point.getX();
+        DT.update_max_edge_weight(y);
         std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
         for (const auto& eid: edges_ids_gd){
             Vertex e_0, e_1;
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
             auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
-            auto y = gd_point.getY();
-            auto x = gd_point.getX();
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x,y);
                 continue; // self loop only affects betti_0_1
@@ -327,7 +329,8 @@ std::tuple<
                 betti_1.emplace_back(gd_point);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
-                if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                // if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                if (s < DT.max_edge_weight){ // The edge is cycle-creating
                     betti_2.emplace_back(x,s);
                     betti_0_1.emplace_back(x,s);
                 }
@@ -349,14 +352,16 @@ std::tuple<
     std::vector<FT>,
     std::vector<FT>,
     std::vector<FT>,
-    std::vector<std::tuple<size_t, size_t, int>>
+    std::vector<std::tuple<size_t, size_t, int>>,
+    std::unordered_map<std::string, std::vector<std::tuple<EdgeId, EdgeId>>>
 > compute_MPH0_DTree_debug(const Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     // Egde matchings for debug
     std::unordered_map<std::string, std::vector<std::tuple<EdgeId, EdgeId>>> edge_matchings;
     // Initialize with 2 empty vectors
-    edge_matchings["b_2"] = std::vector<std::tuple<size_t, size_t>>{};
-    edge_matchings["b_0_1"] = std::vector<std::tuple<size_t, size_t>>{};
+    edge_matchings["b_1"] = std::vector<std::tuple<EdgeId, EdgeId>>{};
+    edge_matchings["b_2"] = std::vector<std::tuple<EdgeId, EdgeId>>{};
+    edge_matchings["b_0_1"] = std::vector<std::tuple<EdgeId, EdgeId>>{};
 
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
 
@@ -409,7 +414,7 @@ std::tuple<
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
             // TODO: return the edge ID of the merge 
-            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate 
+            auto [s, merge_eid] = DT.time_of_merge_double_debug(e_0, e_1); // y-coordinate 
             auto y = gd_point.getY();
             auto x = gd_point.getX();
             if (e_0 == e_1){
@@ -418,7 +423,7 @@ std::tuple<
                 continue; // self loop only affects betti_0_1
             }
             else{
-                DT.merge_at_time(e_0, e_1, y);
+                DT.merge_at_time_debug(e_0, e_1, y, eid);
             }
             
             if (s <= y){
@@ -426,19 +431,21 @@ std::tuple<
                 edge_matchings["b_0_1"].emplace_back(eid, eid);
             }else{ // Edge is not deletable, so belongs to relations in resolution
                 betti_1.emplace_back(gd_point);
+                edge_matchings["b_1"].emplace_back(eid, eid);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
-                if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                // if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                if (s < DT.max_edge_weight){ // The edge is cycle-creating
                     betti_2.emplace_back(x,s);
                     betti_0_1.emplace_back(x,s);
                     // TODO: change the second e_id to s 
-                    edge_matchings["b_2"].emplace_back(eid, eid); 
-                    edge_matchings["b_0_1"].emplace_back(eid, eid);
+                    edge_matchings["b_2"].emplace_back(eid, merge_eid); 
+                    edge_matchings["b_0_1"].emplace_back(eid, merge_eid);
                 }
             }        
 
         }// End loop for each edge at gd_point 
     } // End loop for all grid points
-    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M, edge_matchings); 
 }
 

@@ -1,7 +1,12 @@
 # graph-mph0
 This is a project about computing Multiparemeter Persistence at dimension 0 for filtered graphs.
 
+## Usage
+1. Use non-negative integer to label vertices due to node-printing need in Dendrogram
+2. Node/edge features in Python has to be np.float64 to be passed into C++ double type. 
+
 ## Install 
+Something to say.
 
 ### Common questions
 1. Python: package not found
@@ -9,6 +14,12 @@ This is a project about computing Multiparemeter Persistence at dimension 0 for 
 Solution: Make sure you have activated your desired conda environment first, then 
 ```bash
 cmake -DPYTHON_EXECUTABLE=$(which python) -DPYTHON_LIBRARY=$(which python) ..
+```
+
+Or you can manually set the Python executable and library paths in binding/CMakeLists.txt as the following
+```bash
+set(PYTHON_EXECUTABLE /root/miniconda3/envs/pyg/bin/python)
+set(PYTHON_LIBRARY /root/miniconda3/envs/pyg/bin/python)
 ```
 
 2. Python: cannot find gcc lib.  
@@ -31,12 +42,6 @@ ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 ~/miniconda3/envs/your_package_na
 ```
 
 
-
-## Usage
-1. Use non-negative integer to label vertices due to node-printing need in Dendrogram
-
-
-Note: data from igl will be stored by default in your root or user path like `/root/.dgl`, remove them if they are not used in the future. 
 
 ### Reference
 

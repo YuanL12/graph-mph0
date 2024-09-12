@@ -6,6 +6,8 @@ project(MPH0)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+# To run debug mode (eg. in vscode)
+# set(CMAKE_BUILD_TYPE Debug)
 
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)

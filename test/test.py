@@ -1,5 +1,5 @@
 import sys
-sys.path.append('build')
+sys.path.append('../build')
 import abmph
 import numpy as np
 import pygraphviz as pgv
@@ -48,3 +48,6 @@ print(abmph.compute_MPH0_Dengrogram(mph_g))
 
 print("start compute MPH0 by DTree")
 print(abmph.compute_MPH0_DTree(mph_g))
+
+print("simplices matching used")
+print(abmph.compute_MPH0_DTree_CXX_debug(mph_g))

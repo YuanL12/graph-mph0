@@ -1,11 +1,12 @@
 import sys
-sys.path.append('build')
+sys.path.append('../build')
 import abmph
 import numpy as np
 import os
 import torch
-from torch_geometric.datasets import MoleculeNet
-
+from torch_geometric.datasets import TUDataset
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score, roc_curve, auc
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 
@@ -52,8 +53,10 @@ def compute_abs_mph0(input_graph):
     n_nodes = input_graph.num_nodes
     nodes = np.arange(0, n_nodes, dtype=int)
     edges = input_graph['edge_index'].reshape(-1, 2).numpy()
-    node_features = np.zeros(shape=(n_nodes, 2), dtype = np.double)
-    edge_features = input_graph['edge_attr'][:,[0,2]].numpy().astype(np.double)
+    node_features = np.zeros(shape=(n_nodes, 2), dtype = np.float64)
+    
+    edge_sums = input_graph['x'][input_graph['edge_index'][0]] + input_graph['x'][input_graph['edge_index'][1]]
+    edge_features = (edge_sums[:,[0,1]]).numpy().astype(np.float64)
     
     # Create the Graph object
     mph_g = abmph.Graph(nodes, node_features, edges, edge_features)
@@ -74,7 +77,8 @@ def safe_concatenate(arr1, arr2):
 
 
 # load data
-dataset = MoleculeNet(root='../data/MoleculeNet', name='ClinTox')
+dataset = TUDataset(root='../data/TUDataset', name='PROTEINS')
+# dataset = MoleculeNet(root='../data/MoleculeNet', name='ClinTox')
 print()
 print(f'Dataset: {dataset}:')
 print('====================')
@@ -104,7 +108,7 @@ initial_center = compute_abs_mph0(dataset[0])['b_1'][0]
 x_min, y_min = initial_center
 x_max, y_max = initial_center
 for i, graph in enumerate(dataset):
-    labels.append(torch.argmax(graph['y']).item())
+    labels.append(graph['y'].item())
     abs_res = compute_abs_mph0(graph)
     b_1_arr = np.array(abs_res['b_1'])
     b_2_arr = np.array(abs_res['b_2'])
@@ -134,10 +138,12 @@ x_range, y_range = determine_grid_range(x_min, y_min,
                                         expansion_factor)
 print(f'x_range = {x_range}, y_range = {y_range}')
 for b_1, b_2 in bettis:
-    centers = b_1
+    centers1 = b_1
+    centers2 = b_2
     # Compute the sum of Gaussians with automatic grid range determination
-    Z = sum_gaussians(centers, x_range, y_range, sigma, m)
-    imgs.append(Z)
+    Z1 = sum_gaussians(centers1, x_range, y_range, sigma, m)
+    Z2 = sum_gaussians(centers2, x_range, y_range, sigma, m)
+    imgs.append(Z1-Z2)
 
 imgs_array = np.array([img.flatten() for img in imgs])
 
@@ -146,4 +152,29 @@ imgs_array = np.array([img.flatten() for img in imgs])
 X_train, X_test, y_train, y_test = train_test_split(imgs_array, labels, test_size=0.40, random_state=42)
 lr = LogisticRegression()
 lr.fit(X_train, y_train)
-print(f'final accuracy = {lr.score(X_test, y_test)}')
+
+# Calculate accuracy
+accuracy = lr.score(X_test, y_test)
+print(f'Final accuracy = {accuracy}')
+
+# Get predicted probabilities for the positive class
+y_prob = lr.predict_proba(X_test)[:, 1]
+
+# Calculate the ROC-AUC score
+roc_auc = roc_auc_score(y_test, y_prob)
+print(f'ROC-AUC score = {roc_auc}')
+
+# Optional: Plotting the ROC curve
+fpr, tpr, _ = roc_curve(y_test, y_prob)
+roc_auc = auc(fpr, tpr)
+
+plt.figure()
+plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {roc_auc:.2f})')
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title(f'ROC-AUC score = {roc_auc}')
+plt.legend(loc='lower right')
+plt.savefig("PROTEINS_roc_auc.pdf")
