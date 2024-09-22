@@ -1,11 +1,7 @@
 # If you use Vscode and want to use the its botton to build/debug automatically 
 # you need to manually set the Python executable and library paths here
-# set(PYTHON_EXECUTABLE /root/miniconda3/envs/pyg/bin/python)
-# set(PYTHON_LIBRARY /root/miniconda3/envs/pyg/bin/python)
-
-# If you want to debug using VSCode, you will need to 
-# 2. set the debug mode
-# 3. write your launch.jason 
+# set(PYTHON_EXECUTABLE /home/yluo/miniconda3/envs/pyg_env/bin/python)
+# set(PYTHON_LIBRARY /home/yluo/miniconda3/envs/pyg_env/bin/python)
 
 # You can print the paths to confirm
 message(STATUS "Caution: Python executable: ${PYTHON_EXECUTABLE}")
@@ -22,3 +18,12 @@ pybind11_add_module(_abmph abmph.cpp)
 set_target_properties(_abmph PROPERTIES OUTPUT_NAME _abmph) # set the output name
 set_target_properties(_abmph PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/abmph)
 target_link_libraries(_abmph PRIVATE ST_Tree)
+target_link_libraries(_abmph PRIVATE pybind11::embed)
+
+find_package(PkgConfig REQUIRED)
+if(PkgConfig_FOUND)
+    pkg_check_modules(LIBSTDCXX REQUIRED libstdcxx)
+    target_link_libraries(your_target PUBLIC ${LIBSTDCXX_FOUND})
+else()
+    message(FATAL_ERROR "PkgConfig not found. Please install it or check your CMake configuration.")
+endif()
