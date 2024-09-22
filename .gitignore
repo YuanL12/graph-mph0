@@ -38,3 +38,4 @@ build/
 *.png
 *.dot
 *.pdf
+__pycache__

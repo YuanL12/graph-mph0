@@ -1,12 +1,13 @@
-# If you use Vscode and want to use the debug feature 
-# you need to 
-# 1. manually set the Python executable and library paths here
-# 2. set the debug mode of CMake 
-# 3. set the launch.jason 
+# If you use Vscode and want to use the its botton to build/debug automatically 
+# you need to manually set the Python executable and library paths here
 # set(PYTHON_EXECUTABLE /root/miniconda3/envs/pyg/bin/python)
 # set(PYTHON_LIBRARY /root/miniconda3/envs/pyg/bin/python)
 
-# Optionally, you can print the paths to confirm
+# If you want to debug using VSCode, you will need to 
+# 2. set the debug mode
+# 3. write your launch.jason 
+
+# You can print the paths to confirm
 message(STATUS "Caution: Python executable: ${PYTHON_EXECUTABLE}")
 message(STATUS "Caution: Python library: ${PYTHON_EXECUTABLE}")
 
