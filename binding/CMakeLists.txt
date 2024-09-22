@@ -19,11 +19,3 @@ set_target_properties(_abmph PROPERTIES OUTPUT_NAME _abmph) # set the output nam
 set_target_properties(_abmph PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/abmph)
 target_link_libraries(_abmph PRIVATE ST_Tree)
 target_link_libraries(_abmph PRIVATE pybind11::embed)
-
-find_package(PkgConfig REQUIRED)
-if(PkgConfig_FOUND)
-    pkg_check_modules(LIBSTDCXX REQUIRED libstdcxx)
-    target_link_libraries(your_target PUBLIC ${LIBSTDCXX_FOUND})
-else()
-    message(FATAL_ERROR "PkgConfig not found. Please install it or check your CMake configuration.")
-endif()
