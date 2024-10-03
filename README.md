@@ -59,21 +59,14 @@ Traceback (most recent call last):
     from ._abmph import *
 ImportError: /home/yluo/miniconda3/bin/../lib/libstdc++.so.6: version `GLIBCXX_3.4.32' not found (required by /home/yluo/Documents/graph-mph0/test/../build/abmph/_abmph.cpython-312-x86_64-linux-gnu.so)
 ```
-**Reason**: Pybind11 uses system gcc to build our Python package `_abmph.cpython-312-x86_64-linux-gnu.so` and so links the `libstdc++` library in system path. On the other hand, Python in a conda environment will use the `stdlibc++` provided in the env path. Thus, depending on your g++/gnu version, the `libstdc++` lib in your system may contain a newer version `GLIBCXX_3.4.32` than the `libstdc++.so.6` in your conda environment. You can check the depending libs of 
+**Reason**: Pybind11 uses system gcc to build our Python package `_abmph.cpython-312-x86_64-linux-gnu.so` and so links the `libstdc++` library in system path. On the other hand, Python in a conda environment will use the `stdlibc++` provided in the env path. Thus, depending on your g++/gnu version, the `libstdc++` lib in your system may contain a newer version `GLIBCXX_3.4.32` than the `libstdc++.so.6` in your conda environment. You can also check the dependencies of `_abmph.cpython-310-x86_64-linux-gnu.so` by:
 ```shell
-ldd build/abmph/_abmph.cpython-310-x86_64-linux-gnu.so
-        # linux-vdso.so.1 (0x00007ffe3b55d000)
-        # libpython3.10.so.1.0 => /home/yluo/miniconda3/envs/pyg_env/lib/libpython3.10.so.1.0 (0x00007940c0400000)
-        # libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007940c0000000)
-        # libm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x00007940c0879000)
-        # libgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007940c084c000)
-        # libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007940bfc00000)
-        # /lib64/ld-linux-x86-64.so.2 (0x00007940c0a5f000)
-        # libpthread.so.0 => /usr/lib/x86_64-linux-gnu/libpthread.so.0 (0x00007940c0845000)
-        # libdl.so.2 => /usr/lib/x86_64-linux-gnu/libdl.so.2 (0x00007940c0840000)
-        # libutil.so.1 => /usr/lib/x86_64-linux-gnu/libutil.so.1 (0x00007940c083b000)
+ldd build/abmph/_abmph.cpython-310-x86_64-linux-gnu.so | grep libstdc++
+# it will output something like
+# libstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007940c0000000)      
 ```
-So, `libstdc++.so.6` is actually in `/usr/lib/x86_64-linux-gnu`
+It shows that the `libstdc++.so.6` used by Pybind11 is located at `/usr/lib/x86_64-linux-gnu`.
+
 **Solution**: 
 1. If you only want a temporary change in current terminal session, append your system gnu path to library path list by `export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH`.
 2. You can also modify your current conda environment (well, some risks). You will need to first remove the one in your conda environment and then copy/link system libstdc++ containing `GLIBCXX_3.4.32` to the conda directory (Ref: https://github.com/pybind/pybind11/discussions/3453). Here are the commands

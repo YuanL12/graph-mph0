@@ -172,8 +172,8 @@ std::tuple<
     
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
     
-    // typename FT::CoordinateTP;
-    Dendrogram<typename FT::CoordinateTP> D(g1.get_vertices());
+    // initialize Dendrogram with zero vertices values 
+    // Dendrogram<typename FT::CoordinateTP> D(g1.get_vertices());
 
     std::vector<std::tuple<size_t, size_t, int>> M;
     std::unordered_map<Vertex, size_t> row_idx;
@@ -181,6 +181,13 @@ std::tuple<
     // get f of graph  
     std::unordered_map<EdgeId, FT> g1_edges_values = g1.get_edges_values();
     std::unordered_map<Vertex, FT> g1_vert_values = g1.get_vert_values();
+
+    std::vector<typename FT::CoordinateTP> y_values_vector;
+    y_values_vector.reserve(g1.get_vertices().size());
+    for (const auto& v_values: g1.get_vert_values_vector()){
+        y_values_vector.emplace_back(v_values.getY());
+    }
+    Dendrogram<typename FT::CoordinateTP> D(g1.get_vertices(), y_values_vector);
 
     // Construct the dictionary mapping R2 to a tuple of vectors(vertices and edges' ids)
     std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
@@ -264,10 +271,8 @@ std::tuple<
     std::vector<std::tuple<size_t, size_t, int>> M;
     Graph<FT> g1 = collapse_to_vertex_minimal(g);
 
-    // typename FT::CoordinateTP;
     DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices(), visual_DT);
-
-    std::unordered_map<Vertex, size_t> row_idx;
+    std::unordered_map<Vertex, size_t> row_idx; // row index for M matrix 
 
     // get f of graph  
     const auto& g1_edges_values = g1.get_edges_values();
@@ -277,24 +282,40 @@ std::tuple<
     std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
     // Define a set of R2 objects using the custom comparator for lexicographical ordering
     std::set<R2, LexicographicalCompareR2> gd_points;
+    std::set<R2, LexicographicalCompareR2> gd_points_shifted;
 
+    // get grid points of all vertices and edges
+    // and find the minimum of x and y coordinates
+    R2::CoordinateTP min_x = R2::CoordinateMax;
+    R2::CoordinateTP min_y = R2::CoordinateMax;
     for (const auto& pair : g1_vert_values) {
         Vertex v = pair.first;
         const FT& fv = pair.second;
         // push it to the first element of the tuple
         std::get<0>(FT_2_vertex_edges_id[fv]).push_back(v);
         gd_points.emplace(fv);
+        min_x = std::min(min_x, fv.getX());
+        min_y = std::min(min_y, fv.getY());
     }
-
     for (const auto& pair : g1_edges_values) {
         EdgeId eid = pair.first;
         const FT& fe = pair.second;
         // push it to the first element of the tuple
         std::get<1>(FT_2_vertex_edges_id[fe]).push_back(eid);
         gd_points.emplace(fe);
+        min_x = std::min(min_x, fe.getX());
+        min_y = std::min(min_y, fe.getY());
+    }
+    R2 min_point(min_x, min_y);
+    
+    // shift/subtract the minimum from x y coordinates such that grid points are non-negative
+    for (auto& gd_point : gd_points) {
+        gd_points_shifted.emplace(gd_point - min_point);
     }
 
-    for (const auto& gd_point : gd_points) {
+    // loop over all shifted grid points
+    for (const auto& gd_point_shifted : gd_points_shifted) {
+        R2 gd_point = gd_point_shifted + min_point;
         // All vertices belong to the projective cover
         std::vector<Vertex> verts_gd = std::get<0>(FT_2_vertex_edges_id[gd_point]);
         if (verts_gd.size()!= 0){
@@ -306,33 +327,35 @@ std::tuple<
         }
 
         // Check edges
-        auto y = gd_point.getY();
+        auto y_shifted = gd_point_shifted.getY();
+        auto x_shifted = gd_point_shifted.getX();
         auto x = gd_point.getX();
-        DT.update_max_edge_weight(y);
+        auto y = gd_point.getY();
+        DT.update_max_edge_weight(y_shifted);
         std::vector<EdgeId> edges_ids_gd = std::get<1>(FT_2_vertex_edges_id[gd_point]);
         for (const auto& eid: edges_ids_gd){
             Vertex e_0, e_1;
             auto e = g1.get_edge(eid);
             e_0 = e[0]; e_1 = e[1];
-            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
+            auto s_shifted = DT.time_of_merge_double(e_0, e_1); // y-coordinate
             if (e_0 == e_1){
-                betti_0_1.emplace_back(x,y);
+                betti_0_1.emplace_back(x, y);
                 continue; // self loop only affects betti_0_1
             }
             else{
-                DT.merge_at_time(e_0, e_1, y);
+                DT.merge_at_time(e_0, e_1, y_shifted);
             }
             
-            if (s <= y){
+            if (s_shifted <= y_shifted){
                 betti_0_1.emplace_back(gd_point); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
                 betti_1.emplace_back(gd_point);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
                 // if (s < FT::CoordinateMax){ // The edge is cycle-creating
-                if (s < DT.max_edge_weight){ // The edge is cycle-creating
-                    betti_2.emplace_back(x,s);
-                    betti_0_1.emplace_back(x,s);
+                if (s_shifted < DT.max_edge_weight){ // The edge is cycle-creating
+                    betti_2.emplace_back(x, s_shifted + min_y);
+                    betti_0_1.emplace_back(x, s_shifted + min_y);
                 }
             }        
 

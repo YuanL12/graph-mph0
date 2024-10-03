@@ -9,10 +9,11 @@ from PIL import Image
 n_nodes = 4
 
 nodes = np.arange(1, n_nodes+1, dtype=int)
-node_features = np.zeros(shape=(n_nodes, 2), dtype = np.double)
+# node_features = np.zeros(shape=(n_nodes, 2), dtype = np.double)
+node_features = np.array([[0, -6.7], [0,-7.6], [0,-5.3], [0,-7.6]], dtype = np.double)
 
 edges =         np.array([[1,3],     [1, 2],    [2,3],     [1,4],   ], dtype = int)
-edge_features = np.array([[6.1,6.7], [5.7,7.6], [7.5,5.3], [8.1,7.6]], dtype = np.double)
+edge_features = np.array([[6.1,-3.7], [5.7,-3.6], [7.5,-3.3], [8.1,-3.6]], dtype = np.double)
 edge_str_labels = [f"({row[0]},{row[1]})" for row in edge_features]
 
 # Create a new AGraph (directed graph)

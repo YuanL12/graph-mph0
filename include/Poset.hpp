@@ -15,7 +15,7 @@ struct FTHash {
 class R2 {
 public:
     double x, y;
-    // static const double CoordinateMax;
+    static const double CoordinateMax;
     using CoordinateTP = double; // todo: check double float with python
     // Constructors
     R2() : x(0.0), y(0.0) {}
@@ -56,18 +56,27 @@ public:
         return *this < other || *this == other;
     }
 
+    // minus operator
+    R2 operator-(const R2& other) const {
+        return R2(x - other.x, y - other.y);
+    }
+
+    // plus operator
+    R2 operator+(const R2& other) const {
+        return R2(x + other.x, y + other.y);
+    }
+
     // Output operator
     friend std::ostream& operator<<(std::ostream& os, const R2& coord) {
         os << "(" << coord.x << ", " << coord.y << ")";
         return os;
     }
-    
 };
 
 
 // // Definition and initialization of the static constant
 // const double R2::CoordinateMax = std::numeric_limits<double>::max();
-// const double R2::CoordinateMax = std::numeric_limits<double>::infinity();
+const double R2::CoordinateMax = std::numeric_limits<double>::infinity();
 
 
 // Specialization of MyHash for R2

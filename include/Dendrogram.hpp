@@ -32,7 +32,17 @@ public:
         for(const auto& v: vertices_){
             // Create vertex node label (v)
             std::string vertex_label =  "(" + std::to_string(v)+ ")"; 
-            leaf_nodes_map[v] = std::make_shared<Node>(0.0, vertex_label);
+            leaf_nodes_map[v] = std::make_shared<Node>(T(0.0), vertex_label);
+        }
+    };
+
+    // Construct with vertices and priscribed vertex values
+    Dendrogram(const std::vector<Vertex>& vertices_, const std::vector<T>& vertex_values){
+        assert(vertices_.size() == vertex_values.size() && "The number of vertices and vertex values should be the same.");
+        for (size_t i = 0; i < vertices_.size(); ++i){
+            // Create vertex node label (v)
+            std::string vertex_label =  "(" + std::to_string(vertices_[i])+ ")"; 
+            leaf_nodes_map[vertices_[i]] = std::make_shared<Node>(vertex_values[i], vertex_label);
         }
     };
 
@@ -117,7 +127,16 @@ void insert_edge_node_into_path(std::vector<std::pair<std::shared_ptr<Node>, boo
         
     // Find insertion point, e.g., 3-7-15 has possible insertion points 0, 1, 2, 3
     size_t i = 0;
-    assert(path_v[0].first->value <= edge_node->value && "The vertex value has to be <= edge value, but not now.");
+
+    // Debug output with if-guard
+    if (!(path_v[0].first->value <= edge_node->value)) {
+        std::ostringstream oss;
+        oss << "Assertion failed: The vertex value has to be <= edge value, but not now.\n"
+            << "\tVertex value: " << path_v[0].first->value << "\n"
+            << "\tEdge value: " << edge_node->value << "\n";
+        std::string errorMessage = oss.str();
+        throw std::runtime_error(errorMessage);
+    }
     // Find the appropriate insertion position
     while (i < path_v.size() && path_v[i].first->value <= edge_node->value) {
         ++i;

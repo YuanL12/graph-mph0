@@ -61,6 +61,16 @@ public:
     //  get all vertices values 
     inline const std::unordered_map<Vertex, FT>& get_vert_values() const {return vert_values;};
 
+    //  get all vertices values in a vector
+    inline std::vector<FT> get_vert_values_vector() const {
+        std::vector<FT> vert_values_vector;
+        vert_values_vector.reserve(vertices.size());
+        for (const auto& v: vertices){
+            vert_values_vector.emplace_back(vert_values.at(v));
+        }
+        return vert_values_vector;
+    };
+
     //  get edge value 
     inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};
 

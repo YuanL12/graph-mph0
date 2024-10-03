@@ -26,7 +26,10 @@ struct pair_hash {
 using Vertex = int;
 
 /* 
-Terminology: vertex for input complex, and node for tree
+Assumption:
+Input time (or edge weight) has to be non-negative and then this class will negate to negatives, 
+because we will need mincost() in ST_Tree. 
+
 Notes for using Dynamic Tree for MPH_0 consideration
 1. Use negative time because ST supports mincost
 2. time_of_merge and merge_at_time both looks for the highest edge,
@@ -136,7 +139,7 @@ public:
         }
     }; 
 
-
+    // the folloiwng two debug versions can give edge matchings used in betti_1 and betti_2
     std::pair<T, int> time_of_merge_double_debug(Vertex v, Vertex w, bool visual = false){
         ST.evert(vert2node[v]); // make v the root of the tree containing v
         if(visual) {
