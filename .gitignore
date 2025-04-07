@@ -39,3 +39,7 @@ build/
 *.dot
 *.pdf
 __pycache__
+
+# dataset
+sydney-urban-objects-dataset
+*.gz

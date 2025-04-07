@@ -8,14 +8,6 @@
 
 namespace py = pybind11;
 
-// // Define the lambda function as a global variable
-// auto to_pylist = [](const std::vector<R2>& vec) {
-//     py::list py_list;
-//     for (const auto& item : vec) {
-//         py_list.append(py::make_tuple(item.x, item.y));
-//     }
-//     return py_list;
-// };
 
 // Example of adding print statements
 auto to_pylist = [](const std::vector<R2>& vec) {

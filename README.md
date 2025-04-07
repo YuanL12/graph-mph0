@@ -8,7 +8,7 @@ Clone the repo and corresponding all submodules
 ```shell
 git clone git@github.com:YuanL12/graph-mph0.git
 cd graph-mph0/
-git submodule update --init --recursive 
+git submodule update --init --recursive
 ```
 
 Build this C++ project including pythin binding
