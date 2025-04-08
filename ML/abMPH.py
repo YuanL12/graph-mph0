@@ -3,6 +3,93 @@ import sys
 sys.path.append('../build')
 import abmph
 
+
+# Point cloud to 1-critical filtration
+def point_cloud_to_1_critical_filtration(points, x_y_swapped=False):
+    """
+    Convert a point cloud to a 1-critical filtration.
+    Input:
+        points: a numpy array of shape (n, d)
+    Output:
+        vertices: a list of vertices (int)
+        edges: a list of edges, each edge is a tuple of two integers
+        filt_func_v: a numpy array of shape (n, 2) filtration values for vertices
+        filt_func_e: a numpy array of shape (n, 2) filtration values for edges
+    """
+    # Compute the distance matrix
+    D = distance.squareform(distance.pdist(points)) 
+    n = D.shape[0]
+
+    # create the degree map
+    degrees = np.arange(0, n)
+    
+    # Create a list of vertices 
+    # (n*n corresponding to the pairwise distance matrix, i//n is the index of the point)
+    # we consider row-wise indexing
+    vertices = np.arange(n*n)
+
+    # For each pair of points, get the sorted rows of the distance matrix
+    sorted_edge_lengths = np.sort(D, axis=1)
+
+    # Assign filtration values for the vertices
+    filt_func_verties = []
+    for idx in range(n):
+        # concatenate sorted_edge_lengths[idx] with [0, -1, -2, -3, ...] to form a 2D array,
+        # it will be used as the filtration values for the vertices
+        filt_func_verties.append(np.column_stack((sorted_edge_lengths[idx], -degrees)))
+    filt_func_verties = np.vstack(filt_func_verties)
+
+    # Add edges purely on the vertices
+    edges = []
+    for idx in range(n):
+        for jdx in range(n-1):
+            # each row has n-1 edges
+            row_start_index = idx*n
+            edges.append([row_start_index + jdx, row_start_index + jdx + 1 ])
+    edges = np.vstack(edges)
+
+    # Add corresponding egde filtration values
+    inds = - np.arange(0, n)
+    filt_func_edges = [np.column_stack([sorted_edge_lengths[i][1:], inds[:-1]]) for i in range(n)]
+    filt_func_edges = np.vstack(filt_func_edges)
+    
+    
+    # Loop over n choose pairs of vertices to add "true" edges 
+    pair_edges = [] # edges from pair of vertices 
+    filt_func_edges_pair_vertices = [] # filtration values on them
+    for i in range(n):
+        for j in range(i+1,n):
+            
+            # take maximum of edges lengths of v[i] and v[j]
+            max_rs = np.max([sorted_edge_lengths[i], sorted_edge_lengths[j]], axis= 0)
+
+            # the edge appears at length that is greater than or equal to the distance d(v_i, v_j)
+            for index, r in enumerate(max_rs):
+                if r >= D[i,j]:
+                    # Add the edge filtration value
+                    filt_func_edges_pair_vertices.append([max_rs[index], -degrees[index]])
+
+                    # determine the indices of its two end points in pairwise distance matrix
+                    i_PD_idx, j_PD_idx = i*n + index, j*n + index
+
+                    # Add the edge
+                    pair_edges.append([i_PD_idx, j_PD_idx])
+    
+    # Append those edges to above 
+    pair_edges = np.vstack(pair_edges)
+    filt_func_edges_pair_vertices = np.vstack(filt_func_edges_pair_vertices)
+    
+    edges = np.vstack([edges, pair_edges])
+    filt_func_edges = np.vstack([filt_func_edges, filt_func_edges_pair_vertices])
+
+    # swap the two columns for filtration function of the vertices and edges
+    if x_y_swapped:
+        filt_func_edges = filt_func_edges[:, [1, 0]]
+        filt_func_verties = filt_func_verties[:, [1, 0]]
+
+    return vertices, edges, filt_func_verties, filt_func_edges
+
+
 def compute_abs_mph0(vertices, edges, node_features, edge_features):
     vertices = np.arange(node_features.shape[0], dtype=np.int32)
     assert node_features.dtype == np.float64 and "node_features should be float64"
