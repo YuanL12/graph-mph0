@@ -3,10 +3,27 @@ cmake_minimum_required(VERSION 3.10)
 # Project name
 project(MPH0)
 
+# Security checks when building Graph class
+option(ENABLE_SECURITY_CHECKS "Enable security checks in Graph class" OFF)
+if(ENABLE_SECURITY_CHECKS)
+    # add to the compiler flags
+    add_definitions(-DENABLE_SECURITY_CHECKS)
+endif()
+
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-# To run debug mode (eg. in vscode)
+
+# Set default build type to Release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Add profiling flags
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+
+# Debug mode (eg. in vscode)
 # set(CMAKE_BUILD_TYPE Debug)
 
 # Include all hpp files

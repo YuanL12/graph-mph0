@@ -9,7 +9,16 @@
 #include <boost/functional/hash.hpp> // Include this for Boost hash
 #include <utility> // Include this for std::pair
 #include <icecream.hpp>
+#include <numeric> // Include this for std::iota
+/*
+    (Filtered) Graph class
+    ------------------------------------------------------------
+    Every edge or vertex has its filtration value with type FT
+    - can be used for both 1-critical filtration and degree-Rips filtration
+    - or you can pass in your own filtration
 
+    Note that vertices are initialized as [0, 1, 2, ..., n-1], but it will change after collapse
+*/
 template<typename FT>
 class Graph {
 public:
@@ -42,6 +51,12 @@ public:
         security_check_adjacency_map();
         security_check_shapes();
     }
+
+    // Point cloud constructor 
+    // Cautions: the graph constructed is degree-Rips filtration 
+    // and not graph from the point cloud directly
+    template<typename PT> // PT: Point type
+    Graph(const std::vector<std::vector<PT>>& points, bool x_y_swapped = false);
 
     // get # of vertices
     inline int get_nvertices() const {return vertices.size();};
@@ -82,6 +97,9 @@ public:
     
     // Overloaded method to add an edge with default value 0.0
     void add_edge(int v, int w);
+
+    // Method to add multiple edges to the graph
+    void add_edges(const std::vector<std::tuple<int, int, FT>>& fil_edges);
 
     // Method to set the value of a vertex
     void add_vertex(int v, FT value);
@@ -135,6 +153,7 @@ private:
     // Method to print the stack
     void printStack(const std::stack<int>& stack) const;
 
+    #ifdef ENABLE_SECURITY_CHECKS
     void security_check_adjacency_map(){
         for (const auto& vertex : vertices) {
             // Check if the vertex is in the adjacency_map
@@ -144,12 +163,23 @@ private:
             }
         }
     }
+    #else
+    void security_check_adjacency_map(){
+        // do nothing
+    }
+    #endif
 
+    #ifdef ENABLE_SECURITY_CHECKS
     void security_check_shapes(){
         assert(vertices.size() == vert_values.size() && "vertices.size() !=  vert_values.size()");
         assert(vertices.size() == adjacency.size() && "vertices.size() !=  adjacency.size()");
         assert(edges.size() == edge_values.size() && "edges.size() !=  edge_values.size()");
     }
+    #else
+    void security_check_shapes(){
+        // do nothing
+    }
+    #endif
 };
 
 
@@ -171,6 +201,117 @@ Graph<FT>::Graph(const Graph& other)
       adjacency(other.adjacency)
 {security_check_shapes();}
 
+template<typename FT> // FT: Filtration value type
+template<typename PT> // PT: Point type
+Graph<FT>::Graph(const std::vector<std::vector<PT>>& points, bool x_y_swapped) {
+    /*
+    Convert a point cloud to a 1-critical filtration. The added vertex index follows 
+    the row-major order of the distance matrix.
+    ------------------------------------------------------------
+    Args:
+        points: list of points in R^d
+        x_y_swapped: if true, the x and y coordinates are swapped
+    Returns:
+        vertices: list of vertices
+        edges: list of edges
+        filt_func_v: list of vertices in the filtration function
+        filt_func_e: list of edges in the filtration function
+    */
+    
+    // Create vertices
+    const int n = points.size();
+
+    // Create vertices
+    vertices.resize(n * n);
+    std::iota(vertices.begin(), vertices.end(), 0);
+
+    // Reserve space for vert_values
+    vert_values.reserve(n * n);
+
+    // Compute distance matrix
+    std::vector<int> degrees(n); // [0, 1, 2, ..., n-1]
+    std::vector<std::vector<PT>> D(n, std::vector<PT>(n, PT(0.0)));
+    for (int i = 0; i < n; ++i) {
+        degrees[i] = i;
+        for (int j = i + 1; j < n; ++j) {
+            PT dist = 0.0;
+            for (size_t k = 0; k < points[i].size(); ++k)
+                dist += (points[i][k] - points[j][k]) * (points[i][k] - points[j][k]);
+            D[i][j] = std::sqrt(dist);
+            D[j][i] = D[i][j];
+        }
+    }
+
+    // Precompute sorted distances of each row
+    std::vector<std::vector<PT>> sorted_dists(n, std::vector<PT>(n));
+    for (int i = 0; i < n; ++i) {
+        sorted_dists[i] = D[i];
+        std::sort(sorted_dists[i].begin(), sorted_dists[i].end());
+    }
+
+    // Add vertex values
+    std::vector<FT> filt_func_v;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            Vertex v = i * n + j;
+            PT x = sorted_dists[i][j];
+            PT y = -degrees[j];
+            if (x_y_swapped)
+                vert_values[v] = FT(y, x);
+            else
+                vert_values[v] = FT(x, y);
+        }
+    }
+
+    // Add edges from the same row
+    std::vector<std::pair<int, int>> edges;
+    std::vector<FT> filt_func_e;
+    for (int i = 0; i < n; ++i) {
+        int base = i * n;
+        // Add edges from the same row e_j = (j, j+1), j = 0, 1, ..., n-2
+        // f(e_j) = (r_{j+1} , -j)
+        for (int j = 0; j < n - 1; ++j) {
+            PT x = sorted_dists[i][j + 1];
+            PT y = -degrees[j];
+            if (x_y_swapped)
+                add_edge(base + j, base + j + 1, FT(y, x));
+            else
+                add_edge(base + j, base + j + 1, FT(x, y));
+        }
+    }
+
+    // Add edges across vertices
+    for (int i = 0; i < n; ++i) {
+        const auto& di = sorted_dists[i];
+        for (int j = i + 1; j < n; ++j) {
+            const auto& dj = sorted_dists[j];
+            
+            // compute max distance between i and j
+            std::vector<PT> max_r(n);
+            for (int k = 0; k < n; ++k)
+                max_r[k] = std::max(di[k], dj[k]);
+
+            // find the first index k such that max_r[k] >= D[i][j]
+            PT threshold = D[i][j];
+            auto it = std::lower_bound(max_r.begin(), max_r.end(), threshold);
+            int idx = it - max_r.begin();
+
+            // add edges from i to j
+            for (int k = idx; k < n; ++k) {
+                // transform to 1D vertex index
+                int ii = i * n + k;
+                int jj = j * n + k;
+                PT x = max_r[k];
+                PT y = -degrees[k];
+                if (x_y_swapped)
+                    add_edge(ii, jj, FT(y, x));
+                else
+                    add_edge(ii, jj, FT(x, y));
+            }
+        }
+    }
+}
+
 // Method to add an edge to the graph
 template<typename FT>
 void Graph<FT>::add_edge(int v, int w, FT value) {
@@ -184,6 +325,13 @@ void Graph<FT>::add_edge(int v, int w, FT value) {
     adjacency[w].emplace_back(edge_id_assign);
     edge_id_assign++;
     security_check_adjacency_map();
+}
+
+template<typename FT>
+void Graph<FT>::add_edges(const std::vector<std::tuple<int, int, FT>>& fil_edges) {
+    this->edges.reserve(this->edges.size() + fil_edges.size());
+    // for (const auto& [v, w, val] : fil_edges)
+    //     this->edges.emplace_back(v, w, val);
 }
 
 // Overloaded method to add an edge with default value 0.0

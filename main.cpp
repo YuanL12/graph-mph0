@@ -1,5 +1,6 @@
 #include "MPH.hpp"
 #include <icecream.hpp>
+#include "IO.hpp"
 
 void test1(){
     Graph<double> g(3); 
@@ -200,10 +201,66 @@ int test_5() {
     return 0;
 }
 
+int test_read_filtration_data(std::string file_name) {
+    auto [nV, Es, F_Vs, F_Es] = read_filtration_data<double>(file_name);
 
-int main() {
+    std::cout << "nV: " << nV << std::endl;
+    std::cout << "Es: " << Es.size() << std::endl;
+    std::cout << "F_Vs: " << F_Vs.size() << std::endl;
+    std::cout << "F_Es: " << F_Es.size() << std::endl;
+    
+    // start building the graph
+    Graph<R2> g(nV);
+    for (int i = 0; i < nV; i++) {
+        g.add_vertex(i, R2(F_Vs[i].first, F_Vs[i].second));
+    }
+    for (int i = 0; i < Es.size(); i++) {
+        g.add_edge(Es[i].first, Es[i].second, R2(F_Es[i].first, F_Es[i].second));
+    }
+    // time the computation
+    auto start = std::chrono::high_resolution_clock::now();
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree<R2>(g);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "Time taken to compute MPH0: " << duration.count() << " seconds" << std::endl;
+
+    // std::cout << "Print Final Results: " << std::endl;
+    // IC(betti_0, betti_1, betti_2, betti_0_1);
+    return 0;
+}
+
+
+int test_read_points(std::string file_name) {
+    auto points = read_points<double>(file_name);
+
+    auto time_start = std::chrono::high_resolution_clock::now();
+    Graph<R2> g(points);
+    auto time_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_duration = time_end - time_start;
+    std::cout << "Time taken to build the graph: " << time_duration.count() << " seconds" << std::endl;
+
+    // time the computation
+    std::cout << "Computing MPH0..." << std::endl;
+    time_start = std::chrono::high_resolution_clock::now();
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree_Inplace<R2>(g);
+    time_end = std::chrono::high_resolution_clock::now();
+    time_duration = time_end - time_start;
+    std::cout << "Time taken to compute MPH0: " << time_duration.count() << " seconds" << std::endl;
+    
+    if (points.size() <= 5) {
+        std::cout << "Final Results: " << std::endl;
+        IC(betti_0, betti_1, betti_2, betti_0_1);
+    }
+    return 0;
+}
+
+int main(int argc, char** argv) {
     // test_figure1_dendrogram();
     // test_3();
-    test_5();
+    // test_5();
+    std::string file_name = argv[1];    
+    // test_read_filtration_data(file_name);
+    test_read_points(file_name);
+
     return 0;
 }

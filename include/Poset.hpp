@@ -97,23 +97,3 @@ struct LexicographicalCompareR2 {
         return false;
     }
 };
-
-
-// int main() {
-//     R2 c1(1.0, 2.0);
-//     R2 c2(1.0, 3.0);
-//     R2 c3(2.0, 1.0);
-
-//     std::cout << "R2 c1: " << c1 << std::endl;
-//     std::cout << "R2 c2: " << c2 << std::endl;
-//     std::cout << "R2 c3: " << c3 << std::endl;
-
-//     std::cout << "c1 < c2: " << (c1 < c2) << std::endl;
-//     std::cout << "c2 < c3: " << (c2 < c3) << std::endl;
-//     std::cout << "c1 == c2: " << (c1 == c2) << std::endl;
-
-//     std::cout << "Let's check harder things" << std::endl;
-//     std::cout << "c1 < c3: " << (c1 < c3) << std::endl;
-//     std::cout << "c1 > c3: " << (c1 > c3) << std::endl;
-//     return 0;
-// }
