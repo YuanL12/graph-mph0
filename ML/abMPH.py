@@ -2,6 +2,85 @@ import numpy as np
 import sys
 sys.path.append('../build')
 import abmph
+from scipy.spatial import distance
+
+
+# Point cloud to 1-critical filtration
+def point_cloud_to_1_critical_filtration_fast(points, x_y_swapped=False):
+    """
+    Convert a point cloud to a 1-critical filtration.
+    Input:
+        points: a numpy array of shape (n, d)
+    Output:
+        vertices: a list of vertices (int)
+        edges: a list of edges, each edge is a tuple of two integers
+        filt_func_v: a numpy array of shape (n*n, 2) filtration values for vertices
+        filt_func_e: a numpy array of shape (m, 2) filtration values for edges
+    """
+    # Compute the distance matrix - this is unavoidable
+    D = distance.squareform(distance.pdist(points))
+    n = D.shape[0]
+    
+    # Create vertices and degrees
+    vertices = np.arange(n * n)
+    degrees = np.arange(n)
+
+    # Precompute sorted distances for each point
+    sorted_dists = np.sort(D, axis=1)  # (n, n)
+
+    # Filtration values for vertices
+    neg_degrees = -degrees
+    filt_func_vertices = np.column_stack([sorted_dists.ravel(), np.tile(neg_degrees, n)])
+    print("Done with vertices")
+
+    # Row-wise edges (n * (n-1), 2)
+    base = np.arange(n) * n
+    edges = np.column_stack([np.repeat(base, n - 1) + np.tile(np.arange(n - 1), n),
+                             np.repeat(base, n - 1) + np.tile(np.arange(1, n), n)])
+    print("Done with edges purely on vertices")
+
+    # Filtration values for these edges
+    filt_func_edges = np.column_stack([
+        sorted_dists[:, 1:].ravel(),
+        np.tile(neg_degrees[:-1], n)
+    ])
+    print("Done with Filtration values for edges purely on vertices")
+
+    # Vectorized pair edge computation
+    pair_edges = []
+    filt_func_pair = []
+
+    for i in range(n):
+        di = sorted_dists[i]
+        for j in range(i + 1, n):
+            dj = sorted_dists[j]
+            max_r = np.maximum(di, dj)
+
+            # Get the left most indices where max_r >= D[i,j]
+            idx = np.searchsorted(max_r, D[i, j], side='left')
+
+            if idx < n:
+                valid_range = np.arange(idx, n)
+                ii = i * n + valid_range
+                jj = j * n + valid_range
+
+                pair_edges.append(np.column_stack((ii, jj)))
+                filt_func_pair.append(np.column_stack((max_r[valid_range], -degrees[valid_range])))
+
+    if pair_edges:
+        pair_edges = np.vstack(pair_edges)
+        filt_func_pair = np.vstack(filt_func_pair)
+
+        edges = np.vstack([edges, pair_edges])
+        filt_func_edges = np.vstack([filt_func_edges, filt_func_pair])
+    
+    print("Done with pair edges")
+
+    if x_y_swapped:
+        filt_func_vertices = filt_func_vertices[:, [1, 0]]
+        filt_func_edges = filt_func_edges[:, [1, 0]]
+
+    return vertices, edges, filt_func_vertices, filt_func_edges
 
 
 # Point cloud to 1-critical filtration
@@ -11,10 +90,10 @@ def point_cloud_to_1_critical_filtration(points, x_y_swapped=False):
     Input:
         points: a numpy array of shape (n, d)
     Output:
-        vertices: a list of vertices (int)
-        edges: a list of edges, each edge is a tuple of two integers
-        filt_func_v: a numpy array of shape (n, 2) filtration values for vertices
-        filt_func_e: a numpy array of shape (n, 2) filtration values for edges
+        vertices: a list of vertices (int) [0, 1, 2, ..., n*n]
+        edges: a numpy array of shape (m, 2)
+        filt_func_v: a numpy array of shape (n*n, 2) filtration values for vertices
+        filt_func_e: a numpy array of shape (m, 2) filtration values for edges
     """
     # Compute the distance matrix
     D = distance.squareform(distance.pdist(points)) 
@@ -98,6 +177,16 @@ def compute_abs_mph0(vertices, edges, node_features, edge_features):
     mph_g = abmph.Graph(vertices, node_features, edges, edge_features)
     res = abmph.compute_MPH0_DTree(mph_g) 
     return res
+
+def compute_abs_mph0_inplace(vertices, edges, node_features, edge_features):
+    vertices = np.arange(node_features.shape[0], dtype=np.int32)
+    assert node_features.dtype == np.float64 and "node_features should be float64"
+    assert edge_features.dtype == np.float64 and "edge_features should be float64"
+    # Create the Graph object
+    mph_g = abmph.Graph(vertices, node_features, edges, edge_features)
+    res = abmph.compute_MPH0_DTree_Inplace(mph_g) 
+    return res
+
 
 def compute_betti0_betti1_vertex(pd_matrix: np.ndarray) -> tuple:
     """

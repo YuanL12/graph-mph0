@@ -250,7 +250,12 @@ int test_read_points(std::string file_name) {
     if (points.size() <= 5) {
         std::cout << "Final Results: " << std::endl;
         IC(betti_0, betti_1, betti_2, betti_0_1);
+    }else
+    {
+        // just show the length of output
+        IC(betti_0.size(), betti_1.size(), betti_2.size());
     }
+    
     return 0;
 }
 
