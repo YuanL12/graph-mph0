@@ -4,7 +4,9 @@
 #include <cassert>
 #include <sstream>
 #include <icecream.hpp>
-using Vertex = int;
+#include "Types.hpp"
+
+
 // IDEA:
 /*
 Start with root nodes with value 0, each of them corrsponds to a vertex

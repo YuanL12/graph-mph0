@@ -12,6 +12,7 @@
 #include <utility> // for std::pair
 #include <cstddef> // for std::size_t
 #include <functional> // for std::hash
+#include "Types.hpp"
 
 // Custom hash function for std::pair<int, int>
 struct pair_hash {
@@ -23,7 +24,6 @@ struct pair_hash {
 };
 
 
-using Vertex = int;
 
 /* 
 Assumption:

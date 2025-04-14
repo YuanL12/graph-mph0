@@ -2,12 +2,9 @@
 #include <iostream>
 #include <limits>
 #include <tuple>
+#include "Types.hpp"
 
-// Define type
-using EdgeId = int;
-using VertexID = size_t;
-using Vertex = int;
-
+// Edge: an edge in the graph
 class Edge {
 public:
     Edge(){}

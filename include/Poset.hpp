@@ -2,16 +2,6 @@
 #include <iostream>
 #include <utility> // for std::pair
 
-
-// General template for filtration type(Poset) hash functor
-template <typename T>
-struct FTHash {
-    std::size_t operator()(const T& t) const {
-        return std::hash<T>{}(t);
-    }
-};
-
-
 class R2 {
 public:
     double x, y;
@@ -26,7 +16,7 @@ public:
     double getY() const { return y; }
 
     // Overload the index operator
-    int operator[](int index) const {
+    double operator[](int index) const {
         switch (index) {
             case 0: return x;
             case 1: return y;
@@ -73,11 +63,16 @@ public:
     }
 };
 
-
-// // Definition and initialization of the static constant
-// const double R2::CoordinateMax = std::numeric_limits<double>::max();
+// Definition and initialization of the static constant
 const double R2::CoordinateMax = std::numeric_limits<double>::infinity();
 
+// General template for filtration type(Poset) hash functor
+template <typename T>
+struct FTHash {
+    std::size_t operator()(const T& t) const {
+        return std::hash<T>{}(t);
+    }
+};
 
 // Specialization of MyHash for R2
 template <>
