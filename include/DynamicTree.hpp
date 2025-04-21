@@ -49,7 +49,7 @@ private:
     const int null_edge_id = -1;
 
 public:
-    double max_edge_weight = 1e10; // maximum edge weight
+    T max_edge_weight = std::numeric_limits<T>::max(); // maximum edge weight
     
     // Construct with vertices
     DynamicTree(const std::vector<Vertex>& vertices_, bool visual_ = false)

@@ -10,6 +10,8 @@
 #include <utility> // Include this for std::pair
 #include <icecream.hpp>
 #include <numeric> // Include this for std::iota
+
+
 /*
     (Filtered) Graph class
     ------------------------------------------------------------
@@ -58,8 +60,15 @@ public:
     template<typename PT> // PT: Point type
     Graph(const std::vector<std::vector<PT>>& points, bool x_y_swapped = false);
 
-    // get # of vertices
-    inline int get_nvertices() const {return vertices.size();};
+    // print sizes of all data structures
+    void print_sizes() const {
+        std::cout << "Graph size: " << vertices.size() << std::endl;
+        std::cout << "Edge size: " << edges.size() << std::endl;
+        std::cout << "Adjacency size: " << adjacency.size() << std::endl;
+        std::cout << "Edge values size: " << edge_values.size() << std::endl;
+        std::cout << "Vertex values size: " << vert_values.size() << std::endl;
+    }
+
 
     //  get all vertices
     inline const std::vector<int>& get_vertices() const {return vertices;};
@@ -90,7 +99,7 @@ public:
     inline FT get_edge_value(EdgeId i) const {return edge_values.at(i);};
 
     // get the filtration value of a single vertex
-    FT get_vertex_value(int v) const;
+    FT get_vertex_value(Vertex v) const;
 
     // Method to add an edge to the graph
     void add_edge(int v, int w, FT value);
@@ -152,6 +161,24 @@ private:
     
     // Method to print the stack
     void printStack(const std::stack<int>& stack) const;
+
+
+    // merge vector of key1 to the vector of key2 and delete key1 later 
+    template<typename keyT, typename VectT>
+    void merge_keys_vectors(std::unordered_map<keyT, std::vector<VectT>>& map, keyT key1, keyT key2) {
+        // Check if both keys exist in the map
+        auto it1 = map.find(key1);
+        auto it2 = map.find(key2);
+
+        assert(it1 != map.end() && "Key1 not found in the map.");
+        assert(it2 != map.end() && "Key2 not found in the map.");
+
+        // Append the vector of key1 to the vector of key2
+        it2->second.insert(it2->second.end(), it1->second.begin(), it1->second.end());
+
+        // Optionally, you can erase key1 from the map if it's no longer needed
+        map.erase(it1);
+    }
 
     #ifdef ENABLE_SECURITY_CHECKS
     void security_check_adjacency_map(){
@@ -264,7 +291,6 @@ Graph<FT>::Graph(const std::vector<std::vector<PT>>& points, bool x_y_swapped) {
     }
 
     // Add edges from the same row
-    std::vector<std::pair<int, int>> edges;
     std::vector<FT> filt_func_e;
     for (int i = 0; i < n; ++i) {
         int base = i * n;
@@ -279,7 +305,7 @@ Graph<FT>::Graph(const std::vector<std::vector<PT>>& points, bool x_y_swapped) {
                 add_edge(base + j, base + j + 1, FT(x, y));
         }
     }
-
+    
     // Add edges across vertices
     for (int i = 0; i < n; ++i) {
         const auto& di = sorted_dists[i];
@@ -347,7 +373,7 @@ FT Graph<FT>::get_vertex_value(Vertex v) const {
         std::cout << "vertex not found when trying to get its filtration value" << std::endl;
     }
     assert(it != vert_values.end());
-    return vert_values.at(v);
+    return it->second;
 }
 
 template<typename FT>
@@ -357,7 +383,7 @@ typename Graph<FT>::VAdj Graph<FT>::get_adj(Vertex v) const {
         std::cout << "vertex not found when trying to get its adjacency list" << std::endl;
     }
     assert(it != adjacency.end());
-    return adjacency.at(v);
+    return it->second;
 }
 
 template<typename FT>
@@ -367,7 +393,7 @@ Edge Graph<FT>::get_edge(EdgeId id) const {
         std::cout << "id not found when trying to get the edge" << std::endl;
     }
     assert(it != edges.end());
-    return edges.at(id);
+    return it->second;
 }
     
 
@@ -390,8 +416,8 @@ void Graph<FT>::remove_edge(Edge e){
 
 
 template<typename FT> // unsafe b/c we don't check if edge use the vertex to be removed 
-void Graph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
-    std::vector<int> new_vertices;
+void Graph<FT>::remove_vertices(std::unordered_map<Vertex, Vertex> vert_dict){
+    std::vector<Vertex> new_vertices;
     new_vertices.reserve(vertices.size());
     for (const auto& p: vert_dict){
         if (p.first == p.second){
@@ -404,22 +430,6 @@ void Graph<FT>::remove_vertices(std::unordered_map<int, int> vert_dict){
     vertices = new_vertices;
 }
 
-// merge vector of key1 to the vector of key2 and delete key1 later 
-template<typename keyT, typename VectT>
-void merge_keys_vectors(std::unordered_map<keyT, std::vector<VectT>>& map, keyT key1, keyT key2) {
-    // Check if both keys exist in the map
-    auto it1 = map.find(key1);
-    auto it2 = map.find(key2);
-
-    assert(it1 != map.end() && "Key1 not found in the map.");
-    assert(it2 != map.end() && "Key2 not found in the map.");
-
-    // Append the vector of key1 to the vector of key2
-    it2->second.insert(it2->second.end(), it1->second.begin(), it1->second.end());
-
-    // Optionally, you can erase key1 from the map if it's no longer needed
-    map.erase(it1);
-}
 
 
 // unsafe b/c we don't check if edge use the vertex to be removed 

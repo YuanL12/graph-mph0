@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <utility> // for std::pair
-
+#include "Hash.hpp"
 class R2 {
 public:
     double x, y;
@@ -66,13 +66,6 @@ public:
 // Definition and initialization of the static constant
 const double R2::CoordinateMax = std::numeric_limits<double>::infinity();
 
-// General template for filtration type(Poset) hash functor
-template <typename T>
-struct FTHash {
-    std::size_t operator()(const T& t) const {
-        return std::hash<T>{}(t);
-    }
-};
 
 // Specialization of MyHash for R2
 template <>

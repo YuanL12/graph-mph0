@@ -1,6 +1,7 @@
 #include "MPH.hpp"
 #include <icecream.hpp>
 #include "IO.hpp"
+#include "PointCloud.hpp"
 
 void test1(){
     Graph<double> g(3); 
@@ -246,15 +247,66 @@ int test_read_points(std::string file_name) {
     time_end = std::chrono::high_resolution_clock::now();
     time_duration = time_end - time_start;
     std::cout << "Time taken to compute MPH0: " << time_duration.count() << " seconds" << std::endl;
-    
+    std::cout << "Betti Numbers sizes: " << std::endl;
+    IC(betti_0.size(), betti_1.size(), betti_2.size(), betti_0_1.size());
     if (points.size() <= 5) {
         std::cout << "Final Results: " << std::endl;
         IC(betti_0, betti_1, betti_2, betti_0_1);
-    }else
-    {
-        // just show the length of output
-        IC(betti_0.size(), betti_1.size(), betti_2.size());
     }
+    
+    return 0;
+}
+
+
+
+int test_read_points_GradeTable(std::string file_name) {
+    // read the file
+    auto points = read_points<double>(file_name);
+
+    // build the graph
+    auto time_start = std::chrono::high_resolution_clock::now();
+    auto [ggraph, grade_table] = point_cloud_to_degree_Rips_filtration<double>(points);
+    auto time_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_duration = time_end - time_start;
+    std::cout << "Time taken to build the graph and grade table: " << time_duration.count() << " seconds" << std::endl;
+
+    // time the computation
+    std::cout << "Computing MPH0..." << std::endl;
+    time_start = std::chrono::high_resolution_clock::now();
+    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_DTree_Grade_Version<double, int>(ggraph);
+    time_end = std::chrono::high_resolution_clock::now();
+    time_duration = time_end - time_start;
+    std::cout << "Time taken to compute MPH0: " << time_duration.count() << " seconds" << std::endl;
+    
+    // std::cout << "Raw Betti Numbers sizes: " << std::endl;
+    // IC(raw_betti_0.size(), raw_betti_1.size(), raw_betti_2.size(), raw_betti_0_1.size());
+
+    // bool x_y_swap = true;
+    // if (points.size() <= 10) {
+    //     std::cout << "Final Results: " << std::endl;
+    //     grade_table.print(x_y_swap);
+    //     if (x_y_swap) {
+    //         for (auto& b0: raw_betti_0) {
+    //             std::swap(b0.first, b0.second); 
+    //         }
+    //         for (auto& b1: raw_betti_1) {
+    //             std::swap(b1.first, b1.second); 
+    //         }
+    //         for (auto& b2: raw_betti_2) {
+    //             std::swap(b2.first, b2.second); 
+    //         }
+    //         for (auto& b01: raw_betti_0_1) {
+    //             std::swap(b01.first, b01.second); 
+    //         }
+            
+    //     }
+        
+    //     auto betti_0 = sort_count_betti_result(raw_betti_0);
+    //     auto betti_1 = sort_count_betti_result(raw_betti_1);
+    //     auto betti_2 = sort_count_betti_result(raw_betti_2);
+    //     auto betti_0_1 = sort_count_betti_result(raw_betti_0_1);
+    //     IC(betti_0, betti_1, betti_2, betti_0_1);
+    // }
     
     return 0;
 }
@@ -265,7 +317,13 @@ int main(int argc, char** argv) {
     // test_5();
     std::string file_name = argv[1];    
     // test_read_filtration_data(file_name);
-    test_read_points(file_name);
+    // std::cout << "--------------------------------" << std::endl;
+    // std::cout << "Testing read points with floating point Filtration" << std::endl;
+    // test_read_points(file_name);
 
+    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Testing read points with discrete GradePoint" << std::endl;
+    test_read_points_GradeTable(file_name);
+    std::cout << "--------------------------------" << std::endl;
     return 0;
 }

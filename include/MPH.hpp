@@ -5,6 +5,8 @@
 #include "Dendrogram.hpp"
 #include <set>
 #include <icecream.hpp>
+#include "Grade.hpp"
+#include "GGraph.hpp"
 
 /*
     Algorithm 1: Collapse local collapsible edges (inplace)
@@ -23,7 +25,6 @@ void local_collapse_edges_inplace(Graph<FT>& g) {
 
     // type of (vertex, edge, vertex)
     using VEV = std::tuple<int, Edge, int>; 
-    std::cout << "Running DFS in localCollapse..." << std::endl;
     // Run depth-first search from v on local edges 
     for (auto v: g.get_vertices() ) {
         std::stack<VEV> stack;
@@ -39,12 +40,10 @@ void local_collapse_edges_inplace(Graph<FT>& g) {
 
             // If the vertex has not been visited, mark it as visited and process it
             if (!visited[u]) {
-                // std::cout << "Visit " << u << std::endl;
                 visited[u] = true;
                 if (e != Edge::NULL_EDGE){
                     vertex_dict[u] = v;
                     g.remove_edge(e);
-                    // std::cout << "Remove "<< e << std::endl;
                 }
                 // local collapsible
                 for (const auto& eid_local: g.get_adj(u)){
@@ -62,12 +61,9 @@ void local_collapse_edges_inplace(Graph<FT>& g) {
             }
         }
     }
-    std::cout << "Done running DFS in localCollapse" << std::endl;
 
     // update vertices and edges
-    std::cout << "Updating graph..." << std::endl;
     g.update_graph(vertex_dict);
-    std::cout << "Done updating graph" << std::endl;
 }
 
 
@@ -77,10 +73,8 @@ void local_collapse_edges_inplace(Graph<FT>& g) {
 */
 template<typename FT>
 void collapse_to_vertex_minimal_inplace(Graph<FT>& g) {
-    std::cout << "Local Collapse edges..." << std::endl;
+    // local collapse edges
     local_collapse_edges_inplace(g);
-    std::cout << "Done local collapse edges" << std::endl;
-
 
     // Initialize dictionary φ with identity map
     // Initialize empty set visited
@@ -90,7 +84,6 @@ void collapse_to_vertex_minimal_inplace(Graph<FT>& g) {
         vertex_dict[v] = v;
     }
 
-    std::cout << "Running DFS..." << std::endl;
     // Define (vertex, edge, vertex) type 
     using VEV = std::tuple<int, Edge, int>;
     // Run depth-first search from minimal vertices
@@ -147,12 +140,9 @@ void collapse_to_vertex_minimal_inplace(Graph<FT>& g) {
             }
         }
     }
-    std::cout << "Done running DFS" << std::endl;
 
-    std::cout << "Updating graph..." << std::endl;
     // update vertices 
-    g.update_graph(vertex_dict);
-    std::cout << "Done updating graph" << std::endl;
+    g.update_graph(vertex_dict);    
 }
 
 
@@ -434,21 +424,17 @@ std::tuple<
 > compute_MPH0_DTree_Inplace(Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     std::vector<std::tuple<size_t, size_t, int>> M;
-    std::cout << "Collapsing to vertex minimal..." << std::endl;
+    // collapse to vertex minimal
     collapse_to_vertex_minimal_inplace(g);
-    std::cout << "Done collapsing to vertex minimal" << std::endl;
 
-    std::cout << "Building Dynamic Tree..." << std::endl;
+    // build the dynamic tree
     DynamicTree<typename FT::CoordinateTP> DT(g.get_vertices(), visual_DT);
-    std::cout << "Done building Dynamic Tree" << std::endl;
 
     std::unordered_map<Vertex, size_t> row_idx; // row index for M matrix 
     
     // get f of graph  
-    std::cout << "Getting f of graph..." << std::endl;
     const auto& g_edges_values = g.get_edges_values();
     const auto& g_vert_values = g.get_vert_values();
-    std::cout << "Done getting f of graph" << std::endl;
 
     // Construct the dictionary mapping R2 to a tuple of vectors(vertices and edges' ids)
     std::unordered_map<FT, std::tuple<std::vector<Vertex>, std::vector<EdgeId>>, FTHash<FT>> FT_2_vertex_edges_id;
@@ -458,7 +444,6 @@ std::tuple<
 
     // get grid points of all vertices and edges
     // and find the minimum of x and y coordinates
-    std::cout << "Getting grid points..." << std::endl;
     R2::CoordinateTP min_x = R2::CoordinateMax;
     R2::CoordinateTP min_y = R2::CoordinateMax;
     for (const auto& pair : g_vert_values) {
@@ -480,17 +465,13 @@ std::tuple<
         min_y = std::min(min_y, fe.getY());
     }
     R2 min_point(min_x, min_y);
-    std::cout << "Done getting grid points" << std::endl;
 
     // shift/subtract the minimum from x y coordinates such that grid points are non-negative
-    std::cout << "Shifting grid points..." << std::endl;
     for (auto& gd_point : gd_points) {
         gd_points_shifted.emplace(gd_point - min_point);
     }
-    std::cout << "Done shifting grid points" << std::endl;
 
     // loop over all shifted grid points
-    std::cout << "Looping over all shifted grid points..." << std::endl;
     for (const auto& gd_point_shifted : gd_points_shifted) {
         R2 gd_point = gd_point_shifted + min_point;
         // All vertices belong to the projective cover
@@ -538,7 +519,6 @@ std::tuple<
 
         }// End loop for each edge at gd_point 
     } // End loop for all grid points
-    std::cout << "Done looping over all shifted grid points" << std::endl;
     return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
 }
 
@@ -554,13 +534,13 @@ std::tuple<
 > compute_MPH0_DTree(const Graph<FT>& g, bool visual_DT = false) {
     std::vector<FT> betti_0, betti_1, betti_2, betti_0_1;
     std::vector<std::tuple<size_t, size_t, int>> M;
-    std::cout << "Collapsing to vertex minimal..." << std::endl;
-    Graph<FT> g1 = collapse_to_vertex_minimal(g);
-    std::cout << "Done collapsing to vertex minimal" << std::endl;
 
-    std::cout << "Building Dynamic Tree..." << std::endl;
+    // collapse to vertex minimal
+    Graph<FT> g1 = collapse_to_vertex_minimal(g);
+
+    // build the dynamic tree
     DynamicTree<typename FT::CoordinateTP> DT(g1.get_vertices(), visual_DT);
-    std::cout << "Done building Dynamic Tree" << std::endl;
+    
 
     std::unordered_map<Vertex, size_t> row_idx; // row index for M matrix 
 
@@ -762,3 +742,241 @@ std::tuple<
     return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M, edge_matchings); 
 }
 
+
+/*
+    Algorithm 1: Collapse local collapsible edges inplace
+*/
+template<typename VTX, typename VTY>
+void local_collapse_edges_Grade_Version(GGraph<VTX, VTY>& g) {
+    // Initialize dictionary φ with identity map
+    // Initialize empty set visited
+    std::unordered_map<int, int> vertex_dict;
+    std::unordered_map<int, bool> visited;
+    for (auto v: g.get_vertices() ) {
+        vertex_dict[v] = v;
+        visited[v] = false;
+    }
+
+    // type of (vertex, edge, vertex)
+    using VEV = std::tuple<int, Edge, int>; 
+    // Run depth-first search from v on local edges 
+    for (auto v: g.get_vertices() ) {
+        std::stack<VEV> stack;
+        // Push the starting VEV onto the stack
+        VEV a(v, Edge::NULL_EDGE, v);
+        stack.push(a);
+
+        while (!stack.empty()) {
+            int v_; Edge e; int u;
+            std::tie(v_, e, u) = stack.top();
+            assert(v == v_);
+            stack.pop();
+
+            // If the vertex has not been visited, mark it as visited and process it
+            if (!visited[u]) {
+                visited[u] = true;
+                if (e != Edge::NULL_EDGE){
+                    vertex_dict[u] = v;
+                    // remove the edge
+                    g.remove_edge(e);
+                }
+                // local collapsible
+                for (const auto& eid_local: g.get_adj(u)){
+                    e = g.get_edge(eid_local);
+                    Vertex x = (e[0] == u) ? e[1]: e[0];
+                    
+                    // Get the grade of the vertex and edge
+                    GradePoint fx = g.get_vertex_grade(x);
+                    GradePoint fu = g.get_vertex_grade(u);
+                    GradePoint fe = g.get_edge_grade(eid_local);
+
+                    // Collapsible when fx == fe == fu
+                    if (fe == fx && fx == fu){
+                        stack.push(VEV(v, g.get_edge(eid_local), x));
+                    }
+                }
+            }
+        }
+    }
+
+    // update vertices and edges
+    g.update_graph(vertex_dict);
+    
+}
+
+
+/*
+    Algorithm 2: Collapse to vertex-minimal graph 
+*/
+template<typename VTX, typename VTY>
+void collapse_to_vertex_minimal_Grade_Version(GGraph<VTX, VTY>& g) {
+    // local collapse edges
+    local_collapse_edges_Grade_Version(g);
+
+    // Initialize dictionary φ with identity map
+    // and empty set visited
+    std::unordered_map<int, int> vertex_dict;
+    std::set<int> visited;
+    for (auto v: g.get_vertices() ) {
+        vertex_dict[v] = v;
+    }
+
+    // Define (vertex, edge, vertex) type 
+    using VEV = std::tuple<int, Edge, int>;
+
+    // Run depth-first search from minimal vertices
+    for (auto v: g.get_vertices() ) {
+        GradePoint fv = g.get_vertex_grade(v);
+        bool check_minimal = true;
+        for (const auto& eid : g.get_adj(v)) {
+            Edge e = g.get_edge(eid);
+            Vertex u = (e[0] == v) ? e[1]: e[0];
+            GradePoint fe = g.get_edge_grade(eid);
+            GradePoint fu = g.get_vertex_grade(u);
+            if (fe == fv && fe > fu){ // v is not minimal
+                check_minimal = false;
+                break;
+            }
+        }
+        if(!check_minimal){continue;} // if v is not minimal, skip to the next vertex
+
+        std::stack<VEV> stack;
+        // Push the starting VEV onto the stack
+        VEV a(v, Edge::NULL_EDGE, v);
+        stack.push(a);
+
+        while (!stack.empty()) {
+            int v_; Edge e; int u;
+            std::tie(v_, e, u) = stack.top();
+            if (v != v_) {
+                std::stringstream ss;
+                ss << "Runtime error: Expected vertex " << v << " but got " << v_;
+                throw std::runtime_error(ss.str());
+            }
+            stack.pop();
+
+            // If the vertex has not been visited, mark it as visited and process it
+            if (visited.find(u) == visited.end()) {
+                visited.insert(u);
+                if (e != Edge::NULL_EDGE){
+                    vertex_dict[u] = v;
+                    g.remove_edge(e);
+                }
+
+                // local collapsible
+                for (const auto& eid_local: g.get_adj(u)){
+                    e = g.get_edge(eid_local);
+                    Vertex x = (e[0] == u) ? e[1]: e[0];
+                    // Get the grade of the vertex and edge
+                    GradePoint fx = g.get_vertex_grade(x);
+                    GradePoint fu = g.get_vertex_grade(u);
+                    GradePoint fe = g.get_edge_grade(eid_local);
+                    if (fe == fx && fx > fu){
+                        stack.push(VEV(v, g.get_edge(eid_local), x));
+                    }
+                }
+            }
+        }
+    }
+
+    // update vertices and edges
+    g.update_graph(vertex_dict);
+}
+
+
+
+
+// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
+// Return: 4 Betti tables, 1 sparse Matrix as presentation
+template<typename VTX, typename VTY>
+std::tuple<
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::tuple<size_t, size_t, int>>
+> compute_MPH0_DTree_Grade_Version( 
+        GGraph<VTX, VTY>& g,
+        bool visual_DT = false) 
+{
+
+    // Initialize betti_0, betti_1, betti_2, betti_0_1
+    std::vector<std::pair<int, int>> betti_0;
+    std::vector<std::pair<int, int>> betti_1;
+    std::vector<std::pair<int, int>> betti_2;
+    std::vector<std::pair<int, int>> betti_0_1;
+
+    // Sparse Matrix for presentation and its row index
+    std::vector<std::tuple<size_t, size_t, int>> M;
+    std::unordered_map<Vertex, size_t> row_idx; 
+
+    // Collapse to vertex minimal
+    collapse_to_vertex_minimal_Grade_Version(g);
+
+    // Build Dynamic Tree
+    DynamicTree<int> DT(g.get_vertices(), visual_DT);
+
+    // dict mapping a GradePoint to (vertices, edges)
+    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+    std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
+    // set of all grade points for iteration
+    std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+
+    // Loop over all vertices and edges to fill it
+    for (const auto& [v, gp]: g.get_vert_grades()){
+        grade_point_2_vertex_edges_id[gp].first.push_back(v);
+        grades_collection.insert(gp);
+    }
+    for (const auto& [eid, gp]: g.get_edges_grades()){
+        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
+        grades_collection.insert(gp);
+    }
+
+    // loop over all GradePoint in lexicographical ordering
+    for (const auto& gd_point : grades_collection) {
+        // get the grade point and its x,y ranks
+        int x = gd_point.get_x();
+        int y = gd_point.get_y();
+
+        // get vertices belong to the grade point
+        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+        for (const auto& v: verts_gd){
+            betti_0.emplace_back(x, y);
+            // row_idx[v] ← |β0|
+            row_idx[v] = betti_0.size();
+        }
+
+        // Check edges
+        DT.update_max_edge_weight(y);
+        std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
+        for (const EdgeId& eid: edges_ids_gd){
+            Vertex e_0, e_1;
+            auto e = g.get_edge(eid);
+            e_0 = e[0]; e_1 = e[1];
+            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
+            if (e_0 == e_1){
+                betti_0_1.emplace_back(x, y);
+                continue; // self loop only affects betti_0_1
+            }
+            else{
+                DT.merge_at_time(e_0, e_1, y);
+            }
+            
+            if (s <= y){
+                betti_0_1.emplace_back(x, y); // The edge is deletable, so it only affects H1
+            }else{ // Edge is not deletable, so belongs to relations in resolution
+                betti_1.emplace_back(x, y);
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
+                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+                // if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                if (s < DT.max_edge_weight){ // The edge is cycle-creating
+                    betti_2.emplace_back(x, s);
+                    betti_0_1.emplace_back(x, s);
+                }
+            }        
+
+        }// End loop for each edge at gd_point 
+    } // End loop for all grid points
+    
+    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+}

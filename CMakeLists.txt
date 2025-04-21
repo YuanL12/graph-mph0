@@ -49,10 +49,16 @@ set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set(SOURCES
     main.cpp
 )
-add_executable(out ${SOURCES})
+add_executable(main_out ${SOURCES})
+target_link_libraries(main_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
-# Link libraries
-target_link_libraries(out PRIVATE ${Boost_LIBRARIES} ST_Tree)
+
+# # Add test
+# set(TEST_SOURCES
+#     test/test_grade.cpp
+# )
+# add_executable(test_grade ${TEST_SOURCES})
+# target_link_libraries(test_grade PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # -------------------------------------------------
 # build binding for python 
