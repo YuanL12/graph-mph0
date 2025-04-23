@@ -19,7 +19,7 @@
 
     Note that vertices are initialized as [0, 1, 2, ..., n-1], but it will change after collapse
 */
-template <typename VTX, typename VTY> // Coordinate Value Type (double often) of x and y
+
 class GGraph {
 public:
 
@@ -187,12 +187,10 @@ private:
 
 
 // Constructor
-template<typename VTX, typename VTY>
-GGraph<VTX, VTY>::GGraph(int n) {vertices.reserve(n);}
+GGraph::GGraph(int n) {vertices.reserve(n);}
 
 // Copy Constructor
-template<typename VTX, typename VTY>
-GGraph<VTX, VTY>::GGraph(const GGraph& other) 
+GGraph::GGraph(const GGraph& other) 
     : edge_id_assign(other.edge_id_assign),
       vertices(other.vertices),
       edges(other.edges), 
@@ -203,8 +201,7 @@ GGraph<VTX, VTY>::GGraph(const GGraph& other)
 
 
 // Method to add an edge to the graph
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::add_edge(Vertex v, Vertex w, GradePoint grade_idx) {
+void GGraph::add_edge(Vertex v, Vertex w, GradePoint grade_idx) {
     if (v > w) {
         std::swap(v, w);
     }
@@ -217,21 +214,18 @@ void GGraph<VTX, VTY>::add_edge(Vertex v, Vertex w, GradePoint grade_idx) {
     security_check_adjacency_map();
 }
 
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::add_edges(const std::vector<std::tuple<int, int, GradePoint>>& fil_edges) {
+void GGraph::add_edges(const std::vector<std::tuple<int, int, GradePoint>>& fil_edges) {
     this->edges.reserve(this->edges.size() + fil_edges.size());
     for (const auto& [v, w, grade_idx] : fil_edges)
         this->add_edge(v, w, grade_idx);
 }
 
 // Overloaded method to add an edge with default value 0.0
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::add_edge(Vertex v, Vertex w) {
-    add_edge(v, w, GradePoint(-1, -1, -1));
+void GGraph::add_edge(Vertex v, Vertex w) {
+    add_edge(v, w, GradePoint(-1, -1));
 }
 
-template<typename VTX, typename VTY>
-typename GGraph<VTX, VTY>::VAdj GGraph<VTX, VTY>::get_adj(Vertex v) const {
+GGraph::VAdj GGraph::get_adj(Vertex v) const {
     auto it = adjacency.find(v);
     if(it == adjacency.end()){
         throw std::runtime_error("vertex " + std::to_string(v) + " not found when trying to get its adjacency list");
@@ -239,8 +233,7 @@ typename GGraph<VTX, VTY>::VAdj GGraph<VTX, VTY>::get_adj(Vertex v) const {
     return it->second;
 }
 
-template<typename VTX, typename VTY>
-Edge GGraph<VTX, VTY>::get_edge(EdgeId id) const {
+Edge GGraph::get_edge(EdgeId id) const {
     auto it = edges.find(id);
     if(it == edges.end()){
         std::cout << "id = " << id << " not found when trying to get the edge" << std::endl;
@@ -251,8 +244,7 @@ Edge GGraph<VTX, VTY>::get_edge(EdgeId id) const {
     
 
 // Remove edge e 
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::remove_edge(Edge e){
+void GGraph::remove_edge(Edge e){
     Vertex v0 = e.get_v0();
     Vertex v1 = e.get_v1();
     EdgeId id = e.get_id();
@@ -273,8 +265,7 @@ void GGraph<VTX, VTY>::remove_edge(Edge e){
 // if v_new = v, then nothing is done
 // otherwise, v is removed and v_new is kept and adjacency of v is merged into v_new
 // It is unsafe b/c we don't check if edge use the vertex to be removed 
-template<typename VTX, typename VTY> 
-void GGraph<VTX, VTY>::update_graph(std::unordered_map<Vertex, Vertex> vert_dict){
+void GGraph::update_graph(std::unordered_map<Vertex, Vertex> vert_dict){
     // update vertices
     std::vector<Vertex> new_vertices;
     new_vertices.reserve(vertices.size());
@@ -305,15 +296,13 @@ void GGraph<VTX, VTY>::update_graph(std::unordered_map<Vertex, Vertex> vert_dict
 
 
 // Method to set the value of a vertex
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::add_vertex(int v, GradePoint grade) {
+void GGraph::add_vertex(int v, GradePoint grade) {
     vertices.emplace_back(v);
     vert_grades[v] = grade;
 }
 
 // Method to print the graph
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::print_adjacency() const {
+void GGraph::print_adjacency() const {
     std::cout << "Print Adjacency" << std::endl;
     // Iterate and print the adjacency list map
     for (const auto& pair : adjacency) {
@@ -328,8 +317,7 @@ void GGraph<VTX, VTY>::print_adjacency() const {
 
 
 // Method to print the stack
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::printStack(const std::stack<Vertex>& stack) const {
+void GGraph::printStack(const std::stack<Vertex>& stack) const {
     std::stack<Vertex> tempStack = stack;
     std::vector<Vertex> elements;
     while (!tempStack.empty()) {
@@ -345,8 +333,7 @@ void GGraph<VTX, VTY>::printStack(const std::stack<Vertex>& stack) const {
 }
 
 // Method for Depth-First Search
-template<typename VTX, typename VTY>
-void GGraph<VTX, VTY>::DFS(Vertex startVertex) const {
+void GGraph::DFS(Vertex startVertex) const {
     std::unordered_map<Vertex, bool> visited;
     for (Vertex vertex : vertices) {
         visited[vertex] = false;

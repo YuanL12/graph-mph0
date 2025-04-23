@@ -746,8 +746,7 @@ std::tuple<
 /*
     Algorithm 1: Collapse local collapsible edges inplace
 */
-template<typename VTX, typename VTY>
-void local_collapse_edges_Grade_Version(GGraph<VTX, VTY>& g) {
+void local_collapse_edges_Grade_Version(GGraph& g) {
     // Initialize dictionary φ with identity map
     // Initialize empty set visited
     std::unordered_map<int, int> vertex_dict;
@@ -808,8 +807,7 @@ void local_collapse_edges_Grade_Version(GGraph<VTX, VTY>& g) {
 /*
     Algorithm 2: Collapse to vertex-minimal graph 
 */
-template<typename VTX, typename VTY>
-void collapse_to_vertex_minimal_Grade_Version(GGraph<VTX, VTY>& g) {
+void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
     // local collapse edges
     local_collapse_edges_Grade_Version(g);
 
@@ -888,7 +886,6 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph<VTX, VTY>& g) {
 
 // Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
 // Return: 4 Betti tables, 1 sparse Matrix as presentation
-template<typename VTX, typename VTY>
 std::tuple<
     std::vector<std::pair<int, int>>, 
     std::vector<std::pair<int, int>>, 
@@ -896,7 +893,7 @@ std::tuple<
     std::vector<std::pair<int, int>>, 
     std::vector<std::tuple<size_t, size_t, int>>
 > compute_MPH0_DTree_Grade_Version( 
-        GGraph<VTX, VTY>& g,
+        GGraph& g,
         bool visual_DT = false) 
 {
 

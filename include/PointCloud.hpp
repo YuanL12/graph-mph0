@@ -13,7 +13,7 @@
 // Input: a vector of points, each point is a vector of coordinates
 // Output: a GGraph object and a GradeTable object
 template<typename PT>
-std::tuple<GGraph<PT, int>, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(const std::vector<std::vector<PT>>& points){
+std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(const std::vector<std::vector<PT>>& points){
     // Get the number of points
     const int n = points.size();
 
@@ -41,6 +41,8 @@ std::tuple<GGraph<PT, int>, GradeTable<PT, int>> point_cloud_to_degree_Rips_filt
             all_distances.insert(dist_sqrt);
         }
     }
+
+    std::cout << "Done with distance matrix" << std::endl;
 
     // Create a map of distances to indices (rank in radius coordinate)
     std::unordered_map<PT, int> distance_to_index;
@@ -119,8 +121,11 @@ std::tuple<GGraph<PT, int>, GradeTable<PT, int>> point_cloud_to_degree_Rips_filt
         }
     }
 
+    std::cout << "Done with preparing edges and vertices" << std::endl;
 
     // Create a GGraph
-    GGraph<PT, int> ggraph(n*n, vertex_grades, edges, edge_grades);
+    GGraph ggraph(n*n, vertex_grades, edges, edge_grades);
+
+    std::cout << "Done with GGraph construction" << std::endl;
     return std::make_tuple(ggraph, grade_table);
 }

@@ -125,6 +125,39 @@ int test_figure1_DTree() {
 }
 
 
+int test_figure1_GGraph() {
+    GGraph g(6); 
+    g.add_vertex(1, GradePoint(6,2)); // x1
+    g.add_vertex(2, GradePoint(6,2)); // x2
+    g.add_vertex(3, GradePoint(6,2)); // x3
+    g.add_vertex(4, GradePoint(1,3)); // u
+    g.add_vertex(5, GradePoint(2,1)); // v 
+    g.add_vertex(6, GradePoint(2,6)); // w
+
+    g.add_edge(1, 2, GradePoint(6,2)); // d1 = (x1, x2)
+    g.add_edge(1, 3, GradePoint(6,2)); // d2 = (x2,x3)
+    g.add_edge(2, 3, GradePoint(6,2)); // d3 = (x1,x3)
+    g.add_edge(4, 5, GradePoint(3,5)); // e1 = (u,v)
+    g.add_edge(4, 5, GradePoint(5,3)); // e2 = (u,v)
+    g.add_edge(5, 1, GradePoint(6,2)); // h1 = (v, x1)
+    g.add_edge(4, 6, GradePoint(2,6)); // h2 = (u, w)
+    g.add_edge(6, 3, GradePoint(6,6)); // e3 = (w, x3)
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_DTree_Grade_Version(g);
+    
+    std::cout << "Final Results: " << std::endl;
+    IC(betti_0, betti_1, betti_2, betti_0_1);
+
+    /*
+    Expect Final Results: 
+        betti_0: (1, 3) (2, 1) 
+        betti_1: (3, 5) (5, 3) 
+        betti_2: (5, 5) 
+        betti_0_1: (5, 5) (6, 2) (6, 6) 
+    */
+    return 0;
+}
+
+
 int test_3() {
     Graph<R2> g(2); 
     g.add_vertex(0, R2(1,2)); // x1
@@ -273,7 +306,7 @@ int test_read_points_GradeTable(std::string file_name) {
     // time the computation
     std::cout << "Computing MPH0..." << std::endl;
     time_start = std::chrono::high_resolution_clock::now();
-    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_DTree_Grade_Version<double, int>(ggraph);
+    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_DTree_Grade_Version(ggraph);
     time_end = std::chrono::high_resolution_clock::now();
     time_duration = time_end - time_start;
     std::cout << "Time taken to compute MPH0: " << time_duration.count() << " seconds" << std::endl;
@@ -315,12 +348,14 @@ int main(int argc, char** argv) {
     // test_figure1_dendrogram();
     // test_3();
     // test_5();
-    std::string file_name = argv[1];    
-    // test_read_filtration_data(file_name);
+    // test_figure1_GGraph();
+
+    // std::string file_name = argv[1];    
     // std::cout << "--------------------------------" << std::endl;
     // std::cout << "Testing read points with floating point Filtration" << std::endl;
     // test_read_points(file_name);
 
+    std::string file_name = argv[1];   
     std::cout << "--------------------------------" << std::endl;
     std::cout << "Testing read points with discrete GradePoint" << std::endl;
     test_read_points_GradeTable(file_name);
