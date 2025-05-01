@@ -10,6 +10,34 @@
 
 #include "Graph.hpp"
 
+void write_betti_numbers(
+    const std::vector<std::tuple<int, int, int>>& betti_0, 
+    const std::vector<std::tuple<int, int, int>>& betti_1, 
+    const std::vector<std::tuple<int, int, int>>& betti_2, 
+    const std::vector<std::tuple<int, int, int>>& betti_0_1, 
+    const std::string& filename) {
+    
+    // write the betti numbers to a file
+    std::ofstream file(filename);
+    file << "betti_0:" << std::endl;
+    for (const auto& b0: betti_0) {
+        file << "(" << std::get<0>(b0) << ", " << std::get<1>(b0) << ", " << std::get<2>(b0) << ")" << std::endl;
+    }
+    file << "betti_1:" << std::endl;
+    for (const auto& b1: betti_1) {
+        file << "(" << std::get<0>(b1) << ", " << std::get<1>(b1) << ", " << std::get<2>(b1) << ")" << std::endl;
+    }
+    file << "betti_2:" << std::endl;
+    for (const auto& b2: betti_2) {
+        file << "(" << std::get<0>(b2) << ", " << std::get<1>(b2) << ", " << std::get<2>(b2) << ")" << std::endl;
+    }
+    file << "betti_0_1:" << std::endl;
+    for (const auto& b01: betti_0_1) {
+        file << "(" << std::get<0>(b01) << ", " << std::get<1>(b01) << ", " << std::get<2>(b01) << ")" << std::endl;
+    }
+}
+
+
 template<typename T>
 std::vector<std::vector<T>> read_points(const std::string& filename) {
     // read points from a file, each line is a point in R ^d is in the format of x1,x2,...,xd

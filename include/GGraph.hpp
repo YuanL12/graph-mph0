@@ -28,7 +28,16 @@ public:
     GGraph(int n);
 
     // Copy Constructor
-    GGraph(const GGraph& other);
+    GGraph(const GGraph&) = default;
+
+    // Move Constructor
+    GGraph(GGraph&&) = default;
+
+    // Copy Assignment
+    GGraph& operator=(const GGraph&) = default;
+
+    // Move Assignment
+    GGraph& operator=(GGraph&&) = default;
 
     // vector constructor
     GGraph(
@@ -189,15 +198,15 @@ private:
 // Constructor
 GGraph::GGraph(int n) {vertices.reserve(n);}
 
-// Copy Constructor
-GGraph::GGraph(const GGraph& other) 
-    : edge_id_assign(other.edge_id_assign),
-      vertices(other.vertices),
-      edges(other.edges), 
-      vert_grades(other.vert_grades),
-      edge_grades(other.edge_grades),
-      adjacency(other.adjacency)
-{security_check_shapes();}
+// // Copy Constructor
+// GGraph::GGraph(const GGraph& other) 
+//     : edge_id_assign(other.edge_id_assign),
+//       vertices(other.vertices),
+//       edges(other.edges), 
+//       vert_grades(other.vert_grades),
+//       edge_grades(other.edge_grades),
+//       adjacency(other.adjacency)
+// {security_check_shapes();}
 
 
 // Method to add an edge to the graph
