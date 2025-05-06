@@ -19,6 +19,10 @@
 #include "GGraph.hpp"
 #include <icecream.hpp>
 #include <optional>
+#include "Compare.hpp"
+#include "Hash.hpp"
+
+
 // Construct the Degree-Rips filtration from a point cloud, it will be 1-critical by 
 // inserting vertices and edges with multiplicity. 
 // Input: a vector of points, each point is a vector of coordinates
@@ -33,7 +37,8 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(co
     std::iota(degrees.begin(), degrees.end(), 0);
 
     // create a vector of all distances
-    std::set<PT> all_distances;
+    std::set<PT, Compare<PT>> all_distances;
+    // std::set<double, Compare<double, false>> // if you don't want fuzzy comparison, 
     all_distances.insert(0);
 
     // Compute distance matrix 
@@ -64,14 +69,19 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(co
 
     // construct a GradeTable with x and y coordinates
     // x: distance, y: - degree
-    std::set<int> negative_degrees;
+    std::set<int, Compare<int>> negative_degrees;
     for (int i = 0; i < n; ++i) {
         negative_degrees.insert(-i);
     }
-    GradeTable<PT, int> grade_table(all_distances, negative_degrees);
+    std::vector<PT> x_coords(all_distances.begin(), all_distances.end());
+    std::vector<int> y_coords(negative_degrees.begin(), negative_degrees.end());
+    GradeTable<PT, int> grade_table(x_coords, y_coords);
+    
     // free the memory of all_distances and negative_degrees
-    std::set<PT>().swap(all_distances);
-    std::set<int>().swap(negative_degrees);
+    std::vector<PT>().swap(x_coords);
+    std::vector<int>().swap(y_coords);
+    std::set<PT, Compare<PT>>().swap(all_distances);
+    std::set<int, Compare<int>>().swap(negative_degrees);
     
     // Create a copy of the distance matrix for sorting
     std::vector<std::vector<PT>> sorted_dists(n, std::vector<PT>(n));
@@ -185,7 +195,7 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
     }
 
     // Create distance set from vector and add 0.0 for self-distances
-    std::set<PT> distance_set(distances.begin(), distances.end());
+    std::set<PT, Compare<PT>> distance_set(distances.begin(), distances.end());
     distance_set.insert(0.0);
 
     // Create distance to index map
@@ -204,6 +214,8 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
         size_t threshold_index = static_cast<size_t>(num_edges * 0.2);
         radius_threshold_value = *std::next(distance_set.begin(), threshold_index);
     }
+
+    std::cout << "Radius threshold: " << radius_threshold_value << std::endl;
 
     // Compute ball densities on each vertex
     std::vector<double> ball_densities(n, 0.0);
@@ -230,7 +242,7 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
     }
 
     // Create a set of negative ball densities for y-coordinates 
-    std::set<double> function_value_set(ball_densities.begin(), ball_densities.end());
+    std::set<double, Compare<double>> function_value_set(ball_densities.begin(), ball_densities.end());
 
     // Create a map of ball densities to indices (rank in ball density coordinate)
     std::unordered_map<double, int> ball_density_to_index;
@@ -241,11 +253,15 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
 
     // Construct a GradeTable with
     // x-coordinate: function value, y-coordinate: distance
-    GradeTable<double, PT> grade_table(function_value_set, distance_set);
+    std::vector<PT> x_coords(function_value_set.begin(), function_value_set.end());
+    std::vector<PT> y_coords(distance_set.begin(), distance_set.end());
+    GradeTable<double, PT> grade_table(x_coords, y_coords);
 
-    // free the memory of distance_set and function_value_set
-    std::set<PT>().swap(distance_set);
-    std::set<double>().swap(function_value_set);
+    // free the memory 
+    std::vector<PT>().swap(x_coords);
+    std::vector<PT>().swap(y_coords);
+    std::set<PT, Compare<PT>>().swap(distance_set);
+    std::set<double, Compare<double>>().swap(function_value_set);
 
     // Prepare for GGraph construction with exact sizes
     std::vector<std::pair<int, int>> edges;
@@ -269,6 +285,170 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
             int j_rank = ball_density_to_index[ball_densities[j]];
             int x_rank = std::max(i_rank, j_rank);
             int y_rank = distance_to_index[distances[get_compressed_index(i, j)]];
+            edge_grades.emplace_back(GradePoint(x_rank, y_rank));
+        }
+    }
+
+    return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades), std::move(grade_table));
+}
+
+
+
+/*
+ * Construct a ball-density function-Rips filtration from a point cloud using the type in RIVET
+ * It is quite slow because of the exact type useing rational numbers.
+ * The process is first compute double precision distance value, say d1 
+ * then convert to exact type by approximating, say f1
+ * and next convert to ExactValue type, with a exact value (double precision) as its member variable, say d2.
+ * The plausible thing is that d2 is not equal to d1.
+ * 
+ * 
+ * Input: 
+ *   - a vector of points, each point is a vector of coordinates
+ *   - a radius threshold optional
+ * Output: a GGraph object and a GradeTable object
+ * 
+ * The logic is as follows:
+ * 1. Compute the distance matrix D
+ * 2. Compute the ball density for each point
+ * 3. Create a GradeTable with x and y coordinates
+ * 4. Create a GGraph
+ */
+template<typename PT>
+std::tuple<GGraph, GradeTable<rivert::ExactValue, rivert::ExactValue>> 
+point_cloud_to_ball_density_Rips_filtration_rivet(
+    const std::vector<std::vector<PT>>& points, 
+    std::optional<double> radius_threshold = std::nullopt)
+{
+    const int n = points.size();
+    const int num_edges = n * (n - 1) / 2;
+
+    // Compute distances and store in compressed format
+    std::vector<rivert::ExactValue> distances;
+    distances.reserve(num_edges);
+    
+    // Create distance set from vector and add 0.0 for self-distances
+    rivert::ExactSet distance_set;
+    distance_set.insert(rivert::ExactValue(0.0));
+
+    // Helper function to get index in compressed vector
+    auto get_compressed_index = [n](int i, int j) {
+        if (i > j) std::swap(i, j);
+        return i * n - (i * (i + 1)) / 2 + (j - i - 1);
+    };
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            PT dist = 0.0;
+            for (size_t k = 0; k < points[i].size(); ++k) {
+                PT diff = points[i][k] - points[j][k];
+                dist += diff * diff;
+            }
+            PT dist_sqrt = std::sqrt(dist);
+            rivert::exact dist_sqrt_exact = rivert::approx(dist_sqrt);
+            distances.emplace_back(rivert::ExactValue(dist_sqrt_exact));
+            distance_set.insert(distances.back());
+        }
+    }
+
+    // Create distance to index map
+    std::unordered_map<rivert::exact, int> distance_to_index;
+    int index = 0;
+    for (const auto& value : distance_set) {
+        distance_to_index[value.exact_value] = index++;
+    }
+
+    // Set radius threshold
+    double radius_threshold_value;
+    if (radius_threshold) {
+        radius_threshold_value = *radius_threshold;
+    } else {
+        // use 20% of the distance set as the threshold if not provided
+        std::vector<double> sorted_distances;
+        sorted_distances.reserve(num_edges+1);
+        sorted_distances.emplace_back(0.0);
+        for (const auto& distance : distances) {
+            sorted_distances.emplace_back(distance.double_value);
+        }
+        std::sort(sorted_distances.begin(), sorted_distances.end());
+        size_t threshold_index = static_cast<size_t>(num_edges * 0.2);
+        radius_threshold_value = sorted_distances[threshold_index];
+    }
+    
+    // print the radius threshold
+    std::cout << "Radius threshold: " << radius_threshold_value << std::endl;
+
+    // Compute ball densities on each vertex
+    std::vector<double> ball_densities(n, 0.0);
+    int total_mass = 0;
+    
+    for (int i = 0; i < n; ++i) {
+        int d = 1; // degree of the i-th point, 1 for itself
+        for (int j = 0; j < n; ++j) {
+            if (i != j) {
+                double dist = distances[get_compressed_index(i, j)].double_value;
+                if (dist <= radius_threshold_value) {
+                    d++;
+                }
+            }
+        }
+        // negate for bottom-up filtration F^-1(-inf, a]
+        ball_densities[i] = -static_cast<double>(d);
+        total_mass += d;
+    }
+
+    // Normalize and create function value set
+    for (int i = 0; i < n; ++i) {
+        ball_densities[i] /= total_mass;
+    }
+
+    // Create a set of negative ball densities for y-coordinates 
+    rivert::ExactSet function_value_set;
+    for (const auto& density : ball_densities) {
+        function_value_set.insert(rivert::ExactValue(density));
+    }
+
+    // Create a map of ball densities to indices (rank in ball density coordinate)
+    std::unordered_map<rivert::exact, int> ball_density_to_index;
+    index = 0;
+    for (const auto& value : function_value_set) {
+        ball_density_to_index[value.exact_value] = index++;
+    }
+
+    // Construct a GradeTable with  
+    // x-coordinate: function value, y-coordinate: distance
+    std::vector<rivert::ExactValue> x_coords(function_value_set.begin(), function_value_set.end());
+    std::vector<rivert::ExactValue> y_coords(distance_set.begin(), distance_set.end());
+    GradeTable<rivert::ExactValue, rivert::ExactValue> grade_table(x_coords, y_coords);
+
+    // free the memory 
+    std::vector<rivert::ExactValue>().swap(x_coords);
+    std::vector<rivert::ExactValue>().swap(y_coords);
+    rivert::ExactSet().swap(distance_set);
+    rivert::ExactSet().swap(function_value_set);
+
+    // Prepare for GGraph construction with exact sizes
+    std::vector<std::pair<int, int>> edges;
+    edges.reserve(num_edges);
+    std::vector<GradePoint> vertex_grades(n);
+    std::vector<GradePoint> edge_grades;
+    edge_grades.reserve(num_edges);
+
+    // Create vertex grades
+    for (int i = 0; i < n; ++i) {
+        int x_rank = ball_density_to_index[ball_densities[i]];
+        int y_rank = 0;
+        vertex_grades[i] = GradePoint(x_rank, y_rank);
+    }
+
+    // Create edge grades
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            edges.emplace_back(i, j);
+            int i_rank = ball_density_to_index[ball_densities[i]];
+            int j_rank = ball_density_to_index[ball_densities[j]];
+            int x_rank = std::max(i_rank, j_rank);
+            int y_rank = distance_to_index[distances[get_compressed_index(i, j)].exact_value];
             edge_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
     }

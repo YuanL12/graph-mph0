@@ -66,35 +66,37 @@ def read_our_betti(file_path):
     return betti_0_data, betti_1_data, betti_2_data
 
 # Example usage
-output_path = "/home/yluo/Documents/graph-mph0/build/betti_numbers.txt"
+output_path = "/home/yluo/Documents/graph-mph0/build/density_rips_exact_100.txt"
 betti_0, betti_1, betti_2 = read_our_betti(output_path)
 
 # Print the results
-print("betti_0 len:", len(betti_0))
-print("betti_1 len:", len(betti_1))
-print("betti_2 len:", len(betti_2)) 
+print("ours betti_0 len:", len(betti_0))
+print("ours betti_1 len:", len(betti_1))
+print("ours betti_2 len:", len(betti_2)) 
 
 
 # Example usage
-rivet_output_path = "/home/yluo/Documents/rivet-python/example/output_100.txt"
+rivet_output_path = "/home/yluo/Documents/graph-mph0/build/rivet_output_100.txt"
 xi_0, xi_1, xi_2 = read_rivet_output(rivet_output_path)
 
 # Print the results
-print("xi_0 len:", len(xi_0))
-print("xi_1 len:", len(xi_1))
-print("xi_2 len:", len(xi_2)) 
+print("rivet betti_0 len:", len(xi_0))
+print("rivet betti_1 len:", len(xi_1))
+print("rivet betti_2 len:", len(xi_2)) 
 
 # compare the two results
+print("Compare betti_0:")
 for i in range(len(xi_0)):
     if xi_0[i] != betti_0[i]:
-        print("xi_0[i] != betti_0[i]")
-        print(xi_0[i], betti_0[i])
+        print(f"i = {i:3d}, \trivet = {xi_0[i]}, \tours = {betti_0[i]}")
+
+print("Compare betti_1:")
 for i in range(len(xi_1)):
     if xi_1[i] != betti_1[i]:
-        print("xi_1[i] != betti_1[i]")
-        print(xi_1[i], betti_1[i])
+        print(f"i = {i:3d}, \trivet = {xi_1[i]}, \tours = {betti_1[i]}")
+
+print("Compare betti_2:")
 for i in range(len(xi_2)):
     if xi_2[i] != betti_2[i]:
-        print("xi_2[i] != betti_2[i]")
-        print(xi_2[i], betti_2[i])
+        print(f"i = {i:3d}, \trivet = {xi_2[i]}, \tours = {betti_2[i]}")
         

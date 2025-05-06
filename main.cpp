@@ -317,7 +317,6 @@ void print_and_write_betti_result(
     auto betti_1 = sort_count_betti_result(raw_betti_1);
     auto betti_2 = sort_count_betti_result(raw_betti_2);
     auto betti_0_1 = sort_count_betti_result(raw_betti_0_1);
-    IC(betti_0, betti_1, betti_2, betti_0_1);
     IC(betti_0.size(), betti_1.size(), betti_2.size(), betti_0_1.size());
 
     if (file_name != "") {
@@ -363,6 +362,7 @@ int test_degree_Rips_filtration(std::string file_name) {
 
 int test_ball_density_Rips_filtration(std::string file_name) {
     auto points = read_points<double>(file_name);
+    size_t num_points = points.size();
 
     auto time_start = std::chrono::high_resolution_clock::now();
     auto [ggraph, grade_table] = point_cloud_to_ball_density_Rips_filtration<double>(points);
@@ -383,10 +383,40 @@ int test_ball_density_Rips_filtration(std::string file_name) {
     grade_table.print(x_y_swap);
 
     // print and write the betti numbers
-    std::string file_name_output = "density_rips_10.txt";
+    std::string file_name_output = "density_rips_" + std::to_string(num_points) + ".txt";
     print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, 
         x_y_swap, file_name_output);
     
+    return 0;
+}
+
+int test_ball_density_Rips_filtration_exact(std::string file_name) {
+    auto points = read_points<double>(file_name);
+    size_t num_points = points.size();
+
+    auto time_start = std::chrono::high_resolution_clock::now();    
+    auto [ggraph, grade_table] = point_cloud_to_ball_density_Rips_filtration_rivet<double>(points);
+    auto time_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_duration = time_end - time_start;
+    std::cout << "Time taken to build the graph and grade table: " << time_duration.count() << " seconds" << std::endl;
+    
+    // time the computation 
+    std::cout << "Computing MPH0..." << std::endl;
+    time_start = std::chrono::high_resolution_clock::now();
+    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_DTree_Grade_Version(ggraph);
+    time_end = std::chrono::high_resolution_clock::now();
+    time_duration = time_end - time_start;
+    std::cout << "Time taken to compute MPH0: " << time_duration.count() << " seconds" << std::endl;
+
+    // print the grade table
+    bool x_y_swap = false;
+    grade_table.print(x_y_swap);
+
+    // print and write the betti numbers
+    std::string file_name_output = "density_rips_exact_" + std::to_string(num_points) + ".txt";
+    print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, 
+        x_y_swap, file_name_output);
+
     return 0;
 }
 
@@ -396,18 +426,23 @@ int main(int argc, char** argv) {
     // test_5();
     // test_figure1_GGraph();
 
-    // std::string file_name = argv[1];    
+    std::string file_name = argv[1];    
     // std::cout << "--------------------------------" << std::endl;
     // std::cout << "Testing read points with floating point Filtration" << std::endl;
     // test_read_points(file_name);
 
-    std::string file_name = argv[1];   
-    std::cout << "--------------------------------" << std::endl;
+    // std::string file_name = argv[1];   
+    // std::cout << "--------------------------------" << std::endl;
     // std::cout << "Testing degree Rips Filtration" << std::endl;
     // test_degree_Rips_filtration(file_name);
-    // std::cout << "--------------------------------" << std::endl;
 
-    std::cout << "Testing ball density Rips Filtration" << std::endl;
-    test_ball_density_Rips_filtration(file_name);
+    // std::cout << "--------------------------------" << std::endl;
+    // std::cout << "Testing ball density Rips Filtration" << std::endl;
+    // test_ball_density_Rips_filtration(file_name);
+
+    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Testing ball density Rips Filtration with exact type" << std::endl;
+    test_ball_density_Rips_filtration_exact(file_name);
+
     return 0;
 }

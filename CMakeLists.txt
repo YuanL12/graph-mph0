@@ -12,7 +12,7 @@ endif()
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set default build type to Release
 if(NOT CMAKE_BUILD_TYPE)
@@ -29,7 +29,27 @@ endif()
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)
 # Find Boost and Include Boost headers
+set(BOOST_ROOT /usr)
+set(Boost_NO_SYSTEM_PATHS ON)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+
+message(STATUS "Boost_ROOT: $ENV{BOOST_ROOT}")
+message(STATUS "Boost_INCLUDEDIR: $ENV{BOOST_INCLUDEDIR}")
+message(STATUS "Boost_LIBRARYDIR: $ENV{BOOST_LIBRARYDIR}")
+
+# Print CMake's search paths
+message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
+message(STATUS "CMAKE_INCLUDE_PATH: ${CMAKE_INCLUDE_PATH}")
+message(STATUS "CMAKE_LIBRARY_PATH: ${CMAKE_LIBRARY_PATH}")
+
 find_package(Boost REQUIRED)
+message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
+message(STATUS "Boost_VERSION: ${Boost_VERSION}")
+message(STATUS "Boost_FOUND: ${Boost_FOUND}")
+
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Use Dynamic Tree
