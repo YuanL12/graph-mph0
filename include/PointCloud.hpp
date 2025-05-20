@@ -167,7 +167,9 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(co
  */
 template<typename PT>
 std::tuple<GGraph, GradeTable<double, PT>> 
-point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& points, std::optional<double> radius_threshold = std::nullopt)
+point_cloud_to_ball_density_Rips_filtration(
+    const std::vector<std::vector<PT>>& points, 
+    std::optional<double> radius_threshold = std::nullopt)
 {
     const int n = points.size();
     const int num_edges = n * (n - 1) / 2;
@@ -214,8 +216,6 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
         size_t threshold_index = static_cast<size_t>(num_edges * 0.2);
         radius_threshold_value = *std::next(distance_set.begin(), threshold_index);
     }
-
-    std::cout << "Radius threshold: " << radius_threshold_value << std::endl;
 
     // Compute ball densities on each vertex
     std::vector<double> ball_densities(n, 0.0);
@@ -285,6 +285,16 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
             int j_rank = ball_density_to_index[ball_densities[j]];
             int x_rank = std::max(i_rank, j_rank);
             int y_rank = distance_to_index[distances[get_compressed_index(i, j)]];
+
+            // for debug 4 278 ; 43 44 
+            if (x_rank == 4 && y_rank == 278) {
+                std::cout << "two vertices are: (" << i << ", " << j << ")" << std::endl;
+                std::cout << "ball_densities[i]: " << ball_densities[i] << ", ball_densities[j]: " << ball_densities[j] << std::endl;
+                std::cout << "i_rank: " << i_rank << ", j_rank: " << j_rank << std::endl;
+                
+                std::cout << "vertex_grades[i]: " << vertex_grades[i] << ", vertex_grades[j]: " << vertex_grades[j] << std::endl;
+            }
+
             edge_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
     }
@@ -295,13 +305,9 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
 
 
 /*
- * Construct a ball-density function-Rips filtration from a point cloud using the type in RIVET
- * It is quite slow because of the exact type useing rational numbers.
- * The process is first compute double precision distance value, say d1 
- * then convert to exact type by approximating, say f1
- * and next convert to ExactValue type, with a exact value (double precision) as its member variable, say d2.
- * The plausible thing is that d2 is not equal to d1.
- * 
+ * Construct a ball-density function-Rips filtration from a point cloud 
+ * It uses the ExactValue type in RIVET.
+ * It is slower than the above double version, because the need to convert double to rational number.
  * 
  * Input: 
  *   - a vector of points, each point is a vector of coordinates
@@ -315,7 +321,7 @@ point_cloud_to_ball_density_Rips_filtration(const std::vector<std::vector<PT>>& 
  * 4. Create a GGraph
  */
 template<typename PT>
-std::tuple<GGraph, GradeTable<rivert::ExactValue, rivert::ExactValue>> 
+std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>> 
 point_cloud_to_ball_density_Rips_filtration_rivet(
     const std::vector<std::vector<PT>>& points, 
     std::optional<double> radius_threshold = std::nullopt)
@@ -324,12 +330,12 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
     const int num_edges = n * (n - 1) / 2;
 
     // Compute distances and store in compressed format
-    std::vector<rivert::ExactValue> distances;
+    std::vector<rivet::ExactValue> distances;
     distances.reserve(num_edges);
     
     // Create distance set from vector and add 0.0 for self-distances
-    rivert::ExactSet distance_set;
-    distance_set.insert(rivert::ExactValue(0.0));
+    rivet::ExactSet distance_set;
+    distance_set.insert(rivet::ExactValue(0.0));
 
     // Helper function to get index in compressed vector
     auto get_compressed_index = [n](int i, int j) {
@@ -345,14 +351,14 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
                 dist += diff * diff;
             }
             PT dist_sqrt = std::sqrt(dist);
-            rivert::exact dist_sqrt_exact = rivert::approx(dist_sqrt);
-            distances.emplace_back(rivert::ExactValue(dist_sqrt_exact));
+            rivet::exact dist_sqrt_exact = rivet::approx(dist_sqrt);
+            distances.emplace_back(rivet::ExactValue(dist_sqrt_exact));
             distance_set.insert(distances.back());
         }
     }
 
     // Create distance to index map
-    std::unordered_map<rivert::exact, int> distance_to_index;
+    std::unordered_map<rivet::exact, int> distance_to_index;
     int index = 0;
     for (const auto& value : distance_set) {
         distance_to_index[value.exact_value] = index++;
@@ -375,8 +381,6 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
         radius_threshold_value = sorted_distances[threshold_index];
     }
     
-    // print the radius threshold
-    std::cout << "Radius threshold: " << radius_threshold_value << std::endl;
 
     // Compute ball densities on each vertex
     std::vector<double> ball_densities(n, 0.0);
@@ -398,18 +402,16 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
     }
 
     // Normalize and create function value set
+    rivet::ExactSet function_value_set;
     for (int i = 0; i < n; ++i) {
         ball_densities[i] /= total_mass;
-    }
-
-    // Create a set of negative ball densities for y-coordinates 
-    rivert::ExactSet function_value_set;
-    for (const auto& density : ball_densities) {
-        function_value_set.insert(rivert::ExactValue(density));
+        // directly use the double precision value as the exact value
+        // althogh different from the distance case, rivet use this convention. 
+        function_value_set.insert(rivet::ExactValue(ball_densities[i]));
     }
 
     // Create a map of ball densities to indices (rank in ball density coordinate)
-    std::unordered_map<rivert::exact, int> ball_density_to_index;
+    std::unordered_map<rivet::exact, int> ball_density_to_index;
     index = 0;
     for (const auto& value : function_value_set) {
         ball_density_to_index[value.exact_value] = index++;
@@ -417,15 +419,15 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
 
     // Construct a GradeTable with  
     // x-coordinate: function value, y-coordinate: distance
-    std::vector<rivert::ExactValue> x_coords(function_value_set.begin(), function_value_set.end());
-    std::vector<rivert::ExactValue> y_coords(distance_set.begin(), distance_set.end());
-    GradeTable<rivert::ExactValue, rivert::ExactValue> grade_table(x_coords, y_coords);
+    std::vector<rivet::ExactValue> x_coords(function_value_set.begin(), function_value_set.end());
+    std::vector<rivet::ExactValue> y_coords(distance_set.begin(), distance_set.end());
+    GradeTable<rivet::ExactValue, rivet::ExactValue> grade_table(x_coords, y_coords);
 
     // free the memory 
-    std::vector<rivert::ExactValue>().swap(x_coords);
-    std::vector<rivert::ExactValue>().swap(y_coords);
-    rivert::ExactSet().swap(distance_set);
-    rivert::ExactSet().swap(function_value_set);
+    std::vector<rivet::ExactValue>().swap(x_coords);
+    std::vector<rivet::ExactValue>().swap(y_coords);
+    rivet::ExactSet().swap(distance_set);
+    rivet::ExactSet().swap(function_value_set);
 
     // Prepare for GGraph construction with exact sizes
     std::vector<std::pair<int, int>> edges;

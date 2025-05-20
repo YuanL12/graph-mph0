@@ -72,6 +72,8 @@ set(SOURCES
 add_executable(main_out ${SOURCES})
 target_link_libraries(main_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
+add_executable(time_out time.cpp)
+target_link_libraries(time_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # # Add test
 # set(TEST_SOURCES

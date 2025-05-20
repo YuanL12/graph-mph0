@@ -241,3 +241,32 @@ point_cloud_to_1_critical_filtration(const std::vector<std::vector<PT>>& points,
 
     return {vertices, edges, filt_func_v, filt_func_e};
 }
+
+// write the filtration data to scc2020 format, the input GradeGraph has to be a 1-critical filtration
+void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filename) {
+    // check if file exists, if not exist, create it
+    std::ofstream file(filename);
+    file << "scc2020" << std::endl;
+    file << "2" << std::endl; // 2-parameter filtration
+    const auto& edge_grades = G.get_edges_grades();
+    const auto& vert_grades = G.get_vert_grades();
+    int nV = vert_grades.size();
+    int nE = edge_grades.size();
+
+    // TODO: currently, edge_grades is undered, writting into file has to respect the order
+    file << nE << " " << nV << " " << 0 << std::endl;
+    for (const auto& [eid, grade_pt]: edge_grades) {
+        Edge e = G.get_edge(eid);
+        Vertex v0 = e[0]; Vertex v1 = e[1];
+        int x = grade_pt.get_x();
+        int y = grade_pt.get_y();
+        file << x << " " << y << " ; " << v0 << " " << v1 << " " << std::endl;
+    }
+    for (const auto& [v, grade_pt]: vert_grades) {
+        int x = grade_pt.get_x();
+        int y = grade_pt.get_y();
+        file << x << " " << y << " ; " << std::endl;
+    }
+    file << std::endl;
+    file.close();
+}

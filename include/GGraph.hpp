@@ -67,6 +67,9 @@ public:
     // get # of vertices
     inline int get_nvertices() const {return vertices.size();};
 
+    // get # of edges
+    inline int get_nedges() const {return edges.size();};
+
     // print sizes of all data structures
     void print_sizes() const {
         std::cout << "Graph size: " << vertices.size() << std::endl;

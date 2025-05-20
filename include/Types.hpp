@@ -12,7 +12,13 @@ using Vertex = int;
 using GradeID = int;
 
 
-namespace rivert {
+/*
+The following code is from RIVET. 
+It uses rational numbers from boost::multiprecision to deal with floating point precision.
+Well it is not very nessary for this project as we do not need projection on lines. 
+
+*/
+namespace rivet {
 
 // Rivet exact Type using rational numbers from boost::multiprecision
 using exact = boost::multiprecision::cpp_rational;
@@ -42,8 +48,7 @@ exact approx(double x)
     return exact((long)floor(x * denom), denom);
 }
 
-
-//first, a struct to help sort multi-grade values
+// exact value struct
 struct ExactValue {
     double double_value;
     exact exact_value;
@@ -105,4 +110,4 @@ inline std::ostream& operator<<(std::ostream& os, const ExactValue& ev) {
     return os;
 }
 
-} // namespace rivert
+} // namespace rivet
