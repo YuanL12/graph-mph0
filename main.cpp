@@ -390,12 +390,15 @@ int test_ball_density_Rips_filtration(std::string file_name) {
     return 0;
 }
 
-int test_ball_density_Rips_filtration_exact(std::string file_name) {
+int test_ball_density_Rips_filtration_exact(
+    std::string file_name,
+    std::optional<double> radius_threshold = std::nullopt
+) {
     auto points = read_points<double>(file_name);
     size_t num_points = points.size();
 
     auto time_start = std::chrono::high_resolution_clock::now();    
-    auto [ggraph, grade_table] = point_cloud_to_ball_density_Rips_filtration_rivet<double>(points);
+    auto [ggraph, grade_table] = point_cloud_to_ball_density_Rips_filtration_rivet<double>(points, radius_threshold);
     auto time_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> time_duration = time_end - time_start;
     std::cout << "Time taken to build the graph and grade table: " << time_duration.count() << " seconds" << std::endl;
@@ -413,12 +416,58 @@ int test_ball_density_Rips_filtration_exact(std::string file_name) {
     grade_table.print(x_y_swap);
 
     // print and write the betti numbers
-    std::string file_name_output = "density_rips_exact_" + std::to_string(num_points) + ".txt";
+    std::string file_name_output = "our_density_rips_exact_" + std::to_string(num_points) + ".txt";
     print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, 
-        x_y_swap, file_name_output);
+                                 x_y_swap, file_name_output);
 
     return 0;
 }
+
+
+
+int test_write_ball_density_rips_filtration_to_firep(std::string file_name, std::string output_file_name) {
+    auto points = read_points<double>(file_name);
+    size_t num_points = points.size();
+
+    auto time_start = std::chrono::high_resolution_clock::now();
+    auto [ggraph, grade_table] = point_cloud_to_ball_density_Rips_filtration<double>(points);
+    auto time_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_duration = time_end - time_start;
+    std::cout << "Time taken to build the graph and grade table: " << time_duration.count() << " seconds" << std::endl;
+
+    // write the filtration data to scc2020 format
+    time_start = std::chrono::high_resolution_clock::now();
+    write_filtration_data_to_scc2020(ggraph, output_file_name);
+    time_end = std::chrono::high_resolution_clock::now();
+    time_duration = time_end - time_start;
+    std::cout << "Time taken to write the filtration data to scc2020 format: " << time_duration.count() << " seconds" << std::endl;
+    
+    return 0;
+}
+
+
+
+
+int test_write_deg_rips_filtration_to_firep(std::string file_name, std::string output_file_name) {
+    auto points = read_points<double>(file_name);
+    size_t num_points = points.size();
+
+    auto time_start = std::chrono::high_resolution_clock::now();
+    auto [ggraph, grade_table] = point_cloud_to_degree_Rips_filtration<double>(points);
+    auto time_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> time_duration = time_end - time_start;
+    std::cout << "Time taken to build the graph and grade table: " << time_duration.count() << " seconds" << std::endl;
+
+    // write the filtration data to scc2020 format
+    time_start = std::chrono::high_resolution_clock::now();
+    write_filtration_data_to_scc2020(ggraph, output_file_name);
+    time_end = std::chrono::high_resolution_clock::now();
+    time_duration = time_end - time_start;
+    std::cout << "Time taken to write the filtration data to scc2020 format: " << time_duration.count() << " seconds" << std::endl;
+    
+    return 0;
+}
+
 
 int main(int argc, char** argv) {
     // test_figure1_dendrogram();
@@ -440,9 +489,16 @@ int main(int argc, char** argv) {
     // std::cout << "Testing ball density Rips Filtration" << std::endl;
     // test_ball_density_Rips_filtration(file_name);
 
+    // std::cout << "--------------------------------" << std::endl;
+    // std::cout << "Testing ball density Rips Filtration with exact type" << std::endl;
+    // test_ball_density_Rips_filtration_exact(file_name);
+
     std::cout << "--------------------------------" << std::endl;
-    std::cout << "Testing ball density Rips Filtration with exact type" << std::endl;
-    test_ball_density_Rips_filtration_exact(file_name);
+    std::cout << "Testing write filtration data to scc2020 format" << std::endl;
+    if (argc > 2) {
+        std::string output_file_name = argv[2];
+        test_write_deg_rips_filtration_to_firep(file_name, output_file_name);
+    }
 
     return 0;
 }

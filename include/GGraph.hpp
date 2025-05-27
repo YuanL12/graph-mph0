@@ -23,7 +23,6 @@
 class GGraph {
 public:
 
-    using VAdj = std::vector<EdgeId>; // single vertex adjacency
     // Constructor reserve sizes 
     GGraph(int n);
 
@@ -237,7 +236,7 @@ void GGraph::add_edge(Vertex v, Vertex w) {
     add_edge(v, w, GradePoint(-1, -1));
 }
 
-GGraph::VAdj GGraph::get_adj(Vertex v) const {
+VAdj GGraph::get_adj(Vertex v) const {
     auto it = adjacency.find(v);
     if(it == adjacency.end()){
         throw std::runtime_error("vertex " + std::to_string(v) + " not found when trying to get its adjacency list");

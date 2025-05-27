@@ -10,7 +10,7 @@ using EdgeId = int;
 using VertexID = size_t;
 using Vertex = int;
 using GradeID = int;
-
+using VAdj = std::vector<EdgeId>; // vertex adjacency for storing its adjacent edge indices 
 
 /*
 The following code is from RIVET. 

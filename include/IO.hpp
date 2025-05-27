@@ -253,20 +253,34 @@ void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filena
     int nV = vert_grades.size();
     int nE = edge_grades.size();
 
-    // TODO: currently, edge_grades is undered, writting into file has to respect the order
+    // give each vertex a unique index starting from 0
+    std::unordered_map<Vertex, size_t> vertex_2_idx;
+    std::unordered_map<size_t, Vertex> idx_2_vertex;
+    size_t idx = 0;
+    for (const auto& [v, grade_pt]: vert_grades) {
+        vertex_2_idx[v] = idx;
+        idx_2_vertex[idx] = v;
+        idx++;
+    }
+
+    
     file << nE << " " << nV << " " << 0 << std::endl;
     for (const auto& [eid, grade_pt]: edge_grades) {
         Edge e = G.get_edge(eid);
-        Vertex v0 = e[0]; Vertex v1 = e[1];
+        Vertex v0 = e[0]; size_t v0_idx = vertex_2_idx[v0]; 
+        Vertex v1 = e[1]; size_t v1_idx = vertex_2_idx[v1];
+        // get ranks 
         int x = grade_pt.get_x();
         int y = grade_pt.get_y();
-        file << x << " " << y << " ; " << v0 << " " << v1 << " " << std::endl;
+        file << x << " " << y << " ; " << v0_idx << " " << v1_idx << " " << std::endl;
     }
-    for (const auto& [v, grade_pt]: vert_grades) {
-        int x = grade_pt.get_x();
-        int y = grade_pt.get_y();
+    for (size_t i = 0; i < nV; ++i) {
+        Vertex v = idx_2_vertex[i];
+        int x = vert_grades.at(v).get_x();
+        int y = vert_grades.at(v).get_y();
         file << x << " " << y << " ; " << std::endl;
     }
+
     file << std::endl;
     file.close();
 }
