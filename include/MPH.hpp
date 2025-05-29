@@ -1,4 +1,6 @@
 #pragma once
+#include "Timer.hpp"
+#include <queue>
 #include "DynamicTree.hpp"
 #include "Graph.hpp"
 #include "Poset.hpp"
@@ -907,8 +909,14 @@ std::tuple<
     std::vector<std::tuple<size_t, size_t, int>> M;
     std::unordered_map<Vertex, size_t> row_idx; 
 
+#if MPH0_TIMERS
+mph0::collapse_timer.start();
+#endif
     // Collapse to vertex minimal
     collapse_to_vertex_minimal_Grade_Version(g);
+#if MPH0_TIMERS
+mph0::collapse_timer.stop();
+#endif
 
     // Build Dynamic Tree
     DynamicTree<int> DT(g.get_vertices(), visual_DT);
@@ -919,6 +927,9 @@ std::tuple<
     // set of all grade points for iteration
     std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
 
+#if MPH0_TIMERS
+mph0::create_grades_timer.start();
+#endif
     // Loop over all vertices and edges to fill it
     for (const auto& [v, gp]: g.get_vert_grades()){
         grade_point_2_vertex_edges_id[gp].first.push_back(v);
@@ -928,6 +939,14 @@ std::tuple<
         grade_point_2_vertex_edges_id[gp].second.push_back(eid);
         grades_collection.insert(gp);
     }
+    
+#if MPH0_TIMERS
+mph0::create_grades_timer.stop();
+#endif
+
+#if MPH0_TIMERS
+mph0::grades_iteration_timer.start();
+#endif
 
     // loop over all GradePoint in lexicographical ordering
     for (const auto& gd_point : grades_collection) {
@@ -974,6 +993,89 @@ std::tuple<
 
         }// End loop for each edge at gd_point 
     } // End loop for all grid points
-    
+#if MPH0_TIMERS
+mph0::grades_iteration_timer.stop();
+#endif
+
     return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+}
+
+
+// Algorithm 3: Betti tables and minimal presentation of R2-filtered graph
+// Return: betti_0, betti_1, 1 sparse Matrix as presentation
+std::tuple<
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::tuple<size_t, size_t, int>>
+> compute_minimal_presentation( 
+        GGraph& g,
+        bool visual_DT = false) 
+{
+
+    // Initialize betti_0, betti_1
+    std::vector<std::pair<int, int>> betti_0;
+    std::vector<std::pair<int, int>> betti_1;
+
+    // Sparse Matrix for presentation and its row index
+    std::vector<std::tuple<size_t, size_t, int>> M;
+    std::unordered_map<Vertex, size_t> row_idx; 
+
+    // Collapse to vertex minimal
+    collapse_to_vertex_minimal_Grade_Version(g);
+
+    // Build Dynamic Tree
+    DynamicTree<int> DT(g.get_vertices(), visual_DT);
+
+    // dict mapping a GradePoint to (vertices, edges)
+    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+    std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
+    // set of all grade points for iteration
+    std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+
+    // Loop over all vertices and edges to fill it
+    for (const auto& [v, gp]: g.get_vert_grades()){
+        grade_point_2_vertex_edges_id[gp].first.push_back(v);
+        grades_collection.insert(gp);
+    }
+    for (const auto& [eid, gp]: g.get_edges_grades()){
+        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
+        grades_collection.insert(gp);
+    }
+
+    // loop over all GradePoint in lexicographical ordering
+    for (const auto& gd_point : grades_collection) {
+        // get the grade point and its x,y ranks
+        int x = gd_point.get_x();
+        int y = gd_point.get_y();
+
+        // get vertices belong to the grade point
+        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+        for (const auto& v: verts_gd){
+            betti_0.emplace_back(x, y);
+            // row_idx[v] ← |β0|
+            row_idx[v] = betti_0.size();
+        }
+
+        // Check edges
+        DT.update_max_edge_weight(y);
+        std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
+        for (const EdgeId& eid: edges_ids_gd){
+            auto e = g.get_edge(eid);
+            Vertex e_0 = e[0]; Vertex e_1 = e[1];
+
+            if (e_0 == e_1) continue; // self loop only affects betti_0_1
+
+            // extract the edge weight
+            auto s = DT.time_of_merge_double(e_0, e_1);
+            if (s > y){ // Edge is not deletable
+                DT.merge_at_time(e_0, e_1, y); // merge the edge at time y
+                betti_1.emplace_back(x, y);
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1));
+                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+            }        
+
+        }// End loop for each edge at gd_point 
+    } // End loop for all grid points
+    
+    return std::make_tuple(betti_0, betti_1, M); 
 }

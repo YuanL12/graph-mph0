@@ -35,14 +35,6 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 
-message(STATUS "Boost_ROOT: $ENV{BOOST_ROOT}")
-message(STATUS "Boost_INCLUDEDIR: $ENV{BOOST_INCLUDEDIR}")
-message(STATUS "Boost_LIBRARYDIR: $ENV{BOOST_LIBRARYDIR}")
-
-# Print CMake's search paths
-message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "CMAKE_INCLUDE_PATH: ${CMAKE_INCLUDE_PATH}")
-message(STATUS "CMAKE_LIBRARY_PATH: ${CMAKE_LIBRARY_PATH}")
 
 find_package(Boost REQUIRED)
 message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
@@ -51,6 +43,13 @@ message(STATUS "Boost_VERSION: ${Boost_VERSION}")
 message(STATUS "Boost_FOUND: ${Boost_FOUND}")
 
 include_directories(${Boost_INCLUDE_DIRS})
+
+option(MPH0_TIMERS "Enable MPH0 timing code" OFF)
+find_package(Boost OPTIONAL_COMPONENTS timer)
+if(Boost_TIMER_FOUND AND MPH0_TIMERS)
+    add_compile_options(-DMPH0_TIMERS=1)
+    link_libraries(Boost::timer)
+endif()
 
 # Use Dynamic Tree
 # Add the submodule's source directory to the include path
