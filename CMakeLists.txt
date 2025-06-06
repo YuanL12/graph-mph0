@@ -19,9 +19,12 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# Add profiling flags
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
-# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+# if want to use perf to profile
+option(PERF_PROFILE "Enable perf profiling" OFF)
+if(PERF_PROFILE)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo)
+endif()
+
 
 # Debug mode (eg. in vscode)
 # set(CMAKE_BUILD_TYPE Debug)
@@ -54,8 +57,6 @@ endif()
 # Use Dynamic Tree
 # Add the submodule's source directory to the include path
 include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
-
-# Add the submodule's source files to your project
 add_library(ST_Tree STATIC
     ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/ST_Tree.cpp
     ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/visualise.cpp
@@ -63,24 +64,14 @@ add_library(ST_Tree STATIC
 # Ensure -fPIC is used for the static library
 set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# Add the executable
-# Add the source files
-set(SOURCES
-    main.cpp
-)
-add_executable(main_out ${SOURCES})
-target_link_libraries(main_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
-
-add_executable(time_out time.cpp)
-target_link_libraries(time_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
-
-# # Add test
-# set(TEST_SOURCES
-#     test/test_grade.cpp
-# )
-# add_executable(test_grade ${TEST_SOURCES})
-# target_link_libraries(test_grade PRIVATE ${Boost_LIBRARIES} ST_Tree)
+# -------------------------------------------------
+# Add the cpp executables
+# define the include path of Top Tree Library
+set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
+add_executable(topTree_out test/topTree.cpp)
+target_include_directories(topTree_out PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(topTree_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # -------------------------------------------------
 # build binding for python 
-add_subdirectory(binding)
+# add_subdirectory(binding)

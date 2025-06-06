@@ -1,6 +1,12 @@
 # graph-mph0
 This is a project about computing Multiparemeter Persistence at dimension 0 for filtered graphs.
 
+## TODO
+1. Make sure the result of rivet and mpfree matches in paper: Fast minimal Presentation of Bi-
+2. Update the table result 
+3. try the new top-tree library to see the performance change. The goal is 
+4. Memory Usage
+5. Size of grade_collection vector 
 
 ## Install 
 ### Basic Steps:
@@ -97,7 +103,17 @@ ln -s /usr/lib/x86_64-linux-gnu/libstdc++.so.6 ~/miniconda3/envs/your_package_na
 2. Node/edge features in Python has to be np.float64 to be passed into C++ double type. 
 
 
-### Reference
+## Theory 
+
+Tarjan and Sleator showed that:
+
+Any sequence of m operations on an n-node splay tree takes at most O(mlogn) time total.
+
+➡️ So, average cost = O(log n) per operation — amortized complexity.
+
+
+
+## Reference
 [Stanford Course Note](https://web.stanford.edu/class/archive/cs/cs166/cs166.1146/lectures/08/Slides08.pdf) includes Splay Tree. 
 
 [MIT Course Note](https://ocw.mit.edu/courses/6-854j-advanced-algorithms-fall-2008/resources/lec6/) iclude Splay Tree and Dynamic Tree.

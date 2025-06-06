@@ -924,8 +924,10 @@ mph0::collapse_timer.stop();
     // dict mapping a GradePoint to (vertices, edges)
     using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
     std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
-    // set of all grade points for iteration
-    std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+    
+    // // set of all grade points for iteration
+    // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+    std::vector<GradePoint> grades_collection;
 
 #if MPH0_TIMERS
 mph0::create_grades_timer.start();
@@ -933,13 +935,15 @@ mph0::create_grades_timer.start();
     // Loop over all vertices and edges to fill it
     for (const auto& [v, gp]: g.get_vert_grades()){
         grade_point_2_vertex_edges_id[gp].first.push_back(v);
-        grades_collection.insert(gp);
+        grades_collection.push_back(gp);
     }
     for (const auto& [eid, gp]: g.get_edges_grades()){
         grade_point_2_vertex_edges_id[gp].second.push_back(eid);
-        grades_collection.insert(gp);
+        grades_collection.push_back(gp);
     }
-    
+    std::sort(grades_collection.begin(), grades_collection.end(), LexicographicalOrderGradePoint());
+    // remove duplicates
+    grades_collection.erase(std::unique(grades_collection.begin(), grades_collection.end()), grades_collection.end());
 #if MPH0_TIMERS
 mph0::create_grades_timer.stop();
 #endif
@@ -981,6 +985,120 @@ mph0::grades_iteration_timer.start();
             if (s <= y){
                 betti_0_1.emplace_back(x, y); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
+                betti_1.emplace_back(x, y);
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
+                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+                // if (s < FT::CoordinateMax){ // The edge is cycle-creating
+                if (s < DT.max_edge_weight){ // The edge is cycle-creating
+                    betti_2.emplace_back(x, s);
+                    betti_0_1.emplace_back(x, s);
+                }
+            }        
+
+        }// End loop for each edge at gd_point 
+    } // End loop for all grid points
+#if MPH0_TIMERS
+mph0::grades_iteration_timer.stop();
+#endif
+
+    return std::make_tuple(betti_0, betti_1, betti_2, betti_0_1, M); 
+}
+
+
+// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
+// Return: 4 Betti tables, 1 sparse Matrix as presentation
+std::tuple<
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::pair<int, int>>, 
+    std::vector<std::tuple<size_t, size_t, int>>
+> compute_MPH0_TopTree(GGraph& g)
+{
+
+    // Initialize betti_0, betti_1, betti_2, betti_0_1
+    std::vector<std::pair<int, int>> betti_0;
+    std::vector<std::pair<int, int>> betti_1;
+    std::vector<std::pair<int, int>> betti_2;
+    std::vector<std::pair<int, int>> betti_0_1;
+
+    // Sparse Matrix for presentation and its row index
+    std::vector<std::tuple<size_t, size_t, int>> M;
+    std::unordered_map<Vertex, size_t> row_idx; 
+
+#if MPH0_TIMERS
+mph0::collapse_timer.start();
+#endif
+    // Collapse to vertex minimal
+    collapse_to_vertex_minimal_Grade_Version(g);
+#if MPH0_TIMERS
+mph0::collapse_timer.stop();
+#endif
+
+    // Build TopTree
+    DTree_TopTree<int, Vertex> DT(g.get_vertices());
+
+    // dict mapping a GradePoint to (vertices, edges)
+    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+    std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
+    
+    // // set of all grade points for iteration
+    // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+    std::vector<GradePoint> grades_collection;
+
+#if MPH0_TIMERS
+mph0::create_grades_timer.start();
+#endif
+    // Loop over all vertices and edges to fill it
+    for (const auto& [v, gp]: g.get_vert_grades()){
+        grade_point_2_vertex_edges_id[gp].first.push_back(v);
+        grades_collection.push_back(gp);
+    }
+    for (const auto& [eid, gp]: g.get_edges_grades()){
+        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
+        grades_collection.push_back(gp);
+    }
+    std::sort(grades_collection.begin(), grades_collection.end(), LexicographicalOrderGradePoint());
+    // remove duplicates
+    grades_collection.erase(std::unique(grades_collection.begin(), grades_collection.end()), grades_collection.end());
+#if MPH0_TIMERS
+mph0::create_grades_timer.stop();
+#endif
+
+#if MPH0_TIMERS
+mph0::grades_iteration_timer.start();
+#endif
+
+    // loop over all GradePoint in lexicographical ordering
+    for (const auto& gd_point : grades_collection) {
+        // get the grade point and its x,y ranks
+        int x = gd_point.get_x();
+        int y = gd_point.get_y();
+
+        // get vertices belong to the grade point
+        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+        for (const auto& v: verts_gd){
+            betti_0.emplace_back(x, y);
+            // row_idx[v] ← |β0|
+            row_idx[v] = betti_0.size();
+        }
+
+        // Check edges
+        std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
+        for (const EdgeId& eid: edges_ids_gd){
+            Vertex e_0, e_1;
+            auto e = g.get_edge(eid);
+            e_0 = e[0]; e_1 = e[1];
+            auto s = DT.time_of_merge(e_0, e_1); // y-coordinate
+            if (e_0 == e_1){
+                betti_0_1.emplace_back(x, y);
+                continue; // self loop only affects betti_0_1
+            }
+            
+            if (s <= y){
+                betti_0_1.emplace_back(x, y); // The edge is deletable, so it only affects H1
+            }else{ // Edge is not deletable, so belongs to relations in resolution
+                DT.merge_at_time(e_0, e_1, y);
                 betti_1.emplace_back(x, y);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));

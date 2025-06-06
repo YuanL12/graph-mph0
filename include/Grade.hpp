@@ -93,7 +93,7 @@ struct std::hash<GradePoint> {
 // LexicographicalOrderGradePoint for sorting and unique indexing
 struct LexicographicalOrderGradePoint {
     bool operator()(const GradePoint& a, const GradePoint& b) const {
-        return std::make_pair(a.x, a.y) < std::make_pair(b.x, b.y);
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
     }
 };
 
