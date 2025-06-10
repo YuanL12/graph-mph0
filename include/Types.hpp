@@ -4,13 +4,29 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <unordered_set>
 
 // Define type
-using EdgeId = int;
-using VertexID = size_t;
-using Vertex = int;
+using EdgeId = int; // -1 means null edge due to removal
+using VertexId = int;
 using GradeID = int;
-using VAdj = std::vector<EdgeId>; // vertex adjacency for storing its adjacent edge indices 
+using VAdj = std::unordered_set<EdgeId>; // vertex adjacency for storing its adjacent edge indices 
+
+struct Vertex {
+    VertexId id; // -1 means null vertex due to removal
+    int label; // label of the vertex
+    Vertex(): id(-1), label(-1) {}
+    Vertex(VertexId id, int label): id(id), label(label) {}
+
+    // equality operator
+    bool operator==(const Vertex& other) const {return id == other.id && label == other.label;}
+
+    // << operator
+    friend std::ostream& operator<<(std::ostream& os, const Vertex& v) {
+        os << v.label;
+        return os;
+    }
+};
 
 /*
 The following code is from RIVET. 

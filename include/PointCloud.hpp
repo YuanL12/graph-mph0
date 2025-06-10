@@ -98,7 +98,7 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(co
     // create vertex grades
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
-            Vertex v = i * n + j;
+            int v = i * n + j;
             int x_rank = distance_to_index[sorted_dists[i][j]];
             int y_rank = n - 1 - j; 
             vertex_grades.emplace_back(GradePoint(x_rank, y_rank));

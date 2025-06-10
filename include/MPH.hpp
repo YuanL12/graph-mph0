@@ -246,7 +246,7 @@ Graph<FT> collapse_to_vertex_minimal(const Graph<FT>& g) {
         bool check_minimal = true;
         for (const auto& eid : g1.get_adj(v)) {
             Edge e = g1.get_edge(eid);
-            Vertex u = (e[0] == v) ? e[1]: e[0];
+            int u = (e[0] == v) ? e[1]: e[0];
             FT fe = g1.get_edge_value(eid);
             FT fu = g1.get_vertex_value(u);
             if (fe == fv && fe > fu){ // v is not minimal
@@ -278,7 +278,7 @@ Graph<FT> collapse_to_vertex_minimal(const Graph<FT>& g) {
                 // local collapsible
                 for (const auto& eid_local: g1.get_adj(u)){
                     e = g1.get_edge(eid_local);
-                    Vertex x = (e[0] == u) ? e[1]: e[0];
+                    int x = (e[0] == u) ? e[1]: e[0];
                     FT fx, fu, fe;
                     fx = g1.get_vertex_value(x);
                     fu = g1.get_vertex_value(u);
@@ -750,50 +750,53 @@ std::tuple<
 */
 void local_collapse_edges_Grade_Version(GGraph& g) {
     // Initialize dictionary φ with identity map
+    std::vector<size_t> vertex_dict; vertex_dict.resize(g.get_nvertices());
+    std::iota(vertex_dict.begin(), vertex_dict.end(), 0); // fill with 0, 1, 2, ...
+
     // Initialize empty set visited
-    std::unordered_map<int, int> vertex_dict;
-    std::unordered_map<int, bool> visited;
-    for (auto v: g.get_vertices() ) {
-        vertex_dict[v] = v;
-        visited[v] = false;
-    }
+    std::vector<bool> visited(g.get_nvertices(), false);
 
     // type of (vertex, edge, vertex)
-    using VEV = std::tuple<int, Edge, int>; 
+    using VEV = std::tuple<GVertex, GEdge, GVertex>; 
     // Run depth-first search from v on local edges 
-    for (auto v: g.get_vertices() ) {
+    for (size_t v_idx = 0; v_idx < g.get_nvertices(); ++v_idx){
+        GVertex v = g.get_gvertex(v_idx);
+        if (v.get_id() == -1) {visited[v_idx] = true; continue;} // if the vertex is removed, skip it
+
         std::stack<VEV> stack;
         // Push the starting VEV onto the stack
-        VEV a(v, Edge::NULL_EDGE, v);
+        VEV a(v, GEdge::NULL_GEDGE, v);
         stack.push(a);
 
         while (!stack.empty()) {
-            int v_; Edge e; int u;
+            GVertex v_; GEdge e; GVertex u;
             std::tie(v_, e, u) = stack.top();
             assert(v == v_);
             stack.pop();
 
-            // If the vertex has not been visited, mark it as visited and process it
-            if (!visited[u]) {
-                visited[u] = true;
-                if (e != Edge::NULL_EDGE){
-                    vertex_dict[u] = v;
+            // If the vertex has not been visited and not removed, 
+            // mark it as visited and process it
+            if (!visited[u.get_id()] && u.get_id() != -1) {
+                visited[u.get_id()] = true;
+                if (e != GEdge::NULL_GEDGE){
+                    vertex_dict[u.get_id()] = v.get_id();
                     // remove the edge
-                    g.remove_edge(e);
+                    g.remove_edge(e.get_id());
                 }
                 // local collapsible
-                for (const auto& eid_local: g.get_adj(u)){
-                    e = g.get_edge(eid_local);
-                    Vertex x = (e[0] == u) ? e[1]: e[0];
+                for (const auto& eid_local: g.get_adj(u.get_id())){
+                    e = g.get_gedge(eid_local);
+                    // get the other vertex of the edge
+                    GVertex x = (e.get_v0() == u.get_id()) ? g.get_gvertex(e.get_v1()): g.get_gvertex(e.get_v0());
                     
                     // Get the grade of the vertex and edge
-                    GradePoint fx = g.get_vertex_grade(x);
-                    GradePoint fu = g.get_vertex_grade(u);
-                    GradePoint fe = g.get_edge_grade(eid_local);
+                    GradePoint fx = x.get_grade();
+                    GradePoint fu = u.get_grade();
+                    GradePoint fe = e.get_grade();
 
                     // Collapsible when fx == fe == fu
                     if (fe == fx && fx == fu){
-                        stack.push(VEV(v, g.get_edge(eid_local), x));
+                        stack.push(VEV(v, g.get_gedge(eid_local), x));
                     }
                 }
             }
@@ -814,25 +817,29 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
     local_collapse_edges_Grade_Version(g);
 
     // Initialize dictionary φ with identity map
-    // and empty set visited
-    std::unordered_map<int, int> vertex_dict;
-    std::set<int> visited;
-    for (auto v: g.get_vertices() ) {
-        vertex_dict[v] = v;
-    }
+    std::vector<size_t> vertex_dict; vertex_dict.resize(g.get_nvertices());
+    std::iota(vertex_dict.begin(), vertex_dict.end(), 0); // fill with 0, 1, 2, ...
+
+    // Initialize empty set visited
+    std::vector<bool> visited(g.get_nvertices(), false);
 
     // Define (vertex, edge, vertex) type 
-    using VEV = std::tuple<int, Edge, int>;
+    using VEV = std::tuple<GVertex, GEdge, GVertex>;
 
     // Run depth-first search from minimal vertices
-    for (auto v: g.get_vertices() ) {
-        GradePoint fv = g.get_vertex_grade(v);
+    for (size_t v_idx = 0; v_idx < g.get_nvertices(); ++v_idx){
+        GVertex v = g.get_gvertex(v_idx);
+        // TODO: check if we can use visited[v_idx] to skip?????
+        if (v.get_id() == -1 || visited[v_idx]) {visited[v_idx] = true; continue;} // if the vertex is removed, skip it
+        GradePoint fv = v.get_grade();
+
+        // Check if v is minimal
         bool check_minimal = true;
-        for (const auto& eid : g.get_adj(v)) {
-            Edge e = g.get_edge(eid);
-            Vertex u = (e[0] == v) ? e[1]: e[0];
-            GradePoint fe = g.get_edge_grade(eid);
-            GradePoint fu = g.get_vertex_grade(u);
+        for (const auto& eid : g.get_adj(v_idx)) {
+            GEdge e = g.get_gedge(eid);
+            GVertex u = (e.get_v0() == v_idx) ? g.get_gvertex(e.get_v1()): g.get_gvertex(e.get_v0());
+            GradePoint fe = e.get_grade();
+            GradePoint fu = u.get_grade();
             if (fe == fv && fe > fu){ // v is not minimal
                 check_minimal = false;
                 break;
@@ -842,37 +849,33 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
 
         std::stack<VEV> stack;
         // Push the starting VEV onto the stack
-        VEV a(v, Edge::NULL_EDGE, v);
+        VEV a(v, GEdge::NULL_GEDGE, v);
         stack.push(a);
 
         while (!stack.empty()) {
-            int v_; Edge e; int u;
+            GVertex v_; GEdge e; GVertex u;
             std::tie(v_, e, u) = stack.top();
-            if (v != v_) {
-                std::stringstream ss;
-                ss << "Runtime error: Expected vertex " << v << " but got " << v_;
-                throw std::runtime_error(ss.str());
-            }
+            assert(v == v_ && "v != v_");
             stack.pop();
 
             // If the vertex has not been visited, mark it as visited and process it
-            if (visited.find(u) == visited.end()) {
-                visited.insert(u);
-                if (e != Edge::NULL_EDGE){
-                    vertex_dict[u] = v;
-                    g.remove_edge(e);
+            if (!visited[u.get_id()] && u.get_id() != -1) {
+                visited[u.get_id()] = true;
+                if (e != GEdge::NULL_GEDGE){
+                    vertex_dict[u.get_id()] = v.get_id();
+                    g.remove_edge(e.get_id());
                 }
 
                 // local collapsible
-                for (const auto& eid_local: g.get_adj(u)){
-                    e = g.get_edge(eid_local);
-                    Vertex x = (e[0] == u) ? e[1]: e[0];
+                for (const auto& eid_local: g.get_adj(u.get_id())){
+                    e = g.get_gedge(eid_local);
+                    GVertex x = (e.get_v0() == u.get_id()) ? g.get_gvertex(e.get_v1()): g.get_gvertex(e.get_v0());
                     // Get the grade of the vertex and edge
-                    GradePoint fx = g.get_vertex_grade(x);
-                    GradePoint fu = g.get_vertex_grade(u);
-                    GradePoint fe = g.get_edge_grade(eid_local);
+                    GradePoint fx = x.get_grade();
+                    GradePoint fu = u.get_grade();
+                    GradePoint fe = e.get_grade();
                     if (fe == fx && fx > fu){
-                        stack.push(VEV(v, g.get_edge(eid_local), x));
+                        stack.push(VEV(v, g.get_gedge(eid_local), x));
                     }
                 }
             }
@@ -907,7 +910,7 @@ std::tuple<
 
     // Sparse Matrix for presentation and its row index
     std::vector<std::tuple<size_t, size_t, int>> M;
-    std::unordered_map<Vertex, size_t> row_idx; 
+    std::unordered_map<VertexId, size_t> row_idx; 
 
 #if MPH0_TIMERS
 mph0::collapse_timer.start();
@@ -918,28 +921,31 @@ mph0::collapse_timer.start();
 mph0::collapse_timer.stop();
 #endif
 
-    // Build Dynamic Tree
-    DynamicTree<int> DT(g.get_vertices(), visual_DT);
-
     // dict mapping a GradePoint to (vertices, edges)
-    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+    using VEsTuple = std::pair<std::vector<VertexId>, std::vector<EdgeId>>;
     std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
     
     // // set of all grade points for iteration
     // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
     std::vector<GradePoint> grades_collection;
 
+    // active vertices labels 
+    std::vector<VertexId> active_vertices_ids;
+
 #if MPH0_TIMERS
 mph0::create_grades_timer.start();
 #endif
-    // Loop over all vertices and edges to fill it
-    for (const auto& [v, gp]: g.get_vert_grades()){
-        grade_point_2_vertex_edges_id[gp].first.push_back(v);
-        grades_collection.push_back(gp);
+    // Loop over all vertices and edges to find acitve vertices and edges
+    for (const auto& gv: g.get_gvertices()){
+        if (gv.get_id() == -1) {continue;}
+        active_vertices_ids.push_back(gv.get_id());
+        grade_point_2_vertex_edges_id[gv.get_grade()].first.push_back(gv.get_id());
+        grades_collection.push_back(gv.get_grade());
     }
-    for (const auto& [eid, gp]: g.get_edges_grades()){
-        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
-        grades_collection.push_back(gp);
+    for (const auto& ge: g.get_gedges()){
+        if (ge.get_id() == -1) {continue;}
+        grade_point_2_vertex_edges_id[ge.get_grade()].second.push_back(ge.get_id());
+        grades_collection.push_back(ge.get_grade());
     }
     std::sort(grades_collection.begin(), grades_collection.end(), LexicographicalOrderGradePoint());
     // remove duplicates
@@ -952,6 +958,9 @@ mph0::create_grades_timer.stop();
 mph0::grades_iteration_timer.start();
 #endif
 
+    // Build Dynamic Tree
+    DynamicTree<int, VertexId, std::hash<VertexId>> DT(active_vertices_ids, visual_DT);
+
     // loop over all GradePoint in lexicographical ordering
     for (const auto& gd_point : grades_collection) {
         // get the grade point and its x,y ranks
@@ -959,32 +968,29 @@ mph0::grades_iteration_timer.start();
         int y = gd_point.get_y();
 
         // get vertices belong to the grade point
-        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
-        for (const auto& v: verts_gd){
+        std::vector<VertexId> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+        for (const auto& v_id: verts_gd){
             betti_0.emplace_back(x, y);
             // row_idx[v] ← |β0|
-            row_idx[v] = betti_0.size();
+            row_idx[v_id] = betti_0.size();
         }
 
         // Check edges
         DT.update_max_edge_weight(y);
         std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
         for (const EdgeId& eid: edges_ids_gd){
-            Vertex e_0, e_1;
-            auto e = g.get_edge(eid);
-            e_0 = e[0]; e_1 = e[1];
-            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
+            VertexId e_0 = g.get_edge(eid).get_v0(); 
+            VertexId e_1 = g.get_edge(eid).get_v1();
+            // check if the edge is a self-loop
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x, y);
                 continue; // self loop only affects betti_0_1
             }
-            else{
-                DT.merge_at_time(e_0, e_1, y);
-            }
-            
+            auto s = DT.time_of_merge_double(e_0, e_1); // y-coordinate
             if (s <= y){
                 betti_0_1.emplace_back(x, y); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
+                DT.merge_at_time(e_0, e_1, y);
                 betti_1.emplace_back(x, y);
                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1)); // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
@@ -1024,7 +1030,7 @@ std::tuple<
 
     // Sparse Matrix for presentation and its row index
     std::vector<std::tuple<size_t, size_t, int>> M;
-    std::unordered_map<Vertex, size_t> row_idx; 
+    std::unordered_map<VertexId, size_t> row_idx; 
 
 #if MPH0_TIMERS
 mph0::collapse_timer.start();
@@ -1035,28 +1041,31 @@ mph0::collapse_timer.start();
 mph0::collapse_timer.stop();
 #endif
 
-    // Build TopTree
-    DTree_TopTree<int, Vertex> DT(g.get_vertices());
-
     // dict mapping a GradePoint to (vertices, edges)
-    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+    using VEsTuple = std::pair<std::vector<VertexId>, std::vector<EdgeId>>;
     std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
     
     // // set of all grade points for iteration
     // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
     std::vector<GradePoint> grades_collection;
 
+    // active vertices labels 
+    std::vector<VertexId> active_vertices_ids;
+
 #if MPH0_TIMERS
 mph0::create_grades_timer.start();
 #endif
-    // Loop over all vertices and edges to fill it
-    for (const auto& [v, gp]: g.get_vert_grades()){
-        grade_point_2_vertex_edges_id[gp].first.push_back(v);
-        grades_collection.push_back(gp);
+    // Loop over all vertices and edges to find acitve vertices and edges
+    for (const auto& gv: g.get_gvertices()){
+        if (gv.get_id() == -1) {continue;}
+        active_vertices_ids.push_back(gv.get_id());
+        grade_point_2_vertex_edges_id[gv.get_grade()].first.push_back(gv.get_id());
+        grades_collection.push_back(gv.get_grade());
     }
-    for (const auto& [eid, gp]: g.get_edges_grades()){
-        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
-        grades_collection.push_back(gp);
+    for (const auto& ge: g.get_gedges()){
+        if (ge.get_id() == -1) {continue;}
+        grade_point_2_vertex_edges_id[ge.get_grade()].second.push_back(ge.get_id());
+        grades_collection.push_back(ge.get_grade());
     }
     std::sort(grades_collection.begin(), grades_collection.end(), LexicographicalOrderGradePoint());
     // remove duplicates
@@ -1068,6 +1077,10 @@ mph0::create_grades_timer.stop();
 #if MPH0_TIMERS
 mph0::grades_iteration_timer.start();
 #endif
+    
+    // Build TopTree
+    DTree_TopTree<int, VertexId, std::hash<VertexId>> DT(active_vertices_ids);
+
 
     // loop over all GradePoint in lexicographical ordering
     for (const auto& gd_point : grades_collection) {
@@ -1076,25 +1089,25 @@ mph0::grades_iteration_timer.start();
         int y = gd_point.get_y();
 
         // get vertices belong to the grade point
-        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
-        for (const auto& v: verts_gd){
+        std::vector<VertexId> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+        for (const auto& v_id: verts_gd){
             betti_0.emplace_back(x, y);
             // row_idx[v] ← |β0|
-            row_idx[v] = betti_0.size();
+            row_idx[v_id] = betti_0.size();
         }
 
         // Check edges
         std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
         for (const EdgeId& eid: edges_ids_gd){
-            Vertex e_0, e_1;
-            auto e = g.get_edge(eid);
-            e_0 = e[0]; e_1 = e[1];
-            auto s = DT.time_of_merge(e_0, e_1); // y-coordinate
+            VertexId e_0 = g.get_edge(eid).get_v0(); 
+            VertexId e_1 = g.get_edge(eid).get_v1();
+            // check if the edge is a self-loop
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x, y);
                 continue; // self loop only affects betti_0_1
             }
-            
+            // find the merge time (i.e. the smallest weight in the connected component)
+            auto s = DT.time_of_merge(e_0, e_1); // y-coordinate
             if (s <= y){
                 betti_0_1.emplace_back(x, y); // The edge is deletable, so it only affects H1
             }else{ // Edge is not deletable, so belongs to relations in resolution
@@ -1119,81 +1132,81 @@ mph0::grades_iteration_timer.stop();
 }
 
 
-// Algorithm 3: Betti tables and minimal presentation of R2-filtered graph
-// Return: betti_0, betti_1, 1 sparse Matrix as presentation
-std::tuple<
-    std::vector<std::pair<int, int>>, 
-    std::vector<std::pair<int, int>>, 
-    std::vector<std::tuple<size_t, size_t, int>>
-> compute_minimal_presentation( 
-        GGraph& g,
-        bool visual_DT = false) 
-{
+// // Algorithm 3: Betti tables and minimal presentation of R2-filtered graph
+// // Return: betti_0, betti_1, 1 sparse Matrix as presentation
+// std::tuple<
+//     std::vector<std::pair<int, int>>, 
+//     std::vector<std::pair<int, int>>, 
+//     std::vector<std::tuple<size_t, size_t, int>>
+// > compute_minimal_presentation( 
+//         GGraph& g,
+//         bool visual_DT = false) 
+// {
 
-    // Initialize betti_0, betti_1
-    std::vector<std::pair<int, int>> betti_0;
-    std::vector<std::pair<int, int>> betti_1;
+//     // Initialize betti_0, betti_1
+//     std::vector<std::pair<int, int>> betti_0;
+//     std::vector<std::pair<int, int>> betti_1;
 
-    // Sparse Matrix for presentation and its row index
-    std::vector<std::tuple<size_t, size_t, int>> M;
-    std::unordered_map<Vertex, size_t> row_idx; 
+//     // Sparse Matrix for presentation and its row index
+//     std::vector<std::tuple<size_t, size_t, int>> M;
+//     std::unordered_map<Vertex, size_t> row_idx; 
 
-    // Collapse to vertex minimal
-    collapse_to_vertex_minimal_Grade_Version(g);
+//     // Collapse to vertex minimal
+//     collapse_to_vertex_minimal_Grade_Version(g);
 
-    // Build Dynamic Tree
-    DynamicTree<int> DT(g.get_vertices(), visual_DT);
+//     // Build Dynamic Tree
+//     DynamicTree<int> DT(g.get_vertices(), visual_DT);
 
-    // dict mapping a GradePoint to (vertices, edges)
-    using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
-    std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
-    // set of all grade points for iteration
-    std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+//     // dict mapping a GradePoint to (vertices, edges)
+//     using VEsTuple = std::pair<std::vector<Vertex>, std::vector<EdgeId>>;
+//     std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
+//     // set of all grade points for iteration
+//     std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
 
-    // Loop over all vertices and edges to fill it
-    for (const auto& [v, gp]: g.get_vert_grades()){
-        grade_point_2_vertex_edges_id[gp].first.push_back(v);
-        grades_collection.insert(gp);
-    }
-    for (const auto& [eid, gp]: g.get_edges_grades()){
-        grade_point_2_vertex_edges_id[gp].second.push_back(eid);
-        grades_collection.insert(gp);
-    }
+//     // Loop over all vertices and edges to fill it
+//     for (const auto& [v, gp]: g.get_vert_grades()){
+//         grade_point_2_vertex_edges_id[gp].first.push_back(v);
+//         grades_collection.insert(gp);
+//     }
+//     for (const auto& [eid, gp]: g.get_edges_grades()){
+//         grade_point_2_vertex_edges_id[gp].second.push_back(eid);
+//         grades_collection.insert(gp);
+//     }
 
-    // loop over all GradePoint in lexicographical ordering
-    for (const auto& gd_point : grades_collection) {
-        // get the grade point and its x,y ranks
-        int x = gd_point.get_x();
-        int y = gd_point.get_y();
+//     // loop over all GradePoint in lexicographical ordering
+//     for (const auto& gd_point : grades_collection) {
+//         // get the grade point and its x,y ranks
+//         int x = gd_point.get_x();
+//         int y = gd_point.get_y();
 
-        // get vertices belong to the grade point
-        std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
-        for (const auto& v: verts_gd){
-            betti_0.emplace_back(x, y);
-            // row_idx[v] ← |β0|
-            row_idx[v] = betti_0.size();
-        }
+//         // get vertices belong to the grade point
+//         std::vector<Vertex> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
+//         for (const auto& v: verts_gd){
+//             betti_0.emplace_back(x, y);
+//             // row_idx[v] ← |β0|
+//             row_idx[v] = betti_0.size();
+//         }
 
-        // Check edges
-        DT.update_max_edge_weight(y);
-        std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
-        for (const EdgeId& eid: edges_ids_gd){
-            auto e = g.get_edge(eid);
-            Vertex e_0 = e[0]; Vertex e_1 = e[1];
+//         // Check edges
+//         DT.update_max_edge_weight(y);
+//         std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
+//         for (const EdgeId& eid: edges_ids_gd){
+//             auto e = g.get_edge(eid);
+//             Vertex e_0 = e[0]; Vertex e_1 = e[1];
 
-            if (e_0 == e_1) continue; // self loop only affects betti_0_1
+//             if (e_0 == e_1) continue; // self loop only affects betti_0_1
 
-            // extract the edge weight
-            auto s = DT.time_of_merge_double(e_0, e_1);
-            if (s > y){ // Edge is not deletable
-                DT.merge_at_time(e_0, e_1, y); // merge the edge at time y
-                betti_1.emplace_back(x, y);
-                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1));
-                M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
-            }        
+//             // extract the edge weight
+//             auto s = DT.time_of_merge_double(e_0, e_1);
+//             if (s > y){ // Edge is not deletable
+//                 DT.merge_at_time(e_0, e_1, y); // merge the edge at time y
+//                 betti_1.emplace_back(x, y);
+//                 M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(), -1));
+//                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(),  1));
+//             }        
 
-        }// End loop for each edge at gd_point 
-    } // End loop for all grid points
+//         }// End loop for each edge at gd_point 
+//     } // End loop for all grid points
     
-    return std::make_tuple(betti_0, betti_1, M); 
-}
+//     return std::make_tuple(betti_0, betti_1, M); 
+// }

@@ -14,6 +14,7 @@
 #include <functional> // for std::hash
 #include "Types.hpp"
 #include "ContractionTopTree.hpp"
+#include "Hash.hpp"
 
 // Custom hash function for std::pair<int, int>
 struct pair_hash {
@@ -34,11 +35,11 @@ Notes for using Dynamic Tree for MPH_0 consideration
 2. time_of_merge and merge_at_time both looks for the highest edge,
 3. merge_at_time will remove it only if currect edge time is less than the highest
 */
-template<typename T>
+template<typename T, typename VertexType = Vertex, typename HashFunction = VertexHash>
 class DynamicTree
 {
 private:
-    std::unordered_map<Vertex, int> vert2node; // map vertex to tree node label
+    std::unordered_map<VertexType, int, HashFunction> vert2node; // map vertex to tree node label
     std::unordered_map<std::pair<int, int>, int, pair_hash> vertex2edgeID;
     ST_Tree ST;
     GraphManager graph_manager;
@@ -51,7 +52,7 @@ public:
     T max_edge_weight = std::numeric_limits<T>::max(); // maximum edge weight
     
     // Construct with vertices
-    DynamicTree(const std::vector<Vertex>& vertices_, bool visual_ = false)
+    DynamicTree(const std::vector<VertexType>& vertices_, bool visual_ = false)
         : ST(true, vertices_.size(), 0),   // Initialize ST_Tree directly in the initializer list
           graph_manager(vertices_.size()),
           visual(visual_){
@@ -74,7 +75,7 @@ public:
     }
 
     // T time_of_merge(Vertex v, Vertex w);
-    T time_of_merge_double(Vertex v, Vertex w, bool visual = false){
+    T time_of_merge_double(VertexType v, VertexType w, bool visual = false){
         ST.evert(vert2node[v]); // make v the root of the tree containing v
         if(visual) {
             std::string op_name = "evert_"+std::to_string(vert2node[v]);
@@ -89,7 +90,7 @@ public:
         return -ST.cost(mincost_node);
     };
     
-    void merge_at_time(Vertex v, Vertex w, T time){
+    void merge_at_time(VertexType v, VertexType w, T time){
         // key assumption: v has been the root of the tree containing v
         // if they are in the separte tree
         if (ST.root(vert2node[w]) !=  vert2node[v]){
@@ -139,7 +140,7 @@ public:
     }; 
 
     // the folloiwng two debug versions can give edge matchings used in betti_1 and betti_2
-    std::pair<T, int> time_of_merge_double_debug(Vertex v, Vertex w, bool visual = false){
+    std::pair<T, int> time_of_merge_double_debug(VertexType v, VertexType w, bool visual = false){
         ST.evert(vert2node[v]); // make v the root of the tree containing v
         if(visual) {
             std::string op_name = "evert_"+std::to_string(vert2node[v]);
@@ -162,7 +163,7 @@ public:
 
 
     // return the id of edge id used to  too
-    void merge_at_time_debug(Vertex v, Vertex w, T time, int eid){
+    void merge_at_time_debug(VertexType v, VertexType w, T time, int eid){
         // key assumption: v has been the root of the tree containing v
         // if they are in the separte tree
         int e0, e1;
@@ -232,9 +233,11 @@ public:
 };
 
 /*
-    Dynamic tree using top tree.
+    Dynamic tree using top tree that supports finding the minimal edge weight. 
+    We use negative time to represent the edge weight,
+    because we need to locate edge with the latest time in a c.c. (i.e., a cluster). 
 */
-template<typename T, typename VertexType>
+template<typename T, typename VertexType = Vertex, typename HashFunction = VertexHash>
 class DTree_TopTree
 {
 public:
@@ -254,7 +257,7 @@ public:
         if (forest.sameComponent(TTvertices[vert2node[v]], TTvertices[vert2node[w]])){
             throw std::runtime_error("try to conenct v and w in the same component, it is not allowed in a tree");
         }
-        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], time);
+        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], -time);
     }
 
     T time_of_merge(VertexType v, VertexType w){
@@ -265,8 +268,19 @@ public:
 
         // if connected, find the min weight edge between v and w
         forest.expose(TTvertices[vert2node[v]], TTvertices[vert2node[w]]);
-        return forest.getExposedData().minWeight;
+        return -forest.getExposedData().minWeight;
     }
+
+
+    void merge_at_time(VertexType v, VertexType w, T time){
+        // if v and w are connected first, we need to cut the min weight edge in the path between v and w
+        if (forest.sameComponent(TTvertices[vert2node[v]], TTvertices[vert2node[w]])){
+            cutMinEdge(v, w);
+        }
+        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], -time);
+    }
+
+private:
 
     // search for minimal edge in the path from v to w and cut it
     void cutMinEdge(VertexType v, VertexType w){
@@ -282,15 +296,6 @@ public:
         forest.cut(e0, e1);
     }
 
-    void merge_at_time(VertexType v, VertexType w, T time){
-        // if v and w are connected first, we need to cut the min weight edge in the path between v and w
-        if (forest.sameComponent(TTvertices[vert2node[v]], TTvertices[vert2node[w]])){
-            cutMinEdge(v, w);
-        }
-        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], time);
-    }
-
-private:
     struct ClusterMinEdgeData {
         int minWeight; // minimal weight on path (or weight of an edge)
 
@@ -339,6 +344,6 @@ private:
     };
 
     ContractionTopTree<ClusterMinEdgeData> forest;
-    std::unordered_map<VertexType, size_t> vert2node; // map vertex to tree node label
+    std::unordered_map<VertexType, size_t, HashFunction> vert2node; // map vertex to tree node label
     std::vector<TopTreeVertex> TTvertices; // vertices of the top tree
 };

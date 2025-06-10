@@ -24,13 +24,13 @@ template<typename T>
 class Dendrogram
 {
 private:
-    std::unordered_map<Vertex, std::shared_ptr<Node>> leaf_nodes_map;
+    std::unordered_map<int, std::shared_ptr<Node>> leaf_nodes_map;
     std::unordered_map<size_t, std::shared_ptr<Node>> edge_nodes_map;
 public:
     double max_edge_weight = 1e10; // maximum edge weight
 
     // Construct with vertices
-    Dendrogram(const std::vector<Vertex>& vertices_){
+    Dendrogram(const std::vector<int>& vertices_){
         for(const auto& v: vertices_){
             // Create vertex node label (v)
             std::string vertex_label =  "(" + std::to_string(v)+ ")"; 
@@ -39,7 +39,7 @@ public:
     };
 
     // Construct with vertices and priscribed vertex values
-    Dendrogram(const std::vector<Vertex>& vertices_, const std::vector<T>& vertex_values){
+    Dendrogram(const std::vector<int>& vertices_, const std::vector<T>& vertex_values){
         assert(vertices_.size() == vertex_values.size() && "The number of vertices and vertex values should be the same.");
         for (size_t i = 0; i < vertices_.size(); ++i){
             // Create vertex node label (v)
@@ -48,7 +48,7 @@ public:
         }
     };
 
-    std::shared_ptr<Node> get_vertex_node(Vertex v){return leaf_nodes_map[v];};
+    std::shared_ptr<Node> get_vertex_node(int v){return leaf_nodes_map[v];};
 
     void update_max_edge_weight(T y){
         if (y > max_edge_weight){
@@ -59,8 +59,8 @@ public:
     // returns the smallest t ∈ [0, ∞) such that [v] = [w] ∈ π0(G,f)(r), 
     // or ∞ if [v] != [w] ∈ π0(G,f)(r) for all r ∈ [0,∞).
     // i.e. nearest common ancestor (nca)
-    T time_of_merge(Vertex v, Vertex w);
-    double time_of_merge_double(Vertex v, Vertex w){
+    T time_of_merge(int v, int w);
+    double time_of_merge_double(int v, int w){
         auto lca_node = findLCA(leaf_nodes_map[v], leaf_nodes_map[w]);
         if (lca_node) return lca_node->value;
         return max_edge_weight;
@@ -71,12 +71,12 @@ public:
     respective trees. Restructure the tree or trees containing v and w by merging the paths
     P and Q while preserving heap order.
     */
-    void merge_at_time(Vertex v, Vertex w, size_t eid, T time); 
+    void merge_at_time(int v, int w, size_t eid, T time); 
 };
 
 
 template<typename T>
-T Dendrogram<T>::time_of_merge(Vertex v, Vertex w){
+T Dendrogram<T>::time_of_merge(int v, int w){
     T f_value;
     return f_value;
 }
@@ -307,7 +307,7 @@ void merge_paths(std::vector<std::pair<std::shared_ptr<Node>, bool>>& path1,
 
 
 template<typename T>
-void Dendrogram<T>::merge_at_time(Vertex v, Vertex w, size_t eid, T t){
+void Dendrogram<T>::merge_at_time(int v, int w, size_t eid, T t){
     // IC(edge_nodes_map);
     // std::cout << "call merge_at_time()" << std::endl;
     // IC(v, w, eid, t);

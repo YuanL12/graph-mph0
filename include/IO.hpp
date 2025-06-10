@@ -38,6 +38,42 @@ void write_betti_numbers(
 }
 
 
+void print_and_write_betti_result(
+    std::vector<std::pair<int, int>>& raw_betti_0,
+    std::vector<std::pair<int, int>>& raw_betti_1,
+    std::vector<std::pair<int, int>>& raw_betti_2,
+    std::vector<std::pair<int, int>>& raw_betti_0_1,
+    bool x_y_swap = false,
+    std::string file_name = "") 
+{    
+    std::cout << "Final Results: " << std::endl;
+    if (x_y_swap) {
+        for (auto& b0: raw_betti_0) {
+            std::swap(b0.first, b0.second); 
+        }
+        for (auto& b1: raw_betti_1) {
+            std::swap(b1.first, b1.second); 
+        }
+        for (auto& b2: raw_betti_2) {
+            std::swap(b2.first, b2.second); 
+        }
+        for (auto& b01: raw_betti_0_1) {
+            std::swap(b01.first, b01.second); 
+        }    
+    }
+    auto betti_0 = sort_count_betti_result(raw_betti_0);
+    auto betti_1 = sort_count_betti_result(raw_betti_1);
+    auto betti_2 = sort_count_betti_result(raw_betti_2);
+    auto betti_0_1 = sort_count_betti_result(raw_betti_0_1);
+    IC(betti_0.size(), betti_1.size(), betti_2.size(), betti_0_1.size());
+
+    if (file_name != "") {
+        // write the betti numbers to a file
+        write_betti_numbers(betti_0, betti_1, betti_2, betti_0_1, file_name);
+    }
+}
+
+
 template<typename T>
 std::vector<std::vector<T>> read_points(const std::string& filename) {
     // read points from a file, each line is a point in R ^d is in the format of x1,x2,...,xd
@@ -248,36 +284,35 @@ void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filena
     std::ofstream file(filename);
     file << "scc2020" << std::endl;
     file << "2" << std::endl; // 2-parameter filtration
-    const auto& edge_grades = G.get_edges_grades();
-    const auto& vert_grades = G.get_vert_grades();
-    int nV = vert_grades.size();
-    int nE = edge_grades.size();
+    const auto& gedges = G.get_gedges();
+    const auto& gvertices = G.get_gvertices();
+    int nV = gvertices.size(); int nE = gedges.size();
 
     // give each vertex a unique index starting from 0
-    std::unordered_map<Vertex, size_t> vertex_2_idx;
-    std::unordered_map<size_t, Vertex> idx_2_vertex;
+    std::unordered_map<VertexId, size_t> vertex_2_idx;
+    std::unordered_map<size_t, VertexId> idx_2_vertex;
     size_t idx = 0;
-    for (const auto& [v, grade_pt]: vert_grades) {
-        vertex_2_idx[v] = idx;
-        idx_2_vertex[idx] = v;
-        idx++;
+    for (const auto& gv: gvertices) {
+        assert(gv.get_id() != -1 && "Vertex id is -1 (removed), which is not allowed when writing out");
+        vertex_2_idx[gv.get_id()] = idx;
+        idx_2_vertex[idx] = gv.get_id();
+        idx++; 
     }
 
     
     file << nE << " " << nV << " " << 0 << std::endl;
-    for (const auto& [eid, grade_pt]: edge_grades) {
-        Edge e = G.get_edge(eid);
-        Vertex v0 = e[0]; size_t v0_idx = vertex_2_idx[v0]; 
-        Vertex v1 = e[1]; size_t v1_idx = vertex_2_idx[v1];
+    for (const auto& ge: gedges) {
+        VertexId v0 = ge.get_v0(); size_t v0_idx = vertex_2_idx[v0]; 
+        VertexId v1 = ge.get_v1(); size_t v1_idx = vertex_2_idx[v1];
         // get ranks 
-        int x = grade_pt.get_x();
-        int y = grade_pt.get_y();
+        int x = ge.get_grade().get_x();
+        int y = ge.get_grade().get_y();
         file << x << " " << y << " ; " << v0_idx << " " << v1_idx << " " << std::endl;
     }
     for (size_t i = 0; i < nV; ++i) {
-        Vertex v = idx_2_vertex[i];
-        int x = vert_grades.at(v).get_x();
-        int y = vert_grades.at(v).get_y();
+        VertexId v = idx_2_vertex[i];
+        int x = gvertices[v].get_grade().get_x();
+        int y = gvertices[v].get_grade().get_y();
         file << x << " " << y << " ; " << std::endl;
     }
 

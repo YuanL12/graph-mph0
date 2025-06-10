@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <boost/multiprecision/cpp_int.hpp>
+#include "Types.hpp"
 
 // General template for filtration type(Poset) hash functor
 template <typename T>
@@ -21,3 +22,10 @@ namespace std {
         }
     };
 }
+
+// Hash function for Vertex
+struct VertexHash {
+    size_t operator()(const Vertex& v) const {
+        return std::hash<VertexId>{}(v.id);
+    }
+};

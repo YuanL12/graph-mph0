@@ -9,16 +9,21 @@ class Edge {
 public:
     Edge(){}
     // Constructor
-    Edge(Vertex v0, Vertex v1, EdgeId id): v0(v0), v1(v1), id(id) {}
+    Edge(VertexId v0, VertexId v1, EdgeId id): v0(v0), v1(v1), id(id) {}
 
     // Accessor methods
-    Vertex get_v0() const { return v0; }
-    Vertex get_v1() const { return v1; }
+    VertexId get_v0() const { return v0; }
+    VertexId get_v1() const { return v1; }
     EdgeId get_id() const { return id; }
 
-    Vertex& get_v0() { return v0; }
-    Vertex& get_v1() { return v1; }
+    VertexId& get_v0() { return v0; }
+    VertexId& get_v1() { return v1; }
     EdgeId& get_id() { return id; }
+
+    // Setter methods
+    void set_v0(VertexId v0) { this->v0 = v0; }
+    void set_v1(VertexId v1) { this->v1 = v1; }
+    void set_id(EdgeId id) { this->id = id; }
 
 
     // Overload the output operator
@@ -31,7 +36,7 @@ public:
     static const Edge NULL_EDGE;
 
     // Overload the index operator
-    int operator[](int index) const {
+    VertexId operator[](int index) const {
         switch (index) {
             case 0: return v0;
             case 1: return v1;
@@ -40,7 +45,7 @@ public:
     }
 
     // Overload the index operator (non-const version for write access)
-    int& operator[](int index) {
+    VertexId& operator[](int index) {
         switch (index) {
             case 0: return v0;
             case 1: return v1;
@@ -57,14 +62,10 @@ public:
     }
 
 private:
-    Vertex v0;
-    Vertex v1;
-    EdgeId id;
+    VertexId v0;
+    VertexId v1;
+    EdgeId id; // unique id for the edge, -1 for removed edge, -2 for null edge (used for collapsing)
 };
 
 // Define NULL_EDGE
-const Edge Edge::NULL_EDGE = Edge(
-    std::numeric_limits<Vertex>::max(), 
-    std::numeric_limits<Vertex>::max(), 
-    std::numeric_limits<EdgeId>::max()
-);
+const Edge Edge::NULL_EDGE = Edge(-1, -1, -2);
