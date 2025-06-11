@@ -82,8 +82,10 @@ public:
 
         // Initialize vertices by filling with 0, 1, 2, ..., n-1
         gVertices.reserve(nVertices);
+        adjacency.reserve(nVertices);
         for (int i = 0; i < nVertices; ++i) {
             gVertices.emplace_back(GVertex{Vertex(i, i), node_grades[i]});
+            adjacency.emplace_back(std::vector<EdgeId>());
         }
 
         // Initialize edges and create adjacency list
@@ -121,6 +123,9 @@ public:
     inline const GVertex& get_gvertex(size_t v_idx) const {return gVertices[v_idx];};
     inline const Vertex& get_vertex(size_t v_idx) const {return gVertices[v_idx].v;};
 
+    // get active vertices ids
+    inline const std::vector<VertexId>& get_active_vertices_ids() const {return active_vertices_ids;};
+
     // find the size of active grades
     size_t get_size_of_active_grades() const;
 
@@ -134,9 +139,6 @@ public:
     void add_edge(Vertex v, Vertex w, GradePoint grade);
     void add_edge(Vertex v, Vertex w);
 
-    // print the adjacency list
-    void print_adjacency() const;
-    
     // Remove edge e
     void remove_edge(EdgeId id);
     inline void remove_edge(Edge e){remove_edge(e.get_id());}
@@ -148,9 +150,10 @@ public:
     void print_size_of_adjacency() const {
         size_t size_vertices = 0;
         size_t size_edges = 0;
-        for (const auto& pair : adjacency) {
+        for (size_t i = 0; i < adjacency.size(); ++i) {
+            if (gVertices[i].get_id() == -1) {continue;} // skip removed vertices
             size_vertices += 1;
-            size_edges += pair.second.size();
+            size_edges += adjacency[i].size();
         }
         std::cout << "Size of adjacency list: " << size_vertices << std::endl;
         std::cout << "Size of edges: " << size_edges << std::endl;
@@ -160,10 +163,12 @@ private:
     std::vector<GVertex> gVertices;  // collections of graded vertices 
     std::vector<GEdge> gEdges; // collections of graded edges 
     // adjacency list to represent the graph, map vertex to edge Id
-    std::unordered_map<VertexId, VAdj> adjacency; 
+    // std::unordered_map<VertexId, VAdj> adjacency; 
 
     // TODO: switch to vector<vector<EdgeId>> adjacency;
-    // std::vector<std::vector<EdgeId>> adjacency_vector;
+    std::vector<VAdj> adjacency;
+
+    std::vector<VertexId> active_vertices_ids;
 
     // relabel vertex v to -1 for removal
     inline void relabel_vertex_for_removal(size_t v_idx){
@@ -177,40 +182,48 @@ private:
         ge.e.set_id(-1); ge.grade.x = -1; ge.grade.y = -1;
     }
 
+    inline bool is_vertex_removed(size_t v_idx) const {
+        return gVertices[v_idx].get_id() == -1;
+    }
+
     // Merge u into v: all neighbors of u become neighbors of v, and v is removed
     void merge_adjacency_sets(VertexId v, VertexId u) {
 
         // Check if both keys exist in the map
-        if (!adjacency.count(v)) {
-            throw std::runtime_error("vertex " + std::to_string(v) + " not found in adjacency.");
+        if (is_vertex_removed(v)) {
+            throw std::runtime_error("vertex " + std::to_string(v) + " is removed, but trying to merge into it");
         }
-        if (!adjacency.count(u)){ 
-            throw std::runtime_error("vertex " + std::to_string(u) + " not found in adjacency.");
+        if (is_vertex_removed(u)){ 
+            throw std::runtime_error("vertex " + std::to_string(u) + " is removed, but trying to merge into it");
         }
         if (u == v) {
             throw std::runtime_error("Trying to merge vertex " + std::to_string(u) + " into itself");
         }
 
         // Merge adjacency of u to v
-        for (auto eid : adjacency[v]) {
-            adjacency[u].insert(eid);
-        }
+        adjacency[u].insert(adjacency[u].end(), adjacency[v].begin(), adjacency[v].end());
 
-        adjacency.erase(v);
+        // remove v from adjacency
+        adjacency[v].clear();
     }
 
     // Helper function to remove an edge from the adjacency hash map
     void remove_from_adjacency(VertexId v, EdgeId id) {
         // Check if the key exists in the map
-        auto it = adjacency.find(v);
-        assert(it != adjacency.end() && "vertex not found in adjacency.");
+        if (is_vertex_removed(v)) {
+            throw std::runtime_error("vertex " + std::to_string(v) + " is removed, but trying to remove an edge from it");
+        }
 
-        // Get reference to the adjacency set
-        VAdj& adj_of_v = it->second;
+        // Find the edge id in the adjacency list of v
+        auto it = std::find(adjacency[v].begin(), adjacency[v].end(), id);
+        if (it == adjacency[v].end()) {
+            throw std::runtime_error("edge " + std::to_string(id) + " not found in the adjacency list of vertex " + std::to_string(v));
+        }
 
         // Erase the element
-        size_t num_erased = adj_of_v.erase(id);
-        assert(num_erased == 1 && "edge not found in the adjacency set.");
+        //adjacency[v].erase(it);
+        std::swap(adjacency[v].back(), *it);
+        adjacency[v].pop_back();
     }
 
     #ifdef ENABLE_SECURITY_CHECKS
@@ -248,7 +261,7 @@ GGraph::GGraph(int n) {gVertices.reserve(n);}
 
 void GGraph::add_vertex(Vertex v, GradePoint grade){
     gVertices.emplace_back(GVertex{v, grade});
-    adjacency[v.id] = VAdj();
+    adjacency.emplace_back(std::vector<EdgeId>());
 }
 
 void GGraph::add_vertex(VertexId v, GradePoint grade){add_vertex(Vertex(v, v), grade);}
@@ -263,8 +276,8 @@ void GGraph::add_edge(VertexId v, VertexId w, GradePoint grade_idx) {
     }
     int id = gEdges.size();
     gEdges.emplace_back(GEdge{Edge(v, w, id), grade_idx});
-    adjacency[v].insert(id);
-    adjacency[w].insert(id);
+    adjacency[v].push_back(id);
+    adjacency[w].push_back(id);
     security_check_adjacency_map();
 }
 
@@ -281,19 +294,17 @@ void GGraph::add_edge(Vertex v, Vertex w) {
 }
 
 const VAdj& GGraph::get_adj(VertexId v) const {
-    auto it = adjacency.find(v);
-    if(it == adjacency.end()){
-        throw std::runtime_error("vertex " + std::to_string(v) + " not found when trying to get its adjacency list");
+    if (is_vertex_removed(v)) {
+        throw std::runtime_error("vertex " + std::to_string(v) + " is removed, but trying to get its adjacency list");
     }
-    return it->second;
+    return adjacency[v];
 }
 
 VAdj& GGraph::get_adj(VertexId v) {
-    auto it = adjacency.find(v);
-    if(it == adjacency.end()){
-        throw std::runtime_error("vertex " + std::to_string(v) + " not found when trying to get its adjacency list");
+    if (is_vertex_removed(v)) {
+        throw std::runtime_error("vertex " + std::to_string(v) + " is removed, but trying to get its adjacency list");
     }
-    return it->second;
+    return adjacency[v];
 }
 
 // Remove edge e 
@@ -335,21 +346,9 @@ void GGraph::update_graph(std::vector<size_t> vert_map){
             merge_adjacency_sets(gVertices[i].v.id, gVertices[vert_map[i]].v.id);
             // relabel v_i
             relabel_vertex_for_removal(i);
+        } else {
+            active_vertices_ids.push_back(i);
         }
-    }
-}
-
-// Method to print the graph
-void GGraph::print_adjacency() const {
-    std::cout << "Print Adjacency" << std::endl;
-    // Iterate and print the adjacency list map
-    for (const auto& pair : adjacency) {
-        int v = pair.first; // vertex
-        std::cout << "v = " << v <<": ";
-        for (const auto& eid : pair.second) {
-            std::cout << get_edge(eid) <<" ";
-        }
-        std::cout << std::endl;
     }
 }
 

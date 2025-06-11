@@ -10,7 +10,7 @@
 using EdgeId = int; // -1 means null edge due to removal
 using VertexId = int;
 using GradeID = int;
-using VAdj = std::unordered_set<EdgeId>; // vertex adjacency for storing its adjacent edge indices 
+using VAdj = std::vector<EdgeId>; // vertex adjacency for storing its adjacent edge indices 
 
 struct Vertex {
     VertexId id; // -1 means null vertex due to removal

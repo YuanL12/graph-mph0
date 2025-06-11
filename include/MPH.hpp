@@ -1058,34 +1058,41 @@ std::tuple<
     collapse_to_vertex_minimal_Grade_Version(g);
 
     // dict mapping a GradePoint to (vertices, edges)
-    using VEsTuple = std::pair<std::vector<VertexId>, std::vector<EdgeId>>;
-    std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
+    //using VEsTuple = std::pair<std::vector<VertexId>, std::vector<EdgeId>>;
+    //std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
     
     // // set of all grade points for iteration
     // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
-    std::vector<GradePoint> grades_collection;
+    std::vector<std::tuple<int, int>> grades_collection;
+    grades_collection.reserve(g.get_nvertices() + g.get_nedges());
 
     // active vertices labels 
     std::vector<VertexId> active_vertices_ids;
+    active_vertices_ids.reserve(g.get_nvertices());
 
 #if MPH0_TIMERS
 mph0::create_grades_timer.start();
 #endif
     // Loop over all vertices and edges to find acitve vertices and edges
-    for (const auto& gv: g.get_gvertices()){
-        if (gv.get_id() == -1) {continue;}
-        active_vertices_ids.push_back(gv.get_id());
-        grade_point_2_vertex_edges_id[gv.get_grade()].first.push_back(gv.get_id());
-        grades_collection.push_back(gv.get_grade());
+    for (auto v_id: g.get_active_vertices_ids()){
+        auto gv = g.get_gvertex(v_id);
+        // if (gv.get_id() == -1) {continue;}
+        // active_vertices_ids.push_back(gv.get_id());
+        //grade_point_2_vertex_edges_id[gv.get_grade()].first.push_back(gv.get_id());
+        grades_collection.emplace_back(0, gv.get_id());
     }
     for (const auto& ge: g.get_gedges()){
         if (ge.get_id() == -1) {continue;}
-        grade_point_2_vertex_edges_id[ge.get_grade()].second.push_back(ge.get_id());
-        grades_collection.push_back(ge.get_grade());
+        //grade_point_2_vertex_edges_id[ge.get_grade()].second.push_back(ge.get_id());
+        grades_collection.emplace_back(1, ge.get_id());
     }
-    std::sort(grades_collection.begin(), grades_collection.end(), LexicographicalOrderGradePoint());
-    // remove duplicates
-    grades_collection.erase(std::unique(grades_collection.begin(), grades_collection.end()), grades_collection.end());
+    std::sort(grades_collection.begin(), grades_collection.end(),
+             [&g](std::tuple<int,int> x, std::tuple<int,int> y)
+             {
+                const GradePoint& gx = std::get<0>(x) == 0 ? g.get_gvertex(std::get<1>(x)).get_grade() : g.get_gedge(std::get<1>(x)).get_grade();
+                const GradePoint& gy = std::get<0>(y) == 0 ? g.get_gvertex(std::get<1>(y)).get_grade() : g.get_gedge(std::get<1>(y)).get_grade();
+                return gx < gy || (gx == gy && std::get<0>(x) < std::get<0>(y));
+             });
 #if MPH0_TIMERS
 mph0::create_grades_timer.stop();
 #endif
@@ -1095,28 +1102,27 @@ mph0::grades_iteration_timer.start();
 #endif
     
     // Build TopTree
-    DTree_TopTree<int, VertexId, std::hash<VertexId>> DT(active_vertices_ids);
+    DTree_TopTree<int, VertexId, std::hash<VertexId>> DT(g.get_active_vertices_ids());
 
 
     // loop over all GradePoint in lexicographical ordering
-    for (const auto& gd_point : grades_collection) {
+    for (const auto& gg : grades_collection) {
+        GradePoint gd_point = std::get<0>(gg) == 0 ? g.get_gvertex(std::get<1>(gg)).get_grade() : g.get_gedge(std::get<1>(gg)).get_grade();
         // get the grade point and its x,y ranks
         int x = gd_point.get_x();
         int y = gd_point.get_y();
 
         // get vertices belong to the grade point
-        std::vector<VertexId> verts_gd = grade_point_2_vertex_edges_id[gd_point].first;
-        for (const auto& v_id: verts_gd){
+        if (std::get<0>(gg) == 0){
+            auto v_id = std::get<1>(gg);
             betti_0.emplace_back(x, y);
             // row_idx[v] ← |β0|
             row_idx[v_id] = betti_0.size();
-        }
-
-        // Check edges
-        std::vector<EdgeId> edges_ids_gd = grade_point_2_vertex_edges_id[gd_point].second;
-        for (const EdgeId& eid: edges_ids_gd){
-            VertexId e_0 = g.get_edge(eid).get_v0(); 
-            VertexId e_1 = g.get_edge(eid).get_v1();
+        } else
+        {
+            auto e_id = std::get<1>(gg);
+            VertexId e_0 = g.get_edge(e_id).get_v0(); 
+            VertexId e_1 = g.get_edge(e_id).get_v1();
             // check if the edge is a self-loop
             if (e_0 == e_1){
                 betti_0_1.emplace_back(x, y);
