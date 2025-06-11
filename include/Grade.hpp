@@ -28,30 +28,12 @@ struct GradePoint {
 
     // less than
     bool less_than(const GradePoint& other) const {
-        if (x < other.x){
-            if (y <= other.y){
-                return true;
-            } 
-        } else if (x == other.x){
-            if (y < other.y){
-                return true;
-            }
-        }
-        return false;
+        return (*this != other) && (x <= other.x) && (y <= other.y);
     }
 
     // greater than
     bool greater_than(const GradePoint& other) const {
-        if (x > other.x){
-            if (y >= other.y){
-                return true;
-            }
-        } else if (x == other.x){
-            if (y > other.y){
-                return true;
-            }
-        }
-        return false;
+        return other.less_than(*this);
     }
 
     // equal to

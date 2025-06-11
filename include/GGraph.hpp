@@ -144,14 +144,27 @@ public:
     // Update graph based on a vertex dictionary v->v_new, keeping the image v_new
     void update_graph(std::vector<size_t> vert_dict);
 
-
+    // print the size of adjacency list
+    void print_size_of_adjacency() const {
+        size_t size_vertices = 0;
+        size_t size_edges = 0;
+        for (const auto& pair : adjacency) {
+            size_vertices += 1;
+            size_edges += pair.second.size();
+        }
+        std::cout << "Size of adjacency list: " << size_vertices << std::endl;
+        std::cout << "Size of edges: " << size_edges << std::endl;
+    }
 private:
     EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
     std::vector<GVertex> gVertices;  // collections of graded vertices 
     std::vector<GEdge> gEdges; // collections of graded edges 
-    // adjacency list to represent the graph, map vertex to edge Id  
+    // adjacency list to represent the graph, map vertex to edge Id
     std::unordered_map<VertexId, VAdj> adjacency; 
-    
+
+    // TODO: switch to vector<vector<EdgeId>> adjacency;
+    // std::vector<std::vector<EdgeId>> adjacency_vector;
+
     // relabel vertex v to -1 for removal
     inline void relabel_vertex_for_removal(size_t v_idx){
         GVertex& gv = gVertices[v_idx];
