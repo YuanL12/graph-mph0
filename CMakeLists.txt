@@ -26,9 +26,6 @@ if(PERF_PROFILE)
 endif()
 
 
-# Debug mode (eg. in vscode)
-# set(CMAKE_BUILD_TYPE Debug)
-
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)
 # Find Boost and Include Boost headers
@@ -64,13 +61,24 @@ add_library(ST_Tree STATIC
 # Ensure -fPIC is used for the static library
 set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# use the top tree library
+# define its include path
+set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
+
 # -------------------------------------------------
 # Add the cpp executables
-# define the include path of Top Tree Library
-set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 add_executable(topTree_out test/topTree.cpp)
 target_include_directories(topTree_out PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(topTree_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
+
+add_executable(write_to_firep test/write_to_firep.cpp)
+target_include_directories(write_to_firep PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES})
+
+
+# add_executable(main main.cpp)
+# target_include_directories(main PRIVATE ${TOP_TREE_PATH})
+# target_link_libraries(main PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # -------------------------------------------------
 # build binding for python 

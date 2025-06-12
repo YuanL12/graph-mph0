@@ -4,8 +4,10 @@ This is a project about computing Multiparemeter Persistence at dimension 0 for 
 ## TODO
 1. Make sure the result of rivet and mpfree matches in paper: Fast minimal Presentation of Bi-
 2. Update the table result 
-3. try the new top-tree library to see the performance change. The goal is 
 4. Memory Usage
+
+Done: 
+3. try the new top-tree library to see the performance change.x
 5. Size of grade_collection vector 
 
 ## Install 

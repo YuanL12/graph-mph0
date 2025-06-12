@@ -66,7 +66,10 @@ def read_our_betti(file_path):
     return betti_0_data, betti_1_data, betti_2_data
 
 # Example usage
-output_path = "/home/yluo/Documents/graph-mph0/build/density_rips_exact_100.txt"
+# output_path = "annulus_200_ball_density_LCT_output.txt"
+# output_path = "annulus_200_ball_density_topTree_output.txt"
+# output_path = "TopTree_out_without_removing_duplicates.txt"
+output_path = "TopTree_out_result_unordered_map_unordered_set.txt"
 betti_0, betti_1, betti_2 = read_our_betti(output_path)
 
 # Print the results
@@ -76,7 +79,7 @@ print("ours betti_2 len:", len(betti_2))
 
 
 # Example usage
-rivet_output_path = "/home/yluo/Documents/graph-mph0/build/rivet_output_100.txt"
+rivet_output_path = "annulus_200_ball_density_rivet_output.txt"
 xi_0, xi_1, xi_2 = read_rivet_output(rivet_output_path)
 
 # Print the results
@@ -85,6 +88,8 @@ print("rivet betti_1 len:", len(xi_1))
 print("rivet betti_2 len:", len(xi_2)) 
 
 # compare the two results
+print("--------------------------------")
+print("Print the difference")
 print("Compare betti_0:")
 for i in range(len(xi_0)):
     if xi_0[i] != betti_0[i]:

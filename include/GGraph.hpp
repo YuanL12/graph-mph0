@@ -28,6 +28,7 @@ struct GVertex {
 
     // getter methods
     inline VertexId get_id() const {return v.id;}
+    inline VertexId get_label() const {return v.label;}
     inline const GradePoint& get_grade() const {return grade;}
 
     // equality operator
@@ -155,9 +156,30 @@ public:
             size_vertices += 1;
             size_edges += adjacency[i].size();
         }
-        std::cout << "Size of adjacency list: " << size_vertices << std::endl;
-        std::cout << "Size of edges: " << size_edges << std::endl;
+        std::cout << "\tSize of adjacency list (nV): " << size_vertices << std::endl;
+        std::cout << "\tSize of edges (nE * 2): " << size_edges << std::endl;
     }
+
+    void print_graph_info() const {
+        std::cout << "Graph info: " << std::endl;
+        std::cout << "\tvertices: " << std::endl;
+        for (const auto& v: gVertices) {
+            std::cout << "\t\t" << v.get_id() << " " << v.get_grade() << std::endl;
+        }
+        std::cout << "\tedges: id (v0, v1) grade" << std::endl;
+        for (const auto& e: gEdges) {
+            std::cout << "\t\t" << e.get_id() << " (" << e.get_v0() << ", " << e.get_v1() << ") " << e.get_grade() << std::endl;
+        }
+        std::cout << "\tadjacency list: adj[v] = {e1, e2, ...}" << std::endl;
+        for (size_t i = 0; i < adjacency.size(); ++i) {
+            std::cout << "\t\t adj[" << i << "] = ";
+            for (const auto& e: adjacency[i]) {
+                std::cout << e << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
 private:
     EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
     std::vector<GVertex> gVertices;  // collections of graded vertices 
@@ -202,6 +224,10 @@ private:
 
         // Merge adjacency of u to v
         adjacency[u].insert(adjacency[u].end(), adjacency[v].begin(), adjacency[v].end());
+
+        // remove duplicates from adjacency[u]
+        std::sort(adjacency[u].begin(), adjacency[u].end());
+        adjacency[u].erase(std::unique(adjacency[u].begin(), adjacency[u].end()), adjacency[u].end());
 
         // remove v from adjacency
         adjacency[v].clear();

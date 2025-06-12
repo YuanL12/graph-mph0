@@ -31,6 +31,10 @@ struct GradePoint {
         return (*this != other) && (x <= other.x) && (y <= other.y);
     }
 
+    static bool lexicographical_less_than(const GradePoint& a, const GradePoint& b) {
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
+    }
+
     // greater than
     bool greater_than(const GradePoint& other) const {
         return other.less_than(*this);

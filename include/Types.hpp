@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <unordered_set>
+#include <set>  // Add this for std::set
 
 // Define type
 using EdgeId = int; // -1 means null edge due to removal

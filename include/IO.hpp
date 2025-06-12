@@ -1,14 +1,18 @@
 #pragma once
 
-
 #include <icecream.hpp>
 #include <vector>
 #include <cmath>
 #include <utility>
 #include <algorithm>
 #include <iostream>
+#include <fstream>  // for std::ifstream and std::ofstream
+#include <sstream>  // for std::stringstream
+#include <set>      // for std::set
+#include <string>   // for std::string
 
 #include "Graph.hpp"
+#include "GGraph.hpp"  // Add this for GGraph class
 
 void write_betti_numbers(
     const std::vector<std::tuple<int, int, int>>& betti_0, 
@@ -284,6 +288,63 @@ void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filena
     std::ofstream file(filename);
     file << "scc2020" << std::endl;
     file << "2" << std::endl; // 2-parameter filtration
+    const auto& gedges = G.get_gedges();
+    const auto& gvertices = G.get_gvertices();
+    int nV = gvertices.size(); int nE = gedges.size();
+
+    // give each vertex a unique index starting from 0
+    std::unordered_map<VertexId, size_t> vertex_2_idx;
+    std::unordered_map<size_t, VertexId> idx_2_vertex;
+    size_t idx = 0;
+    for (const auto& gv: gvertices) {
+        assert(gv.get_id() != -1 && "Vertex id is -1 (removed), which is not allowed when writing out");
+        vertex_2_idx[gv.get_id()] = idx;
+        idx_2_vertex[idx] = gv.get_id();
+        idx++; 
+    }
+
+    
+    file << nE << " " << nV << " " << 0 << std::endl;
+    for (const auto& ge: gedges) {
+        VertexId v0 = ge.get_v0(); size_t v0_idx = vertex_2_idx[v0]; 
+        VertexId v1 = ge.get_v1(); size_t v1_idx = vertex_2_idx[v1];
+        // get ranks 
+        int x = ge.get_grade().get_x();
+        int y = ge.get_grade().get_y();
+        file << x << " " << y << " ; " << v0_idx << " " << v1_idx << " " << std::endl;
+    }
+    for (size_t i = 0; i < nV; ++i) {
+        VertexId v = idx_2_vertex[i];
+        int x = gvertices[v].get_grade().get_x();
+        int y = gvertices[v].get_grade().get_y();
+        file << x << " " << y << " ; " << std::endl;
+    }
+
+    file << std::endl;
+    file.close();
+}
+
+
+
+/* 
+write the filtration data to scc2020 format, the input GradeGraph has to be a 1-critical filtration
+
+--datatype firep
+--xlabel parameter 1
+--ylabel parameter 2
+
+# data
+...
+
+*/
+void write_filtration_data_to_rivet_firep(const GGraph& G, const std::string& filename) {
+    // check if file exists, if not exist, create it
+    std::ofstream file(filename);
+    file << "--datatype firep" << std::endl;
+    file << "--xlabel parameter 1" << std::endl;
+    file << "--ylabel parameter 2" << std::endl;
+    file << std::endl;
+    file << "# data" << std::endl;
     const auto& gedges = G.get_gedges();
     const auto& gvertices = G.get_gvertices();
     int nV = gvertices.size(); int nE = gedges.size();
