@@ -137,7 +137,7 @@ mph0::collapse_vertex_timer.start();
 
             // If the vertex has not been visited, mark it as visited and process it
             if (!visited[u.get_id()] && u.get_id() != -1) {
-                visited[u.get_id()] = true;
+                visited[u.get_id()] = true; // despite we have duplicate edges after merge, it is visited only once
                 if (e != GEdge::NULL_GEDGE){
                     vertex_dict[u.get_id()] = v.get_id();
                     g.remove_edge(e.get_id());
