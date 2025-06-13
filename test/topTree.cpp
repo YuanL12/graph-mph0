@@ -57,11 +57,6 @@ mph0::build_ggraph_timer.start();
 #if MPH0_TIMERS
 mph0::build_ggraph_timer.stop();
 #endif
-
-    std::cout << "nV, nE: " << ggraph.get_nvertices() << ", " << ggraph.get_nedges() << std::endl;
-    std::cout << "size of active grades: " << ggraph.get_size_of_active_grades() << std::endl;
-    // time the computation
-    std::cout << "Computing MPH0... by TopTree" << std::endl;
     auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_TopTree(ggraph);
 
 #if MPH0_TIMERS
@@ -71,7 +66,7 @@ mph0::print_timers();
 
     // print and write the betti numbers
     if (save_to_file) {
-        if (file_name_output == "") file_name_output = file_name + "_topTree_out.txt";
+        if (file_name_output == "") file_name_output = "TopTree_out.txt";
         std::cout << "Saving to file: " << file_name_output << std::endl;
         bool x_y_swap = false;
         print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, 
@@ -85,17 +80,21 @@ mph0::print_timers();
 int main(int argc, char** argv) {
     std::cout << "--------------------------------" << std::endl;
 
-    std::cout << "Testing figure 1" << std::endl;
-    std::cout << "--------------------------------" << std::endl;
-    test_figure1_GGraph();
+    // std::cout << "Testing figure 1" << std::endl;
+    // std::cout << "--------------------------------" << std::endl;
+    // test_figure1_GGraph();
 
     std::string file_name = argv[1];
+    std::string output_file_name = "";
+    bool save_to_file = false;
+    if (argc > 2) {
+        output_file_name = argv[2];
+        save_to_file = true;
+    }
     std::cout << "--------------------------------" << std::endl;
     std::cout << "Testing degree Rips Filtration" << std::endl;
-
-    std::cout << "--------------------------------" << std::endl;
     std::cout << "Computing MPH0 by TopTree" << std::endl;
-    test_TopTree(file_name, true, "TopTree_200_degree_out_result.txt");
+    test_TopTree(file_name, save_to_file, output_file_name);
 
     return 0;
 } 

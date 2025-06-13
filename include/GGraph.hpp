@@ -84,6 +84,7 @@ public:
         // Initialize vertices by filling with 0, 1, 2, ..., n-1
         gVertices.reserve(nVertices);
         adjacency.reserve(nVertices);
+        active_vertices_flags.resize(nVertices, true);
         for (int i = 0; i < nVertices; ++i) {
             gVertices.emplace_back(GVertex{Vertex(i, i), node_grades[i]});
             adjacency.emplace_back(std::vector<EdgeId>());
@@ -125,7 +126,16 @@ public:
     inline const Vertex& get_vertex(size_t v_idx) const {return gVertices[v_idx].v;};
 
     // get active vertices ids
-    inline const std::vector<VertexId>& get_active_vertices_ids() const {return active_vertices_ids;};
+    std::vector<VertexId> get_active_vertices_ids() const {
+        std::vector<VertexId> active_vertices_ids;
+        active_vertices_ids.reserve(gVertices.size());
+        for (size_t i = 0; i < active_vertices_flags.size(); ++i) {
+            if (active_vertices_flags[i]) {
+                active_vertices_ids.push_back(i);
+            }
+        }
+        return active_vertices_ids;
+    };
 
     // find the size of active grades
     size_t get_size_of_active_grades() const;
@@ -180,6 +190,11 @@ public:
         }
     }
 
+    // initialize active vertices flags with true
+    void initialize_active_vertices_flags() {
+        active_vertices_flags.resize(gVertices.size(), true);
+    }
+
 private:
     EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
     std::vector<GVertex> gVertices;  // collections of graded vertices 
@@ -189,8 +204,7 @@ private:
 
     // TODO: switch to vector<vector<EdgeId>> adjacency;
     std::vector<VAdj> adjacency;
-
-    std::vector<VertexId> active_vertices_ids;
+    std::vector<bool> active_vertices_flags;
 
     // relabel vertex v to -1 for removal
     inline void relabel_vertex_for_removal(size_t v_idx){
@@ -226,11 +240,11 @@ private:
         adjacency[u].insert(adjacency[u].end(), adjacency[v].begin(), adjacency[v].end());
 
         // remove duplicates from adjacency[u]
-        std::sort(adjacency[u].begin(), adjacency[u].end());
-        adjacency[u].erase(std::unique(adjacency[u].begin(), adjacency[u].end()), adjacency[u].end());
+        // std::sort(adjacency[u].begin(), adjacency[u].end());
+        // adjacency[u].erase(std::unique(adjacency[u].begin(), adjacency[u].end()), adjacency[u].end());
 
         // remove v from adjacency
-        adjacency[v].clear();
+        std::vector<EdgeId>().swap(adjacency[v]);
     }
 
     // Helper function to remove an edge from the adjacency hash map
@@ -372,8 +386,7 @@ void GGraph::update_graph(std::vector<size_t> vert_map){
             merge_adjacency_sets(gVertices[i].v.id, gVertices[vert_map[i]].v.id);
             // relabel v_i
             relabel_vertex_for_removal(i);
-        } else {
-            active_vertices_ids.push_back(i);
+            active_vertices_flags[i] = false;
         }
     }
 }

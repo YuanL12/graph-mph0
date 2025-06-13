@@ -63,7 +63,7 @@ namespace mph0 {
         pretty_print_timer("Update graph inside collapse edge:", update_graph_from_collapse_edge_timer, total);
         pretty_print_timer("Collapse vertex:", collapse_vertex_timer, total);
         pretty_print_timer("Update graph inside collapse vertex:", update_graph_from_collapse_vertex_timer, total);
-        pretty_print_timer("Store grades lexicographically:", create_grades_timer, total);
+        pretty_print_timer("Collect grades lexicographically:", create_grades_timer, total);
         pretty_print_timer("Main Loop(visit grades lexicographically):", grades_iteration_timer, total);
         std::cout << "Overall timer: " << double(overall_timer.elapsed().wall)/std::pow(10,9) << std::endl;
     }

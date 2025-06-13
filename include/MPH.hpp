@@ -87,15 +87,8 @@ mph0::collapse_edge_timer.stop();
     Algorithm 2: Collapse to vertex-minimal graph 
 */
 void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
-    // print the size of adjacency list 
-    std::cout << "size of adjacency list before collapse: " << std::endl;
-    g.print_size_of_adjacency();
-
     // local collapse edges
     local_collapse_edges_Grade_Version(g);
-
-    std::cout << "size of adjacency list after edge collapse (algorithm 1): " << std::endl;
-    g.print_size_of_adjacency();
 
 
 #if MPH0_TIMERS
@@ -177,9 +170,6 @@ mph0::update_graph_from_collapse_vertex_timer.stop();
 #if MPH0_TIMERS
 mph0::collapse_vertex_timer.stop();
 #endif
-    
-    std::cout << "size of adjacency list after collapse (algorithm 2): " << std::endl;
-    g.print_size_of_adjacency();
 }
 
 
@@ -193,6 +183,8 @@ std::tuple<
     std::vector<std::tuple<size_t, size_t, int>>
 > compute_MPH0_TopTree(GGraph& g)
 {
+    // set all vertices flags to true before remove them in the later collapse process
+    g.initialize_active_vertices_flags();
 
     // Initialize betti_0, betti_1, betti_2, betti_0_1
     std::vector<std::pair<int, int>> betti_0;
@@ -206,33 +198,23 @@ std::tuple<
 
     // Collapse to vertex minimal
     collapse_to_vertex_minimal_Grade_Version(g);
-
-    // dict mapping a GradePoint to (vertices, edges)
-    //using VEsTuple = std::pair<std::vector<VertexId>, std::vector<EdgeId>>;
-    //std::unordered_map<GradePoint, VEsTuple, FTHash<GradePoint>> grade_point_2_vertex_edges_id;
     
-    // // set of all grade points for iteration
-    // std::set<GradePoint, LexicographicalOrderGradePoint> grades_collection;
+    // collect all grade points for iteration
     std::vector<std::tuple<int, int>> grades_collection;
     grades_collection.reserve(g.get_nvertices() + g.get_nedges());
 
-    // active vertices labels 
-    std::vector<VertexId> active_vertices_ids;
-    active_vertices_ids.reserve(g.get_nvertices());
+    const auto& active_vertices_ids = g.get_active_vertices_ids();
 
 #if MPH0_TIMERS
 mph0::create_grades_timer.start();
 #endif
     // Loop over all vertices and edges to find acitve vertices and edges
-    for (auto gv: g.get_gvertices()){
-        if (gv.get_id() == -1) { continue;}
-        active_vertices_ids.push_back(gv.get_id());
-        //grade_point_2_vertex_edges_id[gv.get_grade()].first.push_back(gv.get_id());
-        grades_collection.emplace_back(0, gv.get_id());
+    for (auto v_id: active_vertices_ids){
+        grades_collection.emplace_back(0, v_id);
     }
+
     for (const auto& ge: g.get_gedges()){
         if (ge.get_id() == -1) {continue;}
-        //grade_point_2_vertex_edges_id[ge.get_grade()].second.push_back(ge.get_id());
         grades_collection.emplace_back(1, ge.get_id());
     }
     std::sort(grades_collection.begin(), grades_collection.end(),
@@ -242,6 +224,7 @@ mph0::create_grades_timer.start();
                 const GradePoint& gy = std::get<0>(y) == 0 ? g.get_gvertex(std::get<1>(y)).get_grade() : g.get_gedge(std::get<1>(y)).get_grade();
                 return GradePoint::lexicographical_less_than(gx, gy) || (gx == gy && std::get<0>(x) < std::get<0>(y));
              });
+
 #if MPH0_TIMERS
 mph0::create_grades_timer.stop();
 #endif
