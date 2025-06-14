@@ -282,12 +282,9 @@ point_cloud_to_1_critical_filtration(const std::vector<std::vector<PT>>& points,
     return {vertices, edges, filt_func_v, filt_func_e};
 }
 
-// write the filtration data to scc2020 format, the input GradeGraph has to be a 1-critical filtration
-void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filename) {
-    // check if file exists, if not exist, create it
-    std::ofstream file(filename);
-    file << "scc2020" << std::endl;
-    file << "2" << std::endl; // 2-parameter filtration
+
+
+void write_filtration_data_to_firep_without_header(const GGraph& G, std::ofstream& file) {
     const auto& gedges = G.get_gedges();
     const auto& gvertices = G.get_gvertices();
     int nV = gvertices.size(); int nE = gedges.size();
@@ -321,6 +318,23 @@ void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filena
     }
 
     file << std::endl;
+}
+
+
+/*
+Write the filtration data to scc2020 format, the input GradeGraph has to be a 1-critical filtration
+The format is:
+scc2020
+2
+nE nV 0
+...
+*/
+void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filename) {
+    // check if file exists, if not exist, create it
+    std::ofstream file(filename);
+    file << "scc2020" << std::endl;
+    file << "2" << std::endl; // 2-parameter filtration
+    write_filtration_data_to_firep_without_header(G, file);
     file.close();
 }
 
@@ -328,14 +342,14 @@ void write_filtration_data_to_scc2020(const GGraph& G, const std::string& filena
 
 /* 
 write the filtration data to scc2020 format, the input GradeGraph has to be a 1-critical filtration
-
+The format is:
 --datatype firep
 --xlabel parameter 1
 --ylabel parameter 2
 
 # data
+nE nV 0
 ...
-
 */
 void write_filtration_data_to_rivet_firep(const GGraph& G, const std::string& filename) {
     // check if file exists, if not exist, create it
@@ -345,38 +359,25 @@ void write_filtration_data_to_rivet_firep(const GGraph& G, const std::string& fi
     file << "--ylabel parameter 2" << std::endl;
     file << std::endl;
     file << "# data" << std::endl;
-    const auto& gedges = G.get_gedges();
-    const auto& gvertices = G.get_gvertices();
-    int nV = gvertices.size(); int nE = gedges.size();
+    write_filtration_data_to_firep_without_header(G, file);
+    file.close();
+}
 
-    // give each vertex a unique index starting from 0
-    std::unordered_map<VertexId, size_t> vertex_2_idx;
-    std::unordered_map<size_t, VertexId> idx_2_vertex;
-    size_t idx = 0;
-    for (const auto& gv: gvertices) {
-        assert(gv.get_id() != -1 && "Vertex id is -1 (removed), which is not allowed when writing out");
-        vertex_2_idx[gv.get_id()] = idx;
-        idx_2_vertex[idx] = gv.get_id();
-        idx++; 
-    }
-
-    
-    file << nE << " " << nV << " " << 0 << std::endl;
-    for (const auto& ge: gedges) {
-        VertexId v0 = ge.get_v0(); size_t v0_idx = vertex_2_idx[v0]; 
-        VertexId v1 = ge.get_v1(); size_t v1_idx = vertex_2_idx[v1];
-        // get ranks 
-        int x = ge.get_grade().get_x();
-        int y = ge.get_grade().get_y();
-        file << x << " " << y << " ; " << v0_idx << " " << v1_idx << " " << std::endl;
-    }
-    for (size_t i = 0; i < nV; ++i) {
-        VertexId v = idx_2_vertex[i];
-        int x = gvertices[v].get_grade().get_x();
-        int y = gvertices[v].get_grade().get_y();
-        file << x << " " << y << " ; " << std::endl;
-    }
-
-    file << std::endl;
+/*
+Write the filtration data to mpfree format, the input GradeGraph has to be a 1-critical filtration
+The format is:
+firep
+first parameter
+second parameter
+nE nV 0
+...
+*/
+void write_filtration_data_to_mpfree_firep(const GGraph& G, const std::string& filename) {
+    // check if file exists, if not exist, create it
+    std::ofstream file(filename);
+    file << "firep" << std::endl;
+    file << "first parameter" << std::endl;
+    file << "second parameter" << std::endl;
+    write_filtration_data_to_firep_without_header(G, file);
     file.close();
 }

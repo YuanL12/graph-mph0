@@ -199,10 +199,7 @@ private:
     EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
     std::vector<GVertex> gVertices;  // collections of graded vertices 
     std::vector<GEdge> gEdges; // collections of graded edges 
-    // adjacency list to represent the graph, map vertex to edge Id
-    // std::unordered_map<VertexId, VAdj> adjacency; 
-
-    // TODO: switch to vector<vector<EdgeId>> adjacency;
+    // adjacency list to represent the graph, map vertex to std::vector<EdgeId>
     std::vector<VAdj> adjacency;
     std::vector<bool> active_vertices_flags;
 
