@@ -199,9 +199,10 @@ private:
     EdgeId edge_id_assign = 0; // used to assign next edge an unique identity
     std::vector<GVertex> gVertices;  // collections of graded vertices 
     std::vector<GEdge> gEdges; // collections of graded edges 
-    // adjacency list to represent the graph, map vertex to std::vector<EdgeId>
-    std::vector<VAdj> adjacency;
-    std::vector<bool> active_vertices_flags;
+    // Caution: after collapse, the adjacency list may contain duplicates
+    //       and it is fine if using visisted to perform DFS
+    std::vector<VAdj> adjacency; // adjacency list: vertex to std::vector<EdgeId>
+    std::vector<bool> active_vertices_flags; // flags to indicate if the vertex is active or removed
 
     // relabel vertex v to -1 for removal
     inline void relabel_vertex_for_removal(size_t v_idx){
