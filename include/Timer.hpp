@@ -21,7 +21,7 @@ void pretty_print_timer(const std::string& label, const boost::timer::cpu_timer&
 
 namespace mph0 {
 
-    boost::timer::cpu_timer overall_timer, io_timer, 
+    boost::timer::cpu_timer overall_timer, load_input_timer, 
         build_ggraph_timer,
         collapse_edge_timer, collapse_vertex_timer, 
         update_graph_from_collapse_edge_timer, update_graph_from_collapse_vertex_timer,
@@ -32,6 +32,9 @@ namespace mph0 {
     void initialize_timers() {    
         overall_timer.start();
         overall_timer.stop();
+
+        load_input_timer.start();
+        load_input_timer.stop();
  
         build_ggraph_timer.start();
         build_ggraph_timer.stop();
@@ -56,8 +59,7 @@ namespace mph0 {
     }
 
     void print_timers(double total = double(overall_timer.elapsed().wall) / std::pow(10,9)) {
-        
-        
+        pretty_print_timer("Load input:", load_input_timer, total);
         pretty_print_timer("Build ggraph:", build_ggraph_timer, total);
         pretty_print_timer("Collapse edge:", collapse_edge_timer, total);
         pretty_print_timer("Update graph inside collapse edge:", update_graph_from_collapse_edge_timer, total);
@@ -65,7 +67,10 @@ namespace mph0 {
         pretty_print_timer("Update graph inside collapse vertex:", update_graph_from_collapse_vertex_timer, total);
         pretty_print_timer("Collect grades lexicographically:", create_grades_timer, total);
         pretty_print_timer("Main Loop(visit grades lexicographically):", grades_iteration_timer, total);
-        std::cout << "Overall timer: " << double(overall_timer.elapsed().wall)/std::pow(10,9) << std::endl;
+        
+        double load_input_time = double(load_input_timer.elapsed().wall)/std::pow(10,9);
+        std::cout << "Total time: " << total << " s" << std::endl;
+        std::cout << "Total time minus load input: " << total - load_input_time << " s" << std::endl;
     }
 }
   

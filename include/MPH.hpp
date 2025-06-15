@@ -13,7 +13,7 @@
 */
 void local_collapse_edges_Grade_Version(GGraph& g) {
 #if MPH0_TIMERS
-mph0::collapse_edge_timer.start();
+mph0::collapse_edge_timer.resume();
 #endif
     // Initialize dictionary φ with identity map
     std::vector<size_t> vertex_dict; vertex_dict.resize(g.get_nvertices());
@@ -71,7 +71,7 @@ mph0::collapse_edge_timer.start();
 
     // update vertices and edges
 #if MPH0_TIMERS
-mph0::update_graph_from_collapse_edge_timer.start();
+mph0::update_graph_from_collapse_edge_timer.resume();
 #endif
     g.update_graph(vertex_dict);
 #if MPH0_TIMERS
@@ -92,7 +92,7 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
 
 
 #if MPH0_TIMERS
-mph0::collapse_vertex_timer.start();
+mph0::collapse_vertex_timer.resume();
 #endif
     // Initialize dictionary φ with identity map
     std::vector<size_t> vertex_dict(g.get_nvertices());
@@ -161,7 +161,7 @@ mph0::collapse_vertex_timer.start();
 
     // update vertices and edges
 #if MPH0_TIMERS
-mph0::update_graph_from_collapse_vertex_timer.start();
+mph0::update_graph_from_collapse_vertex_timer.resume();
 #endif
     g.update_graph(vertex_dict);
 #if MPH0_TIMERS
@@ -181,7 +181,7 @@ std::tuple<
     std::vector<std::pair<int, int>>, 
     std::vector<std::pair<int, int>>, 
     std::vector<std::tuple<size_t, size_t, int>>
-> compute_MPH0_TopTree(GGraph& g)
+> compute_MPH0(GGraph& g)
 {
     // set all vertices flags to true before remove them in the later collapse process
     g.initialize_active_vertices_flags();
@@ -206,7 +206,7 @@ std::tuple<
     const auto& active_vertices_ids = g.get_active_vertices_ids();
 
 #if MPH0_TIMERS
-mph0::create_grades_timer.start();
+mph0::create_grades_timer.resume();
 #endif
     // Loop over all vertices and edges to find acitve vertices and edges
     for (auto v_id: active_vertices_ids){
@@ -230,7 +230,7 @@ mph0::create_grades_timer.stop();
 #endif
 
 #if MPH0_TIMERS
-mph0::grades_iteration_timer.start();
+mph0::grades_iteration_timer.resume();
 #endif
     
     // Build TopTree

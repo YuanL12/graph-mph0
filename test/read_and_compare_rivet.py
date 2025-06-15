@@ -68,8 +68,7 @@ def read_our_betti(file_path):
 # Example usage
 # output_path = "annulus_200_ball_density_LCT_output.txt"
 # output_path = "annulus_200_ball_density_topTree_output.txt"
-# output_path = "TopTree_out_without_removing_duplicates.txt"
-output_path = "TopTree_out_result_unordered_map_unordered_set.txt"
+output_path = "../build/annulus_200_deg_toptree_merge_unique.txt"
 betti_0, betti_1, betti_2 = read_our_betti(output_path)
 
 # Print the results
@@ -79,7 +78,7 @@ print("ours betti_2 len:", len(betti_2))
 
 
 # Example usage
-rivet_output_path = "annulus_200_ball_density_rivet_output.txt"
+rivet_output_path = "annulus_200_deg_rivet_output.txt"
 xi_0, xi_1, xi_2 = read_rivet_output(rivet_output_path)
 
 # Print the results

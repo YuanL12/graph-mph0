@@ -25,7 +25,7 @@ int test_figure1_GGraph() {
     g.add_edge(4, 0, GradePoint(6,2)); // h1 = (v, x1)
     g.add_edge(3, 5, GradePoint(2,6)); // h2 = (u, w)
     g.add_edge(5, 2, GradePoint(6,6)); // e3 = (w, x3)
-    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0_TopTree(g);
+    auto [betti_0, betti_1, betti_2, betti_0_1, M] = compute_MPH0(g);
     
     std::cout << "Final Results: " << std::endl;
     IC(betti_0, betti_1, betti_2, betti_0_1);
@@ -57,7 +57,7 @@ mph0::build_ggraph_timer.start();
 #if MPH0_TIMERS
 mph0::build_ggraph_timer.stop();
 #endif
-    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0_TopTree(ggraph);
+    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0(ggraph);
 
 #if MPH0_TIMERS
 mph0::overall_timer.stop();

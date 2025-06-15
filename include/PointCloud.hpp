@@ -28,7 +28,9 @@
 // Input: a vector of points, each point is a vector of coordinates
 // Output: a GGraph object and a GradeTable object
 template<typename PT>
-std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(const std::vector<std::vector<PT>>& points){
+std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(
+    const std::vector<std::vector<PT>>& points
+    ){
     // Get the number of points
     const int n = points.size();
 

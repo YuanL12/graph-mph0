@@ -67,9 +67,9 @@ set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 
 # -------------------------------------------------
 # Add the cpp executables
-add_executable(topTree_out test/topTree.cpp)
-target_include_directories(topTree_out PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(topTree_out PRIVATE ${Boost_LIBRARIES} ST_Tree)
+add_executable(time test/time.cpp)
+target_include_directories(time PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(time PRIVATE ${Boost_LIBRARIES})
 
 add_executable(write_to_firep test/write_to_firep.cpp)
 target_include_directories(write_to_firep PRIVATE ${TOP_TREE_PATH})
