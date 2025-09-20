@@ -61,6 +61,12 @@ add_library(ST_Tree STATIC
 # Ensure -fPIC is used for the static library
 set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+# Add AbMPH library
+file(GLOB_RECURSE AbMPH_SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+add_library(AbMPH STATIC ${AbMPH_SRC_FILES})
+# Ensure -fPIC is used for the static library
+set_target_properties(AbMPH PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 # use the top tree library
 # define its include path
 set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
@@ -69,12 +75,11 @@ set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 # Add the cpp executables
 add_executable(time test/time.cpp)
 target_include_directories(time PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(time PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(time PRIVATE ${Boost_LIBRARIES} AbMPH)
 
 add_executable(write_to_firep test/write_to_firep.cpp)
 target_include_directories(write_to_firep PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES})
-
+target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
 
 # add_executable(main main.cpp)
 # target_include_directories(main PRIVATE ${TOP_TREE_PATH})

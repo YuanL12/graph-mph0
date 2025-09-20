@@ -46,3 +46,6 @@ sydney-urban-objects-dataset
 *.gz
 
 *.txt
+
+# format config
+.clang-format
