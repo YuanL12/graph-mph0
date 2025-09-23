@@ -10,6 +10,81 @@ Done:
 3. try the new top-tree library to see the performance change.x
 5. Size of grade_collection vector 
 
+## User Guide 
+### Input
+We suppot the following two types input
+1. a point cloud
+2. a bifiltration in the format of `firep`:
+```bash
+firep
+first parameter
+second parameter
+#_of_edges #_of_vertices 0 
+grade_x_of_e_0 grade_y_of_e_0 ; boundary_vertex_0_of_e0 boundary_vertex_1_of_e0
+...
+grade_x_of_v_0 grade_y_of_v_0 ;
+...
+```
+Example from the figure one of "Computing Betti Tables and Minimal Presentations
+of Zero-dimensional Persistent Homology"
+```bash
+firep
+first parameter
+second parameter
+8 6 0
+3 5 ; 0 1 
+5 3 ; 0 1 
+6 6 ; 2 5
+6 2 ; 1 3
+2 6 ; 0 2
+6 2 ; 3 4 
+6 2 ; 4 5
+6 2 ; 3 5
+1 3 ; 
+2 1 ; 
+2 6 ;
+6 2 ;
+6 2 ;
+6 2 ;
+```
+
+### Correctness
+We have tested the correctness of our algorithm against rivet. Notice that when loading a point cloud in floating point, rivet use rational numbers for its own drawing purpose. In order to match the result, we also implemented the rational number data types. However, in practice, `float` is often enough. 
+
+```bash
+# Our 
+cd build 
+# ball density-Rips
+./main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rivet annulus_200_ball_density_exact_our_out.txt
+# degree-Rips
+./main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rivet annulus_400_degree_exact_our_out.txt
+
+# rivet
+# ball-density function 
+/home/yluo/Documents/rivet/build/rivet_console /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt -b --num_threads 1 --datatype points -H 0 --bifil function --function balldensity[] > annulus_200_ball_density_output_rivet.txt
+# degree
+/home/yluo/Documents/rivet/build/rivet_console /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt -b --num_threads 1 --datatype points -H 0 --bifil degree > annulus_200_degree_output_rivet.txt
+
+# we can now compare their difference using python script in test folder 
+python /home/yluo/Documents/graph-mph0/test/python/read_and_compare_rivet.py
+# The output will looks like the following  
+# ours betti_0 len: 35
+# ours betti_1 len: 259
+# ours betti_2 len: 60
+# rivet betti_0 len: 35
+# rivet betti_1 len: 259
+# rivet betti_2 len: 60
+# --------------------------------
+# Print the difference
+# Compare betti_0:
+# Compare betti_1:
+# Compare betti_2:
+```
+### Effciency
+We compare the efficency over two exisitng packages, rivet and mpfree, which can compute absolute betti numbers or minial presentation or both. 
+
+
+
 ## Install 
 ### Basic Steps:
 Clone the repo and corresponding all submodules
@@ -112,6 +187,31 @@ Tarjan and Sleator showed that:
 Any sequence of m operations on an n-node splay tree takes at most O(mlogn) time total.
 
 ➡️ So, average cost = O(log n) per operation — amortized complexity.
+
+
+
+
+## How rivet deal with floating points
+1. load data in double
+2. approximate a double to a rational numebr(boost) 
+```cpp
+// approximate a double to an exact type
+exact approx(double x)
+{
+    int d = 7; //desired number of significant digits
+    int log = (int)floor(log10(x)) + 1;
+
+    if (log >= d)
+        return exact((int)floor(x));
+
+    long denom = pow(10, d - log);
+    return exact((long)floor(x * denom), denom);
+}
+```
+3. convert it back into double when necessary
+```cpp
+double_value = numerator(e).convert_to<double>() / denominator(e).convert_to<double>();
+```
 
 
 

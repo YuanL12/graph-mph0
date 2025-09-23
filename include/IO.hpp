@@ -13,6 +13,8 @@
 
 #include "GGraph.hpp"  // Add this for GGraph class
 #include "Graph.hpp"
+#include "PointCloud.hpp"
+#include "Timer.hpp"
 #include "Utils.hpp"
 
 void write_betti_numbers(const std::vector<std::tuple<int, int, int>> &betti_0,
@@ -366,4 +368,180 @@ void write_filtration_data_to_mpfree_firep(const GGraph &G, const std::string &f
     file << "second parameter" << std::endl;
     write_filtration_data_to_firep_without_header(G, file);
     file.close();
+}
+
+std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
+    const std::string &filename) {
+    // Initialize
+    std::vector<int> x_coords;
+    std::vector<int> y_coords;
+    std::vector<GradePoint> vertex_grades;
+    std::vector<std::pair<int, int>> edges;
+    std::vector<GradePoint> edge_grades;
+    int nE, nV;
+
+#if MPH0_TIMERS
+    mph0::load_input_timer.resume();
+#endif
+    // Read the filtration data from a file, then build a GGraph.
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("File not found: " + filename);
+    }
+    // if not end in .firep, throw an runtime error
+    if (filename.find(".firep") == std::string::npos) {
+        throw std::runtime_error("File is not a firep file: " + filename);
+    }
+
+    // skip the first three lines
+    std::string line;
+    std::getline(file, line);  // line 1: "firep"
+    std::getline(file, line);  // line 2: "first parameter"
+    std::getline(file, line);  // line 3: "second parameter"
+    std::getline(file, line);  // line 4: "#_of_edges #_of_vertices 0"
+    std::stringstream ss(line);
+    int int_zero = 0;
+    ss >> nE >> nV >> int_zero;
+
+    // Validate parsed values
+    if (ss.fail() || nE < 0 || nV < 0) {
+        throw std::runtime_error(
+            "Invalid format in line 4: expected 'nE nV 0' where nE and nV are "
+            "non-negative integers");
+    }
+
+    // Check for reasonable limits to prevent memory issues
+    if (nE > 10000000 || nV > 10000000) {
+        std::cerr << "WARNING: File contains large number of edges or vertices (nE=" << nE
+                  << ", nV=" << nV << "). This may cause memory issues." << std::endl;
+    }
+
+    edges.reserve(nE);
+    vertex_grades.reserve(nV);
+    edge_grades.reserve(nE);
+
+    // first read the graded edges: format is grade_x grade_y ; boundary_vertex_0
+    // boundary_vertex_1
+    for (int i = 0; i < nE; ++i) {
+        if (!std::getline(file, line)) {
+            throw std::runtime_error("Unexpected end of file while reading edge " +
+                                     std::to_string(i));
+        }
+        std::stringstream ss(line);
+        int x_rank, y_rank, v0, v1;
+        char semicolon;
+        ss >> x_rank >> y_rank >> semicolon >> v0 >> v1;
+
+        if (ss.fail() || semicolon != ';') {
+            throw std::runtime_error("Invalid format in edge line " +
+                                     std::to_string(i + 4) + ": " + line);
+        }
+
+        if (v0 < 0 || v1 < 0 || v0 >= nV || v1 >= nV) {
+            throw std::runtime_error(
+                "Invalid vertex indices in edge line " + std::to_string(i + 4) +
+                ": v0=" + std::to_string(v0) + ", v1=" + std::to_string(v1) +
+                " (nV=" + std::to_string(nV) + ")");
+        }
+
+        edges.emplace_back(v0, v1);
+        edge_grades.emplace_back(x_rank, y_rank);
+        x_coords.push_back(x_rank);
+        y_coords.push_back(y_rank);
+    }
+
+    // then read the graded vertices
+    for (int i = 0; i < nV; ++i) {
+        if (!std::getline(file, line)) {
+            throw std::runtime_error("Unexpected end of file while reading vertex " +
+                                     std::to_string(i));
+        }
+        std::stringstream ss(line);
+        int x_rank, y_rank;
+        char semicolon;
+        ss >> x_rank >> y_rank >> semicolon;
+
+        if (ss.fail() || semicolon != ';') {
+            throw std::runtime_error("Invalid format in vertex line " +
+                                     std::to_string(i + 4 + nE) + ": " + line);
+        }
+
+        vertex_grades.emplace_back(x_rank, y_rank);
+        x_coords.push_back(x_rank);
+        y_coords.push_back(y_rank);
+    }
+
+#if MPH0_TIMERS
+    mph0::load_input_timer.stop();
+#endif
+
+    // Remove the duplicated x and y coordinates and sort them
+    std::sort(x_coords.begin(), x_coords.end());
+    x_coords.erase(std::unique(x_coords.begin(), x_coords.end()), x_coords.end());
+    std::sort(y_coords.begin(), y_coords.end());
+    y_coords.erase(std::unique(y_coords.begin(), y_coords.end()), y_coords.end());
+
+    // Construct a GradeTable with x and y coordinates
+    GradeTable<int, int> grade_table(x_coords, y_coords);
+
+    // free the memory
+    std::vector<int>().swap(x_coords);
+    std::vector<int>().swap(y_coords);
+
+    // Create a GGraph
+    GGraph ggraph(nV, vertex_grades, edges, edge_grades);
+
+    return std::make_tuple(std::move(ggraph), std::move(grade_table));
+}
+
+template <typename PT>
+std::tuple<GGraph, GradeTable<PT, int>> build_degree_filtration_from_point_cloud(
+    const std::string &filename) {
+#if MPH0_TIMERS
+    mph0::load_input_timer.resume();
+#endif
+
+    // read the points
+    auto points = read_points<PT>(filename);
+
+#if MPH0_TIMERS
+    mph0::load_input_timer.stop();
+#endif
+
+    // build the degree filtration
+    return point_cloud_to_degree_Rips_filtration<PT>(points);
+}
+
+template <typename PT>
+std::tuple<GGraph, GradeTable<double, PT>> build_ball_density_filtration_from_point_cloud(
+    const std::string &filename) {
+#if MPH0_TIMERS
+    mph0::load_input_timer.resume();
+#endif
+
+    // read the points
+    auto points = read_points<PT>(filename);
+
+#if MPH0_TIMERS
+    mph0::load_input_timer.stop();
+#endif
+
+    // build the ball density filtration
+    return point_cloud_to_ball_density_Rips_filtration<PT>(points);
+}
+
+template <typename PT>
+std::tuple<GGraph, GradeTable<int, rivet::ExactValue>> build_degree_filtration_from_point_cloud_rivet(
+    const std::string &filename) {
+    // read the points
+    auto points = read_points<PT>(filename);
+    return point_cloud_to_degree_Rips_filtration_rivet<PT>(points);
+}
+
+template <typename PT>
+std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>> build_ball_density_filtration_from_point_cloud_rivet(
+    const std::string &filename) {
+    // read the points
+    auto points = read_points<PT>(filename);
+    return point_cloud_to_ball_density_Rips_filtration_rivet<PT>(points);
 }

@@ -1,21 +1,21 @@
-#include "MPH.hpp"
+#include <cassert>
 #include <icecream.hpp>
-#include "IO.hpp"
-#include "PointCloud.hpp"
-#include "Timer.hpp"
-#include "ContractionTopTree.hpp"
 #include <iostream>
 #include <tuple>
-#include <cassert>
-#include "RIVET.hpp"
 
-int main(int argc, char **argv)
-{
-    if (argc != 3)
-    {
+#include "ContractionTopTree.hpp"
+#include "IO.hpp"
+#include "MPH.hpp"
+#include "PointCloud.hpp"
+#include "RIVET.hpp"
+#include "Timer.hpp"
+
+int main(int argc, char **argv) {
+    if (argc != 3) {
         std::cout << "--------------------------------" << std::endl;
         std::cout << "Need 2 arguments: " << std::endl;
-        std::cout << "<input_file> <filtration_type(ball_density or degree)>" << std::endl;
+        std::cout << "<input_file> <filtration_type(ball_density or degree)>"
+                  << std::endl;
         return 1;
     }
     std::cout << "--------------------------------" << std::endl;
@@ -27,13 +27,6 @@ int main(int argc, char **argv)
 #if MPH0_TIMERS
     mph0::initialize_timers();
     mph0::overall_timer.resume();
-    mph0::load_input_timer.resume();
-#endif
-
-    // read the file
-    auto points = read_points<double>(file_name);
-#if MPH0_TIMERS
-    mph0::load_input_timer.stop();
 #endif
 
     // build the graph
@@ -42,22 +35,19 @@ int main(int argc, char **argv)
 #endif
     GGraph ggraph;
     size_t x_size, y_size;
-    if (filtration_type == "degree")
-    {
-        GradeTable<double, int> grade_table; // (x, y) is (radius, degree)
-        std::tie(ggraph, grade_table) = point_cloud_to_degree_Rips_filtration<double>(points);
+    if (filtration_type == "degree") {
+        GradeTable<double, int> grade_table;  // (x, y) is (radius, degree)
+        std::tie(ggraph, grade_table) =
+            build_degree_filtration_from_point_cloud<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
-    }
-    else if (filtration_type == "ball_density")
-    {
-        GradeTable<double, double> grade_table; // (x, y) is (ball density, radius)
-        std::tie(ggraph, grade_table) = point_cloud_to_ball_density_Rips_filtration<double>(points);
+    } else if (filtration_type == "ball_density") {
+        GradeTable<double, double> grade_table;  // (x, y) is (ball density, radius)
+        std::tie(ggraph, grade_table) =
+            build_ball_density_filtration_from_point_cloud<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
-    }
-    else
-    {
+    } else {
         std::cout << "Invalid filtration type" << std::endl;
         return 1;
     }
@@ -66,16 +56,20 @@ int main(int argc, char **argv)
 #endif
 
 #if MPH0_TIMERS
-    mph0::overall_timer.stop(); // pause the overall timer
+    mph0::overall_timer.stop();  // pause the overall timer
 #endif
 
     // compute active grades size
     size_t active_grades_size = ggraph.get_size_of_active_grades();
     size_t total_grades_size = x_size * y_size;
-    std::cout << "Total grades size: (" << x_size << ", " << y_size << ") = " << std::scientific << std::setprecision(2) << total_grades_size / 1e6 << " M" << std::endl;
-    std::cout << "Active grades size: " << std::scientific << std::setprecision(2) << active_grades_size / 1e6 << " M";
+    std::cout << "Total grades size: (" << x_size << ", " << y_size
+              << ") = " << std::scientific << std::setprecision(2)
+              << total_grades_size / 1e6 << " M" << std::endl;
+    std::cout << "Active grades size: " << std::scientific << std::setprecision(2)
+              << active_grades_size / 1e6 << " M";
     // get the percentage of active grades
-    std::cout << " (" << static_cast<double>(active_grades_size) / total_grades_size * 100 << "%)" << std::endl;
+    std::cout << " (" << static_cast<double>(active_grades_size) / total_grades_size * 100
+              << "%)" << std::endl;
 
 #if MPH0_TIMERS
     mph0::overall_timer.resume();

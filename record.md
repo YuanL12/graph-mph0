@@ -42,7 +42,7 @@ Later (not urgent)
 $ time /home/yluo/Documents/rivet/build/rivet_console ../experiment/data/annulus_100.txt -b --num_threads 1 --datatype points -H 0 --bifil function --function balldensity[] > rivet_output_100.txt
 
 # degree with betti numbers computed 
-$ time /home/yluo/Documents/rivet/build/rivet_console ../experiment/data/annulus_100.txt -b --num_threads 1 --datatype points -H 0 --bifil degree
+$ time /home/yluo/Documents/rivet/build/rivet_console /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt -b --num_threads 1 --datatype points -H 0 --bifil degree > rivet_output_200_test.txt
 
 # compute the minimal presentation
 $ ../rivet/rivet_console experiment/data/rivet/annulus_50_ball_density.firep --minpres --num_threads 1 --datatype firep > rivet_output_100.txt

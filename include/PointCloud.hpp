@@ -461,3 +461,141 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
     return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades),
                            std::move(grade_table));
 }
+
+/*
+ * Construct a Degree-Rips filtration from a point cloud using RIVET exact types
+ * (x: degree, y: distance)
+ */
+template <typename PT>
+std::tuple<GGraph, GradeTable<int, rivet::ExactValue>>
+point_cloud_to_degree_Rips_filtration_rivet(
+    const std::vector<std::vector<PT>> &points) {
+    const int n = points.size();
+    const int num_edges = n * (n - 1) / 2;
+
+    // Compute distances and store in compressed format
+    std::vector<rivet::ExactValue> distances;
+    distances.reserve(num_edges);
+
+    // Create distance set from vector and add 0.0 for self-distances
+    rivet::ExactSet distance_set;
+    distance_set.insert(rivet::ExactValue(0.0));
+
+    // Helper function to get index in compressed vector
+    auto get_compressed_index = [n](int i, int j) {
+        if (i > j) std::swap(i, j);
+        return i * n - (i * (i + 1)) / 2 + (j - i - 1);
+    };
+
+    // Compute distance matrix 
+    std::vector<std::vector<rivet::ExactValue>> D(n, std::vector<rivet::ExactValue>(n, rivet::ExactValue(0.0)));
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            PT dist = 0.0;
+            for (size_t k = 0; k < points[i].size(); ++k) {
+                PT diff = points[i][k] - points[j][k];
+                dist += diff * diff;
+            }
+            PT dist_sqrt = std::sqrt(dist);
+            rivet::exact dist_sqrt_exact = rivet::approx(dist_sqrt);
+            rivet::ExactValue dist_sqrt_exact_value(dist_sqrt_exact);
+            distances.emplace_back(dist_sqrt_exact_value);
+            distance_set.insert(dist_sqrt_exact_value);
+
+            // add the distance to the distance matrix
+            D[i][j] = dist_sqrt_exact_value;
+            D[j][i] = dist_sqrt_exact_value;
+        }
+    }
+
+    // Create distance to index map
+    std::unordered_map<rivet::exact, int> distance_to_index;
+    int index = 0;
+    for (const auto &value : distance_set) {
+        distance_to_index[value.exact_value] = index++;
+    }
+
+    // Construct a GradeTable with
+    // x-coordinate: negative degree, y-coordinate: distance
+    std::vector<int> x_coords; // -n+1, -n+2, ..., -1, 0
+    for (int i = n-1; i >= 0; --i) {
+        x_coords.emplace_back(i);
+    }
+    std::vector<rivet::ExactValue> y_coords(distance_set.begin(), distance_set.end());
+    GradeTable<int, rivet::ExactValue> grade_table(x_coords, y_coords);
+
+    // free the memory
+    std::vector<int>().swap(x_coords);
+    std::vector<rivet::ExactValue>().swap(y_coords);
+    rivet::ExactSet().swap(distance_set);
+
+    // Create a copy of the distance matrix for sorting
+    std::vector<std::vector<rivet::ExactValue>> sorted_dists;
+    sorted_dists.reserve(n);
+    rivet::ExactValueComparator cmp;
+    for (int i = 0; i < n; ++i) {
+        sorted_dists.emplace_back(D[i]);
+        std::sort(sorted_dists.back().begin(), sorted_dists.back().end(), cmp);
+    }
+
+    // Prepare for GGraph construction with exact sizes
+    std::vector<std::pair<int, int>> edges;
+    edges.reserve(n * n + n * (n - 1) / 2);
+    std::vector<GradePoint> vertex_grades;
+    vertex_grades.reserve(n * n);
+    std::vector<GradePoint> edge_grades;
+    edge_grades.reserve(n * n + n * (n - 1) / 2);
+
+    // Create vertex grades
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            int v = i * n + j;
+            int x_rank = distance_to_index[sorted_dists[i][j].exact_value]; 
+            int y_rank = n - 1 - j; // negative degree to positive rank
+            vertex_grades.emplace_back(GradePoint(x_rank, y_rank));
+        }
+    }
+
+    // Add edges from the same row
+    for (int i = 0; i < n; ++i) {
+        int base = i * n;
+        // Add edges from the same row e_j = (j, j+1), j = 0, 1, ..., n-2
+        // f(e_j) = (r_{j+1} , -j)
+        for (int j = 0; j < n - 1; ++j) {
+            int x_rank = distance_to_index[sorted_dists[i][j + 1].exact_value];
+            int y_rank = n - 1 - j;
+            edges.emplace_back(base + j, base + j + 1);
+            edge_grades.emplace_back(GradePoint(x_rank, y_rank));
+        }
+    }
+
+    // Add edges across vertices
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            // compute max distance between i and j
+            std::vector<rivet::ExactValue> max_r;
+            max_r.reserve(n);
+            for (int k = 0; k < n; ++k)
+                max_r.emplace_back(std::max(sorted_dists[i][k], sorted_dists[j][k], cmp));
+
+            // find the first index k such that max_r[k] >= D[i][j]
+            rivet::ExactValue threshold = D[i][j];
+            auto it = std::lower_bound(max_r.begin(), max_r.end(), threshold, cmp);
+            int idx = it - max_r.begin();
+
+            // add edges from i to j
+            for (int k = idx; k < n; ++k) {
+                // transform to 1D vertex index
+                int ii = i * n + k;
+                int jj = j * n + k;
+                edges.emplace_back(ii, jj);
+                int x_rank = distance_to_index[max_r[k].exact_value];
+                int y_rank = n - 1 - k;
+                edge_grades.emplace_back(GradePoint(x_rank, y_rank));
+            }
+        }
+    }
+
+    return std::make_tuple(GGraph(n*n, vertex_grades, edges, edge_grades),
+                            std::move(grade_table));
+}

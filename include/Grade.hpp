@@ -75,6 +75,13 @@ struct LexicographicalOrderGradePoint {
     }
 };
 
+/*
+    GradeTable: a table of grades, x and y coordinates are sorted in ascending order.
+    ------------------------------------------------------------
+    Args:
+        VTX: type of x coordinates
+        VTY: type of y coordinates
+*/
 template <typename VTX, typename VTY>
 class GradeTable {
    private:

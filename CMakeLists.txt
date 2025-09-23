@@ -73,13 +73,25 @@ set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 
 # -------------------------------------------------
 # Add the cpp executables
-add_executable(time test/time.cpp)
-target_include_directories(time PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(time PRIVATE ${Boost_LIBRARIES} AbMPH)
+add_executable(time_point_cloud test/cpp/time_point_cloud.cpp)
+target_include_directories(time_point_cloud PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(time_point_cloud PRIVATE ${Boost_LIBRARIES} AbMPH)
 
-add_executable(write_to_firep test/write_to_firep.cpp)
+add_executable(time_firep test/cpp/time_firep.cpp)
+target_include_directories(time_firep PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(time_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+
+add_executable(write_to_firep test/cpp/write_to_firep.cpp)
 target_include_directories(write_to_firep PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+
+add_executable(read_firep test/cpp/read_firep.cpp)
+target_include_directories(read_firep PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(read_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+
+add_executable(main test/cpp/main.cpp)
+target_include_directories(main PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
 
 # add_executable(main main.cpp)
 # target_include_directories(main PRIVATE ${TOP_TREE_PATH})

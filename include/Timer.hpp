@@ -60,8 +60,8 @@ void initialize_timers() {
 }
 
 void print_timers(double total = double(overall_timer.elapsed().wall) / std::pow(10, 9)) {
-    pretty_print_timer("Load input:", load_input_timer, total);
-    pretty_print_timer("Build ggraph:", build_ggraph_timer, total);
+    pretty_print_timer("Build ggraph(filtration):", build_ggraph_timer, total);
+    pretty_print_timer("- Load input:", load_input_timer, total);
     pretty_print_timer("Collapse edge:", collapse_edge_timer, total);
     pretty_print_timer("Update graph inside collapse edge:",
                        update_graph_from_collapse_edge_timer, total);
