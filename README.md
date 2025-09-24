@@ -57,7 +57,7 @@ cd build
 # ball density-Rips
 ./main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rivet annulus_200_ball_density_exact_our_out.txt
 # degree-Rips
-./main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rivet annulus_400_degree_exact_our_out.txt
+./main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rivet annulus_200_degree_exact_our_out.txt --swap_xy
 
 # rivet
 # ball-density function 

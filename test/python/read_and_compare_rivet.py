@@ -66,46 +66,60 @@ def read_our_betti(file_path):
     return betti_0_data, betti_1_data, betti_2_data
 
 
-# Example usage
-rivet_output_path = (
-    # "/home/yluo/Documents/graph-mph0/annulus_400_ball_density_output_rivet.txt"
-    "/home/yluo/Documents/graph-mph0/annulus_400_degree_output_rivet.txt"
-)
-output_path = (
-    # "/home/yluo/Documents/graph-mph0/build/annulus_400_ball_density_our_out.txt"
-    "/home/yluo/Documents/graph-mph0/build/annulus_400_degree_exact_our_out.txt"
-)
+if __name__ == "__main__":
+    # Example usage
+    rivet_output_paths = [
+        "/home/yluo/Documents/graph-mph0/annulus_200_ball_density_output_rivet.txt",
+        "/home/yluo/Documents/graph-mph0/annulus_400_ball_density_output_rivet.txt",
+        "/home/yluo/Documents/graph-mph0/annulus_200_degree_output_rivet.txt",
+        "/home/yluo/Documents/graph-mph0/annulus_400_degree_output_rivet.txt",
+    ]
+    our_output_paths = [
+        "/home/yluo/Documents/graph-mph0/build/annulus_200_ball_density_exact_our_out.txt",
+        "/home/yluo/Documents/graph-mph0/build/annulus_400_ball_density_exact_our_out.txt",
+        "/home/yluo/Documents/graph-mph0/build/annulus_200_degree_exact_our_out.txt",
+        "/home/yluo/Documents/graph-mph0/build/annulus_400_degree_exact_our_out.txt",
+    ]
 
+    for rivet_output_path, our_output_path in zip(rivet_output_paths, our_output_paths):
+        try:
+            # Start reading the results
+            betti_0, betti_1, betti_2 = read_our_betti(our_output_path)
 
-# Start reading the results
-betti_0, betti_1, betti_2 = read_our_betti(output_path)
+            # Print the results
+            print("ours betti_0 len:", len(betti_0))
+            print("ours betti_1 len:", len(betti_1))
+            print("ours betti_2 len:", len(betti_2))
 
-# Print the results
-print("ours betti_0 len:", len(betti_0))
-print("ours betti_1 len:", len(betti_1))
-print("ours betti_2 len:", len(betti_2))
+            xi_0, xi_1, xi_2 = read_rivet_output(rivet_output_path)
 
-xi_0, xi_1, xi_2 = read_rivet_output(rivet_output_path)
+            # Print the results
+            print("rivet betti_0 len:", len(xi_0))
+            print("rivet betti_1 len:", len(xi_1))
+            print("rivet betti_2 len:", len(xi_2))
 
-# Print the results
-print("rivet betti_0 len:", len(xi_0))
-print("rivet betti_1 len:", len(xi_1))
-print("rivet betti_2 len:", len(xi_2))
+            # compare the two results
+            for i in range(len(xi_0)):
+                if xi_0[i] != betti_0[i]:
+                    raise ValueError(
+                        f"i = {i:3d}, \trivet = {xi_0[i]}, \tours = {betti_0[i]}"
+                    )
 
-# compare the two results
-print("--------------------------------")
-print("Print the difference")
-print("Compare betti_0:")
-for i in range(len(xi_0)):
-    if xi_0[i] != betti_0[i]:
-        print(f"i = {i:3d}, \trivet = {xi_0[i]}, \tours = {betti_0[i]}")
+            for i in range(len(xi_1)):
+                if xi_1[i] != betti_1[i]:
+                    raise ValueError(
+                        f"i = {i:3d}, \trivet = {xi_1[i]}, \tours = {betti_1[i]}"
+                    )
 
-print("Compare betti_1:")
-for i in range(len(xi_1)):
-    if xi_1[i] != betti_1[i]:
-        print(f"i = {i:3d}, \trivet = {xi_1[i]}, \tours = {betti_1[i]}")
+            for i in range(len(xi_2)):
+                if xi_2[i] != betti_2[i]:
+                    raise ValueError(
+                        f"i = {i:3d}, \trivet = {xi_2[i]}, \tours = {betti_2[i]}"
+                    )
+            print(f"✅ Compare {rivet_output_path} and {our_output_path} passed")
+            print("--------------------------------")
+        except Exception as e:
+            print(f"❌ Compare {rivet_output_path} and {our_output_path} failed")
+            raise e
 
-print("Compare betti_2:")
-for i in range(len(xi_2)):
-    if xi_2[i] != betti_2[i]:
-        print(f"i = {i:3d}, \trivet = {xi_2[i]}, \tours = {betti_2[i]}")
+    print("\n✅ All tests passed!!!")

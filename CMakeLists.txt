@@ -25,6 +25,8 @@ if(PERF_PROFILE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
+# print the build type
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)
@@ -89,6 +91,10 @@ add_executable(read_firep test/cpp/read_firep.cpp)
 target_include_directories(read_firep PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(read_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
 
+add_executable(rational test/cpp/rational.cpp)
+target_include_directories(rational PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(rational PRIVATE ${Boost_LIBRARIES} AbMPH)
+
 add_executable(main test/cpp/main.cpp)
 target_include_directories(main PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
@@ -96,6 +102,21 @@ target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
 # add_executable(main main.cpp)
 # target_include_directories(main PRIVATE ${TOP_TREE_PATH})
 # target_link_libraries(main PRIVATE ${Boost_LIBRARIES} ST_Tree)
+
+# -------------------------------------------------
+# Add test target that runs the 4 commands and Python comparison
+add_custom_target(run_tests
+    COMMAND ${CMAKE_COMMAND} -E echo "Running test commands..."
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rivet annulus_200_ball_density_exact_our_out.txt
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt ball_density_rivet annulus_400_ball_density_exact_our_out.txt 
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rivet annulus_200_degree_exact_our_out.txt --swap_xy
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rivet annulus_400_degree_exact_our_out.txt --swap_xy
+    COMMAND ${CMAKE_COMMAND} -E echo "Running Python comparison script..."
+    COMMAND python3 ${CMAKE_SOURCE_DIR}/test/python/read_and_compare_rivet.py
+    DEPENDS main
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Running all test commands and Python comparison"
+)
 
 # -------------------------------------------------
 # build binding for python 
