@@ -54,14 +54,6 @@ namespace rivet {
     
         static double epsilon;
 
-        // constructor from double
-        ExactValue(double d)
-            : double_value(d)
-        {
-            exact_value = approx(d);
-        }
-
-    
          ExactValue(exact e)
              : exact_value(e)
          {
