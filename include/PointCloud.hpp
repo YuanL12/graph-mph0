@@ -325,7 +325,7 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_ball_density_Rips_filt
  */
 template <typename PT>
 std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>>
-point_cloud_to_ball_density_Rips_filtration_rivet(
+point_cloud_to_ball_density_Rips_filtration_rational(
     const std::vector<std::vector<PT>> &points,
     std::optional<double> radius_threshold = std::nullopt) {
     const int n = points.size();
@@ -468,7 +468,7 @@ point_cloud_to_ball_density_Rips_filtration_rivet(
  */
 template <typename PT>
 std::tuple<GGraph, GradeTable<int, rivet::ExactValue>>
-point_cloud_to_degree_Rips_filtration_rivet(
+point_cloud_to_degree_Rips_filtration_rational(
     const std::vector<std::vector<PT>> &points) {
     const int n = points.size();
     const int num_edges = n * (n - 1) / 2;

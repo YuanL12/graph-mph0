@@ -1,97 +1,16 @@
 #include <cassert>
 #include <icecream.hpp>
 #include <iostream>
-#include <tuple>
-#include <string>
 #include <stdexcept>
+#include <string>
+#include <tuple>
 
+#include "Args.hpp"
 #include "ContractionTopTree.hpp"
 #include "IO.hpp"
 #include "MPH.hpp"
 #include "PointCloud.hpp"
 #include "Timer.hpp"
-
-// Structure to hold parsed command line arguments
-struct ProgramArgs {
-    std::string input_file;
-    std::string filtration_type;
-    bool save_to_file = false;
-    std::string output_file = "";
-    bool swap_x_y = false;
-    
-    // Validation function
-    bool is_valid() const {
-        return !input_file.empty() && !filtration_type.empty() &&
-               (filtration_type == "degree" || filtration_type == "ball_density" ||
-                filtration_type == "degree_rivet" || filtration_type == "ball_density_rivet");
-    }
-    
-    // Print usage information
-    static void print_usage(const std::string& program_name) {
-        std::cout << "Usage: " << program_name << " <input_file> <filtration_type> [options]\n";
-        std::cout << "\nRequired arguments:\n";
-        std::cout << "  input_file        Path to input point cloud file\n";
-        std::cout << "  filtration_type   Type of filtration: degree, ball_density, degree_rivet, ball_density_rivet\n";
-        std::cout << "\nOptional arguments:\n";
-        std::cout << "  --output <file>   Save results to specified output file\n";
-        std::cout << "  --swap_xy         Enable x-y axis swapping (default: swap disabled)\n";
-        std::cout << "  --help            Show this help message\n";
-    }
-};
-
-// Function to parse command line arguments
-ProgramArgs parse_arguments(int argc, char** argv) {
-    ProgramArgs args;
-    
-    // Check for help first
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if (arg == "--help" || arg == "-h") {
-            ProgramArgs::print_usage(argv[0]);
-            exit(0);
-        }
-    }
-    
-    if (argc < 3) {
-        throw std::invalid_argument("Insufficient arguments");
-    }
-    
-    // Parse positional arguments
-    args.input_file = argv[1];
-    args.filtration_type = argv[2];
-    
-    // Parse optional arguments
-    for (int i = 3; i < argc; ++i) {
-        std::string arg = argv[i];
-        
-        if (arg == "--output" || arg == "-o") {
-            if (i + 1 >= argc) {
-                throw std::invalid_argument("--output requires a filename");
-            }
-            args.output_file = argv[++i];
-            args.save_to_file = true;
-        }
-        else if (arg == "--swap_xy") {
-            args.swap_x_y = true;
-        }
-        else {
-            // Legacy support: if it's not a flag, treat as output file
-            if (arg[0] != '-') {
-                args.output_file = arg;
-                args.save_to_file = true;
-            } else {
-                throw std::invalid_argument("Unknown argument: " + arg);
-            }
-        }
-    }
-    
-    // Validate arguments
-    if (!args.is_valid()) {
-        throw std::invalid_argument("Invalid arguments provided");
-    }
-    
-    return args;
-}
 
 int test_figure1_GGraph() {
     GGraph g(6);
@@ -126,15 +45,13 @@ int test_figure1_GGraph() {
 }
 
 int test_compute_MPH0_from_point_cloud(std::string file_name, std::string filtration_type,
-                                       bool save_to_file = false,
-                                       std::string file_name_output = "",
+                                       bool save_to_file = false, std::string file_name_output = "",
                                        bool x_y_swap = false) {
     GGraph ggraph;
     size_t x_size, y_size;
     if (filtration_type == "degree") {
         GradeTable<double, int> grade_table;  // (x, y) is (radius, degree)
-        std::tie(ggraph, grade_table) =
-            build_degree_filtration_from_point_cloud<double>(file_name);
+        std::tie(ggraph, grade_table) = build_degree_filtration_from_point_cloud<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
     } else if (filtration_type == "ball_density") {
@@ -143,16 +60,17 @@ int test_compute_MPH0_from_point_cloud(std::string file_name, std::string filtra
             build_ball_density_filtration_from_point_cloud<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
-    } else if (filtration_type == "degree_rivet") {
+    } else if (filtration_type == "degree_rational") {
         GradeTable<int, rivet::ExactValue> grade_table;  // (x, y) is (degree, radius)
         std::tie(ggraph, grade_table) =
-            build_degree_filtration_from_point_cloud_rivet<double>(file_name);
+            build_degree_filtration_from_point_cloud_rational<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
-    } else if (filtration_type == "ball_density_rivet") {
-        GradeTable<rivet::ExactValue, rivet::ExactValue> grade_table;  // (x, y) is (ball density, radius)
+    } else if (filtration_type == "ball_density_rational") {
+        GradeTable<rivet::ExactValue, rivet::ExactValue>
+            grade_table;  // (x, y) is (ball density, radius)
         std::tie(ggraph, grade_table) =
-            build_ball_density_filtration_from_point_cloud_rivet<double>(file_name);
+            build_ball_density_filtration_from_point_cloud_rational<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
     } else {
@@ -166,8 +84,8 @@ int test_compute_MPH0_from_point_cloud(std::string file_name, std::string filtra
     if (save_to_file) {
         if (file_name_output == "") file_name_output = "TopTree_out.txt";
         std::cout << "Saving to file: " << file_name_output << std::endl;
-        print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1,
-                                     x_y_swap, file_name_output);
+        print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, x_y_swap,
+                                     file_name_output);
     }
     return 0;
 }
@@ -181,19 +99,19 @@ int main(int argc, char** argv) {
     try {
         // Parse command line arguments
         ProgramArgs args = parse_arguments(argc, argv);
-        
+
         std::cout << "--------------------------------" << std::endl;
         std::cout << "Testing " << args.filtration_type << "-Rips Filtration" << std::endl;
         std::cout << "Input file: " << args.input_file << std::endl;
         std::cout << "Swap x, y axis: " << (args.swap_x_y ? "enabled" : "disabled") << std::endl;
-        
+
         if (args.save_to_file) {
             std::cout << "The results will be saved to " << args.output_file << std::endl;
         }
-        
-        test_compute_MPH0_from_point_cloud(args.input_file, args.filtration_type, 
-                                          args.save_to_file, args.output_file, args.swap_x_y);
-        
+
+        test_compute_MPH0_from_point_cloud(args.input_file, args.filtration_type, args.save_to_file,
+                                           args.output_file, args.swap_x_y);
+
     } catch (const std::invalid_argument& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         std::cerr << std::endl;

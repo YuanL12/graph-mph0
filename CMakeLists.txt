@@ -107,10 +107,10 @@ target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
 # Add test target that runs the 4 commands and Python comparison
 add_custom_target(run_tests
     COMMAND ${CMAKE_COMMAND} -E echo "Running test commands..."
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rivet annulus_200_ball_density_exact_our_out.txt
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt ball_density_rivet annulus_400_ball_density_exact_our_out.txt 
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rivet annulus_200_degree_exact_our_out.txt --swap_xy
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rivet annulus_400_degree_exact_our_out.txt --swap_xy
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rational annulus_200_ball_density_exact_our_out.txt
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt ball_density_rational annulus_400_ball_density_exact_our_out.txt 
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rational annulus_200_degree_exact_our_out.txt --swap_xy
+    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rational annulus_400_degree_exact_our_out.txt --swap_xy
     COMMAND ${CMAKE_COMMAND} -E echo "Running Python comparison script..."
     COMMAND python3 ${CMAKE_SOURCE_DIR}/test/python/read_and_compare_rivet.py
     DEPENDS main

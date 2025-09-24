@@ -531,17 +531,17 @@ std::tuple<GGraph, GradeTable<double, PT>> build_ball_density_filtration_from_po
 }
 
 template <typename PT>
-std::tuple<GGraph, GradeTable<int, rivet::ExactValue>> build_degree_filtration_from_point_cloud_rivet(
+std::tuple<GGraph, GradeTable<int, rivet::ExactValue>> build_degree_filtration_from_point_cloud_rational(
     const std::string &filename) {
     // read the points
     auto points = read_points<PT>(filename);
-    return point_cloud_to_degree_Rips_filtration_rivet<PT>(points);
+    return point_cloud_to_degree_Rips_filtration_rational<PT>(points);
 }
 
 template <typename PT>
-std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>> build_ball_density_filtration_from_point_cloud_rivet(
+std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>> build_ball_density_filtration_from_point_cloud_rational(
     const std::string &filename) {
     // read the points
     auto points = read_points<PT>(filename);
-    return point_cloud_to_ball_density_Rips_filtration_rivet<PT>(points);
+    return point_cloud_to_ball_density_Rips_filtration_rational<PT>(points);
 }
