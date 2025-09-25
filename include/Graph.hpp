@@ -78,14 +78,10 @@ class Graph {
     Edge get_edge(EdgeId id) const;
 
     //  get all edge values
-    inline const std::unordered_map<EdgeId, FT>& get_edges_values() const {
-        return edge_values;
-    };
+    inline const std::unordered_map<EdgeId, FT>& get_edges_values() const { return edge_values; };
 
     //  get all vertices values
-    inline const std::unordered_map<int, FT>& get_vert_values() const {
-        return vert_values;
-    };
+    inline const std::unordered_map<int, FT>& get_vert_values() const { return vert_values; };
 
     //  get all vertices values in a vector
     inline std::vector<FT> get_vert_values_vector() const {
@@ -198,12 +194,9 @@ class Graph {
 
 #ifdef ENABLE_SECURITY_CHECKS
     void security_check_shapes() {
-        assert(vertices.size() == vert_values.size() &&
-               "vertices.size() !=  vert_values.size()");
-        assert(vertices.size() == adjacency.size() &&
-               "vertices.size() !=  adjacency.size()");
-        assert(edges.size() == edge_values.size() &&
-               "edges.size() !=  edge_values.size()");
+        assert(vertices.size() == vert_values.size() && "vertices.size() !=  vert_values.size()");
+        assert(vertices.size() == adjacency.size() && "vertices.size() !=  adjacency.size()");
+        assert(edges.size() == edge_values.size() && "edges.size() !=  edge_values.size()");
     }
 #else
     void security_check_shapes() {
@@ -371,8 +364,7 @@ template <typename FT>
 FT Graph<FT>::get_vertex_value(int v) const {
     auto it = vert_values.find(v);
     if (it == vert_values.end()) {
-        std::cout << "vertex not found when trying to get its filtration value"
-                  << std::endl;
+        std::cout << "vertex not found when trying to get its filtration value" << std::endl;
     }
     assert(it != vert_values.end());
     return it->second;
@@ -382,8 +374,7 @@ template <typename FT>
 typename Graph<FT>::VAdj Graph<FT>::get_adj(int v) const {
     auto it = adjacency.find(v);
     if (it == adjacency.end()) {
-        std::cout << "vertex not found when trying to get its adjacency list"
-                  << std::endl;
+        std::cout << "vertex not found when trying to get its adjacency list" << std::endl;
     }
     assert(it != adjacency.end());
     return it->second;

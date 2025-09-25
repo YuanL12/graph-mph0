@@ -10,27 +10,24 @@
 #include <iomanip>  // for std::setw, std::setprecision
 #include <iostream>
 
-void pretty_print_timer(const std::string& label, const boost::timer::cpu_timer& timer,
-                        double total_seconds) {
+inline void pretty_print_timer(const std::string& label, const boost::timer::cpu_timer& timer,
+                               double total_seconds) {
     double seconds = double(timer.elapsed().wall) / 1e9;
     double percent = (seconds / total_seconds) * 100;
 
-    std::cout << std::left << std::setw(50)
-              << label  // left-aligned label, 30 characters wide
-              << std::right << std::fixed << std::setw(8) << std::setprecision(3)
-              << seconds << " s"
-              << "   ( " << std::setw(6) << std::setprecision(2) << percent << " % )"
-              << std::endl;
+    std::cout << std::left << std::setw(50) << label  // left-aligned label, 30 characters wide
+              << std::right << std::fixed << std::setw(8) << std::setprecision(3) << seconds << " s"
+              << "   ( " << std::setw(6) << std::setprecision(2) << percent << " % )" << std::endl;
 }
 
 namespace mph0 {
 
-boost::timer::cpu_timer overall_timer, load_input_timer, build_ggraph_timer,
+inline boost::timer::cpu_timer overall_timer, load_input_timer, build_ggraph_timer,
     collapse_edge_timer, collapse_vertex_timer, update_graph_from_collapse_edge_timer,
     update_graph_from_collapse_vertex_timer, create_grades_timer, grades_iteration_timer;
 
 // Initialize/Reset timers (start will clear previous records)
-void initialize_timers() {
+inline void initialize_timers() {
     overall_timer.start();
     overall_timer.stop();
 
@@ -59,22 +56,20 @@ void initialize_timers() {
     grades_iteration_timer.stop();
 }
 
-void print_timers(double total = double(overall_timer.elapsed().wall) / std::pow(10, 9)) {
+inline void print_timers(double total = double(overall_timer.elapsed().wall) / std::pow(10, 9)) {
     pretty_print_timer("Build ggraph(filtration):", build_ggraph_timer, total);
     pretty_print_timer("- Load input:", load_input_timer, total);
     pretty_print_timer("Collapse edge:", collapse_edge_timer, total);
-    pretty_print_timer("Update graph inside collapse edge:",
-                       update_graph_from_collapse_edge_timer, total);
+    pretty_print_timer("Update graph inside collapse edge:", update_graph_from_collapse_edge_timer,
+                       total);
     pretty_print_timer("Collapse vertex:", collapse_vertex_timer, total);
-    pretty_print_timer("Update graph inside collapse vertex:",
-                       update_graph_from_collapse_vertex_timer, total);
-    pretty_print_timer("Collect grades lexicographically:", create_grades_timer, total);
     pretty_print_timer(
-        "Main Loop(visit grades lexicographically):", grades_iteration_timer, total);
+        "Update graph inside collapse vertex:", update_graph_from_collapse_vertex_timer, total);
+    pretty_print_timer("Collect grades lexicographically:", create_grades_timer, total);
+    pretty_print_timer("Main Loop(visit grades lexicographically):", grades_iteration_timer, total);
 
     double load_input_time = double(load_input_timer.elapsed().wall) / std::pow(10, 9);
     std::cout << "Total time: " << total << " s" << std::endl;
-    std::cout << "Total time minus load input: " << total - load_input_time << " s"
-              << std::endl;
+    std::cout << "Total time minus load input: " << total - load_input_time << " s" << std::endl;
 }
 }  // namespace mph0

@@ -7,6 +7,7 @@
 
 #include "Args.hpp"
 #include "ContractionTopTree.hpp"
+#include "Filtration.hpp"
 #include "IO.hpp"
 #include "MPH.hpp"
 #include "PointCloud.hpp"
@@ -47,37 +48,8 @@ int test_figure1_GGraph() {
 int test_compute_MPH0_from_point_cloud(std::string file_name, std::string filtration_type,
                                        bool save_to_file = false, std::string file_name_output = "",
                                        bool x_y_swap = false) {
-    GGraph ggraph;
-    size_t x_size, y_size;
-    if (filtration_type == "degree") {
-        GradeTable<double, int> grade_table;  // (x, y) is (radius, degree)
-        std::tie(ggraph, grade_table) = build_degree_filtration_from_point_cloud<double>(file_name);
-        x_size = grade_table.get_x_size();
-        y_size = grade_table.get_y_size();
-    } else if (filtration_type == "ball_density") {
-        GradeTable<double, double> grade_table;  // (x, y) is (ball density, radius)
-        std::tie(ggraph, grade_table) =
-            build_ball_density_filtration_from_point_cloud<double>(file_name);
-        x_size = grade_table.get_x_size();
-        y_size = grade_table.get_y_size();
-    } else if (filtration_type == "degree_rational") {
-        GradeTable<int, rivet::ExactValue> grade_table;  // (x, y) is (degree, radius)
-        std::tie(ggraph, grade_table) =
-            build_degree_filtration_from_point_cloud_rational<double>(file_name);
-        x_size = grade_table.get_x_size();
-        y_size = grade_table.get_y_size();
-    } else if (filtration_type == "ball_density_rational") {
-        GradeTable<rivet::ExactValue, rivet::ExactValue>
-            grade_table;  // (x, y) is (ball density, radius)
-        std::tie(ggraph, grade_table) =
-            build_ball_density_filtration_from_point_cloud_rational<double>(file_name);
-        x_size = grade_table.get_x_size();
-        y_size = grade_table.get_y_size();
-    } else {
-        std::cout << "Invalid filtration type" << std::endl;
-        return 1;
-    }
-
+    auto bi_filtration = BiFiltration::make(filtration_type, file_name);
+    GGraph ggraph = bi_filtration.ggraph;
     auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0(ggraph);
 
     // print and write the betti numbers

@@ -127,8 +127,7 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(
         for (int j = i + 1; j < n; ++j) {
             // compute max distance between i and j
             std::vector<PT> max_r(n);
-            for (int k = 0; k < n; ++k)
-                max_r[k] = std::max(sorted_dists[i][k], sorted_dists[j][k]);
+            for (int k = 0; k < n; ++k) max_r[k] = std::max(sorted_dists[i][k], sorted_dists[j][k]);
 
             // find the first index k such that max_r[k] >= D[i][j]
             PT threshold = D[i][j];
@@ -302,8 +301,7 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_ball_density_Rips_filt
         }
     }
 
-    return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades),
-                           std::move(grade_table));
+    return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades), std::move(grade_table));
 }
 
 /*
@@ -420,8 +418,7 @@ point_cloud_to_ball_density_Rips_filtration_rational(
 
     // Construct a GradeTable with
     // x-coordinate: function value, y-coordinate: distance
-    std::vector<rivet::ExactValue> x_coords(function_value_set.begin(),
-                                            function_value_set.end());
+    std::vector<rivet::ExactValue> x_coords(function_value_set.begin(), function_value_set.end());
     std::vector<rivet::ExactValue> y_coords(distance_set.begin(), distance_set.end());
     GradeTable<rivet::ExactValue, rivet::ExactValue> grade_table(x_coords, y_coords);
 
@@ -452,14 +449,12 @@ point_cloud_to_ball_density_Rips_filtration_rational(
             int i_rank = ball_density_to_index[ball_densities[i]];
             int j_rank = ball_density_to_index[ball_densities[j]];
             int x_rank = std::max(i_rank, j_rank);
-            int y_rank =
-                distance_to_index[distances[get_compressed_index(i, j)].exact_value];
+            int y_rank = distance_to_index[distances[get_compressed_index(i, j)].exact_value];
             edge_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
     }
 
-    return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades),
-                           std::move(grade_table));
+    return std::make_tuple(GGraph(n, vertex_grades, edges, edge_grades), std::move(grade_table));
 }
 
 /*
@@ -468,8 +463,7 @@ point_cloud_to_ball_density_Rips_filtration_rational(
  */
 template <typename PT>
 std::tuple<GGraph, GradeTable<int, rivet::ExactValue>>
-point_cloud_to_degree_Rips_filtration_rational(
-    const std::vector<std::vector<PT>> &points) {
+point_cloud_to_degree_Rips_filtration_rational(const std::vector<std::vector<PT>> &points) {
     const int n = points.size();
     const int num_edges = n * (n - 1) / 2;
 
@@ -487,8 +481,9 @@ point_cloud_to_degree_Rips_filtration_rational(
         return i * n - (i * (i + 1)) / 2 + (j - i - 1);
     };
 
-    // Compute distance matrix 
-    std::vector<std::vector<rivet::ExactValue>> D(n, std::vector<rivet::ExactValue>(n, rivet::ExactValue(0.0)));
+    // Compute distance matrix
+    std::vector<std::vector<rivet::ExactValue>> D(
+        n, std::vector<rivet::ExactValue>(n, rivet::ExactValue(0.0)));
     for (int i = 0; i < n; ++i) {
         for (int j = i + 1; j < n; ++j) {
             PT dist = 0.0;
@@ -517,8 +512,8 @@ point_cloud_to_degree_Rips_filtration_rational(
 
     // Construct a GradeTable with
     // x-coordinate: negative degree, y-coordinate: distance
-    std::vector<int> x_coords; // -n+1, -n+2, ..., -1, 0
-    for (int i = n-1; i >= 0; --i) {
+    std::vector<int> x_coords;  // -n+1, -n+2, ..., -1, 0
+    for (int i = n - 1; i >= 0; --i) {
         x_coords.emplace_back(i);
     }
     std::vector<rivet::ExactValue> y_coords(distance_set.begin(), distance_set.end());
@@ -550,8 +545,8 @@ point_cloud_to_degree_Rips_filtration_rational(
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             int v = i * n + j;
-            int x_rank = distance_to_index[sorted_dists[i][j].exact_value]; 
-            int y_rank = n - 1 - j; // negative degree to positive rank
+            int x_rank = distance_to_index[sorted_dists[i][j].exact_value];
+            int y_rank = n - 1 - j;  // negative degree to positive rank
             vertex_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
     }
@@ -596,6 +591,6 @@ point_cloud_to_degree_Rips_filtration_rational(
         }
     }
 
-    return std::make_tuple(GGraph(n*n, vertex_grades, edges, edge_grades),
-                            std::move(grade_table));
+    return std::make_tuple(GGraph(n * n, vertex_grades, edges, edge_grades),
+                           std::move(grade_table));
 }

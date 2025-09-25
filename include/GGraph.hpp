@@ -36,9 +36,7 @@ struct GVertex {
     inline const GradePoint &get_grade() const { return grade; }
 
     // equality operator
-    bool operator==(const GVertex &other) const {
-        return v == other.v && grade == other.grade;
-    }
+    bool operator==(const GVertex &other) const { return v == other.v && grade == other.grade; }
 };
 
 // graded edge
@@ -56,9 +54,7 @@ struct GEdge {
     inline const GradePoint &get_grade() const { return grade; }
 
     // equality operator
-    bool operator==(const GEdge &other) const {
-        return e == other.e && grade == other.grade;
-    }
+    bool operator==(const GEdge &other) const { return e == other.e && grade == other.grade; }
     bool operator!=(const GEdge &other) const { return !(*this == other); }
 };
 
@@ -165,9 +161,7 @@ class GGraph {
         ge.grade.y = -1;
     }
 
-    inline bool is_vertex_removed(size_t v_idx) const {
-        return gVertices[v_idx].get_id() == -1;
-    }
+    inline bool is_vertex_removed(size_t v_idx) const { return gVertices[v_idx].get_id() == -1; }
 
     // Merge u into v: all neighbors of u become neighbors of v, and v is removed
     void merge_adjacency_sets(VertexId v, VertexId u);

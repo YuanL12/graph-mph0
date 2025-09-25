@@ -17,40 +17,40 @@
 #include "Timer.hpp"
 #include "Utils.hpp"
 
-void write_betti_numbers(const std::vector<std::tuple<int, int, int>> &betti_0,
-                         const std::vector<std::tuple<int, int, int>> &betti_1,
-                         const std::vector<std::tuple<int, int, int>> &betti_2,
-                         const std::vector<std::tuple<int, int, int>> &betti_0_1,
-                         const std::string &filename) {
+inline void write_betti_numbers(const std::vector<std::tuple<int, int, int>> &betti_0,
+                                const std::vector<std::tuple<int, int, int>> &betti_1,
+                                const std::vector<std::tuple<int, int, int>> &betti_2,
+                                const std::vector<std::tuple<int, int, int>> &betti_0_1,
+                                const std::string &filename) {
     // write the betti numbers to a file
     std::ofstream file(filename);
     file << "betti_0:" << std::endl;
     for (const auto &b0 : betti_0) {
-        file << "(" << std::get<0>(b0) << ", " << std::get<1>(b0) << ", "
-             << std::get<2>(b0) << ")" << std::endl;
+        file << "(" << std::get<0>(b0) << ", " << std::get<1>(b0) << ", " << std::get<2>(b0) << ")"
+             << std::endl;
     }
     file << "betti_1:" << std::endl;
     for (const auto &b1 : betti_1) {
-        file << "(" << std::get<0>(b1) << ", " << std::get<1>(b1) << ", "
-             << std::get<2>(b1) << ")" << std::endl;
+        file << "(" << std::get<0>(b1) << ", " << std::get<1>(b1) << ", " << std::get<2>(b1) << ")"
+             << std::endl;
     }
     file << "betti_2:" << std::endl;
     for (const auto &b2 : betti_2) {
-        file << "(" << std::get<0>(b2) << ", " << std::get<1>(b2) << ", "
-             << std::get<2>(b2) << ")" << std::endl;
+        file << "(" << std::get<0>(b2) << ", " << std::get<1>(b2) << ", " << std::get<2>(b2) << ")"
+             << std::endl;
     }
     file << "betti_0_1:" << std::endl;
     for (const auto &b01 : betti_0_1) {
-        file << "(" << std::get<0>(b01) << ", " << std::get<1>(b01) << ", "
-             << std::get<2>(b01) << ")" << std::endl;
+        file << "(" << std::get<0>(b01) << ", " << std::get<1>(b01) << ", " << std::get<2>(b01)
+             << ")" << std::endl;
     }
 }
 
-void print_and_write_betti_result(std::vector<std::pair<int, int>> &raw_betti_0,
-                                  std::vector<std::pair<int, int>> &raw_betti_1,
-                                  std::vector<std::pair<int, int>> &raw_betti_2,
-                                  std::vector<std::pair<int, int>> &raw_betti_0_1,
-                                  bool x_y_swap = false, std::string file_name = "") {
+inline void print_and_write_betti_result(std::vector<std::pair<int, int>> &raw_betti_0,
+                                         std::vector<std::pair<int, int>> &raw_betti_1,
+                                         std::vector<std::pair<int, int>> &raw_betti_2,
+                                         std::vector<std::pair<int, int>> &raw_betti_0_1,
+                                         bool x_y_swap = false, std::string file_name = "") {
     std::cout << "Final Results: " << std::endl;
     if (x_y_swap) {
         for (auto &b0 : raw_betti_0) {
@@ -79,7 +79,7 @@ void print_and_write_betti_result(std::vector<std::pair<int, int>> &raw_betti_0,
 }
 
 template <typename T>
-std::vector<std::vector<T>> read_points(const std::string &filename) {
+inline std::vector<std::vector<T>> read_points(const std::string &filename) {
     // read points from a file, each line is a point in R ^d is in the format of
     // x1,x2,...,xd
 
@@ -112,8 +112,8 @@ std::vector<std::vector<T>> read_points(const std::string &filename) {
 
 // read filtration data from a file
 template <typename T>
-std::tuple<int, std::vector<std::pair<int, int>>, std::vector<std::pair<T, T>>,
-           std::vector<std::pair<T, T>>>
+inline std::tuple<int, std::vector<std::pair<int, int>>, std::vector<std::pair<T, T>>,
+                  std::vector<std::pair<T, T>>>
 read_filtration_data(const std::string &file_name) {
     // number of vertices
     int nV;
@@ -178,8 +178,8 @@ read_filtration_data(const std::string &file_name) {
 }
 
 template <typename PT, typename FT>  // PT: Point type, FT: Filtration value type
-std::tuple<std::vector<int>, std::vector<std::pair<int, int>>, std::vector<FT>,
-           std::vector<FT>>
+inline std::tuple<std::vector<int>, std::vector<std::pair<int, int>>, std::vector<FT>,
+                  std::vector<FT>>
 point_cloud_to_1_critical_filtration(const std::vector<std::vector<PT>> &points,
                                      bool x_y_swapped = false) {
     /*
@@ -277,7 +277,7 @@ point_cloud_to_1_critical_filtration(const std::vector<std::vector<PT>> &points,
     return {vertices, edges, filt_func_v, filt_func_e};
 }
 
-void write_filtration_data_to_firep_without_header(const GGraph &G, std::ofstream &file) {
+inline void write_filtration_data_to_firep_without_header(const GGraph &G, std::ofstream &file) {
     const auto &gedges = G.get_gedges();
     const auto &gvertices = G.get_gvertices();
     int nV = gvertices.size();
@@ -323,7 +323,7 @@ filtration The format is: scc2020
 nE nV 0
 ...
 */
-void write_filtration_data_to_scc2020(const GGraph &G, const std::string &filename) {
+inline void write_filtration_data_to_scc2020(const GGraph &G, const std::string &filename) {
     // check if file exists, if not exist, create it
     std::ofstream file(filename);
     file << "scc2020" << std::endl;
@@ -343,7 +343,7 @@ filtration The format is:
 nE nV 0
 ...
 */
-void write_filtration_data_to_rivet_firep(const GGraph &G, const std::string &filename) {
+inline void write_filtration_data_to_rivet_firep(const GGraph &G, const std::string &filename) {
     // check if file exists, if not exist, create it
     std::ofstream file(filename);
     file << "--datatype firep" << std::endl;
@@ -360,7 +360,7 @@ Write the filtration data to mpfree format, the input GradeGraph has to be a 1-c
 filtration The format is: firep first parameter second parameter nE nV 0
 ...
 */
-void write_filtration_data_to_mpfree_firep(const GGraph &G, const std::string &filename) {
+inline void write_filtration_data_to_mpfree_firep(const GGraph &G, const std::string &filename) {
     // check if file exists, if not exist, create it
     std::ofstream file(filename);
     file << "firep" << std::endl;
@@ -370,7 +370,7 @@ void write_filtration_data_to_mpfree_firep(const GGraph &G, const std::string &f
     file.close();
 }
 
-std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
+inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
     const std::string &filename) {
     // Initialize
     std::vector<int> x_coords;
@@ -433,15 +433,15 @@ std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
         ss >> x_rank >> y_rank >> semicolon >> v0 >> v1;
 
         if (ss.fail() || semicolon != ';') {
-            throw std::runtime_error("Invalid format in edge line " +
-                                     std::to_string(i + 4) + ": " + line);
+            throw std::runtime_error("Invalid format in edge line " + std::to_string(i + 4) + ": " +
+                                     line);
         }
 
         if (v0 < 0 || v1 < 0 || v0 >= nV || v1 >= nV) {
-            throw std::runtime_error(
-                "Invalid vertex indices in edge line " + std::to_string(i + 4) +
-                ": v0=" + std::to_string(v0) + ", v1=" + std::to_string(v1) +
-                " (nV=" + std::to_string(nV) + ")");
+            throw std::runtime_error("Invalid vertex indices in edge line " +
+                                     std::to_string(i + 4) + ": v0=" + std::to_string(v0) +
+                                     ", v1=" + std::to_string(v1) + " (nV=" + std::to_string(nV) +
+                                     ")");
         }
 
         edges.emplace_back(v0, v1);
@@ -462,8 +462,8 @@ std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
         ss >> x_rank >> y_rank >> semicolon;
 
         if (ss.fail() || semicolon != ';') {
-            throw std::runtime_error("Invalid format in vertex line " +
-                                     std::to_string(i + 4 + nE) + ": " + line);
+            throw std::runtime_error("Invalid format in vertex line " + std::to_string(i + 4 + nE) +
+                                     ": " + line);
         }
 
         vertex_grades.emplace_back(x_rank, y_rank);
@@ -531,16 +531,16 @@ std::tuple<GGraph, GradeTable<double, PT>> build_ball_density_filtration_from_po
 }
 
 template <typename PT>
-std::tuple<GGraph, GradeTable<int, rivet::ExactValue>> build_degree_filtration_from_point_cloud_rational(
-    const std::string &filename) {
+std::tuple<GGraph, GradeTable<int, rivet::ExactValue>>
+build_degree_filtration_from_point_cloud_rational(const std::string &filename) {
     // read the points
     auto points = read_points<PT>(filename);
     return point_cloud_to_degree_Rips_filtration_rational<PT>(points);
 }
 
 template <typename PT>
-std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>> build_ball_density_filtration_from_point_cloud_rational(
-    const std::string &filename) {
+std::tuple<GGraph, GradeTable<rivet::ExactValue, rivet::ExactValue>>
+build_ball_density_filtration_from_point_cloud_rational(const std::string &filename) {
     // read the points
     auto points = read_points<PT>(filename);
     return point_cloud_to_ball_density_Rips_filtration_rational<PT>(points);
