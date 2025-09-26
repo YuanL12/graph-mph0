@@ -1,24 +1,32 @@
-# If you use Vscode and want to use the its botton to build/debug automatically 
-# you need to manually set the Python executable and library paths here
-# set(PYTHON_EXECUTABLE /home/yluo/miniconda3/envs/pyg_env/bin/python)
-# set(PYTHON_LIBRARY /home/yluo/miniconda3/envs/pyg_env/bin/python)
+# # pybind11 subproject
+# find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+# find_package(pybind11 CONFIG REQUIRED)
 
-# You can print the paths to confirm
-message(STATUS "Caution: Python executable: ${PYTHON_EXECUTABLE}")
-message(STATUS "Caution: Python library: ${PYTHON_EXECUTABLE}")
+# # Copy the abmph folder into the build directory as the package API
+# file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/abmph DESTINATION ${CMAKE_BINARY_DIR})
 
-# Copy the abmph folder into the build directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/abmph DESTINATION ${CMAKE_BINARY_DIR})
+# # create binary file for python
+# python_add_library(_abmph MODULE abmph.cpp WITH_SOABI)
+# target_include_directories(_abmph PRIVATE ${TOP_TREE_PATH})
+# target_link_libraries(_abmph PRIVATE ${Boost_LIBRARIES} AbMPH pybind11::headers)
 
-# load pybind11
-add_subdirectory(pybind11)
+# # Set the output directory for the .so file
+# set_target_properties(_abmph PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/abmph)
 
-# Print the current value of LD_LIBRARY_PATH will used by Pybind11
-message(STATUS "LD_LIBRARY_PATH: $ENV{LD_LIBRARY_PATH}")
+# # The install directory is the output (wheel) directory (e.g. conda env package path)
+# install(TARGETS _abmph DESTINATION abmph)
+# install(FILES ${CMAKE_BINARY_DIR}/abmph/__init__.py DESTINATION abmph) # Destination is the final package name
 
-# create binary file 
-pybind11_add_module(_abmph abmph.cpp)
-set_target_properties(_abmph PROPERTIES OUTPUT_NAME _abmph) # set the output name
-set_target_properties(_abmph PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/abmph)
-target_link_libraries(_abmph PRIVATE ST_Tree)
-target_link_libraries(_abmph PRIVATE pybind11::embed)
+
+# -------------------------------------------------------------
+# pybind11 subproject
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
+
+# create binary file for python
+python_add_library(_abmph MODULE abmph.cpp WITH_SOABI)
+target_include_directories(_abmph PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(_abmph PRIVATE ${Boost_LIBRARIES} AbMPH pybind11::headers)
+
+# The install directory is the output (wheel) directory (e.g. conda env package path)
+install(TARGETS _abmph DESTINATION abmph)
