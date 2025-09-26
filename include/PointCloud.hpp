@@ -512,9 +512,9 @@ point_cloud_to_degree_Rips_filtration_rational(const std::vector<std::vector<PT>
 
     // Construct a GradeTable with
     // x-coordinate: negative degree, y-coordinate: distance
-    std::vector<int> x_coords;  // -n+1, -n+2, ..., -1, 0
+    std::vector<int> x_coords;  // -(n-1), -(n-2), ..., -1, 0
     for (int i = n - 1; i >= 0; --i) {
-        x_coords.emplace_back(i);
+        x_coords.emplace_back(-i);
     }
     std::vector<rivet::ExactValue> y_coords(distance_set.begin(), distance_set.end());
     GradeTable<int, rivet::ExactValue> grade_table(x_coords, y_coords);

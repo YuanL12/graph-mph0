@@ -118,6 +118,8 @@ class GradeTable {
     // Get sizes
     size_t get_x_size() const { return x_coords.size(); }
     size_t get_y_size() const { return y_coords.size(); }
+    std::vector<VTX> get_x_coords() const { return x_coords; }
+    std::vector<VTY> get_y_coords() const { return y_coords; }
 
     // print
     void print(bool xy_swap = false) const {
@@ -156,3 +158,7 @@ using GradeTableVariant =
                  GradeTable<int, rivet::ExactValue>,                // (degree, radius)
                  GradeTable<rivet::ExactValue, rivet::ExactValue>,  // (ball density, radius)
                  GradeTable<int, int>>;                             // firep (x_int, y_int)
+
+// Variant that holds references to vectors
+using CoordsVariant =
+    std::variant<std::vector<double>, std::vector<int>, std::vector<rivet::ExactValue>>;

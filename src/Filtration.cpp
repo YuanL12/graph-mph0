@@ -60,12 +60,20 @@ BiFiltration BiFiltration::make_from_firep(const std::string &path) {
     return BiFiltration{std::move(g), std::move(gt)};
 }
 
-BiFiltration BiFiltration::make(const std::string &filtration_type, const std::string &path) {
+BiFiltration::BiFiltration(const std::string &filtration_type, const std::string &path) {
     if (filtration_type == "firep") {
-        return make_from_firep(path);
+        *this = make_from_firep(path);
     } else {
-        return make_from_point_cloud(filtration_type, path);
+        *this = make_from_point_cloud(filtration_type, path);
     }
+}
+
+CoordsVariant BiFiltration::get_x_coords() const {
+    return std::visit([&](auto &&tbl) -> CoordsVariant { return tbl.get_x_coords(); }, grade_table);
+}
+
+CoordsVariant BiFiltration::get_y_coords() const {
+    return std::visit([&](auto &&tbl) -> CoordsVariant { return tbl.get_y_coords(); }, grade_table);
 }
 
 // FiltrationResultVariant FiltrationRunner::build_from_point_cloud(const std::string
