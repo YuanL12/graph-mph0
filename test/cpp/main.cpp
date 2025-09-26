@@ -50,12 +50,12 @@ int test_compute_MPH0_from_point_cloud(std::string file_name, std::string filtra
                                        bool x_y_swap = false) {
     auto bi_filtration = BiFiltration::make(filtration_type, file_name);
     GGraph ggraph = bi_filtration.ggraph;
+    print_grade_table_size(bi_filtration.grade_table, x_y_swap);
     auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0(ggraph);
 
     // print and write the betti numbers
     if (save_to_file) {
         if (file_name_output == "") file_name_output = "TopTree_out.txt";
-        std::cout << "Saving to file: " << file_name_output << std::endl;
         print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, x_y_swap,
                                      file_name_output);
     }

@@ -12,10 +12,24 @@
 #include <vector>
 
 #include "GGraph.hpp"  // Add this for GGraph class
+#include "Grade.hpp"   // Must include before using GradeTableVariant
 #include "Graph.hpp"
 #include "PointCloud.hpp"
 #include "Timer.hpp"
 #include "Utils.hpp"
+
+inline void print_grade_table(const GradeTableVariant &grade_table, bool x_y_swap = false) {
+    std::visit([&](auto &&tbl) { tbl.print(x_y_swap); }, grade_table);
+}
+
+inline void print_grade_table_size(const GradeTableVariant &grade_table, bool x_y_swap = false) {
+    std::visit(
+        [&](auto &&tbl) {
+            std::cout << "GradeTable(" << tbl.get_x_size() << ", " << tbl.get_y_size() << ")"
+                      << std::endl;
+        },
+        grade_table);
+}
 
 inline void write_betti_numbers(const std::vector<std::tuple<int, int, int>> &betti_0,
                                 const std::vector<std::tuple<int, int, int>> &betti_1,

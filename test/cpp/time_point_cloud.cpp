@@ -14,8 +14,7 @@ int main(int argc, char **argv) {
     if (argc != 3) {
         std::cout << "--------------------------------" << std::endl;
         std::cout << "Need 2 arguments: " << std::endl;
-        std::cout << "<input_file> <filtration_type(ball_density or degree)>"
-                  << std::endl;
+        std::cout << "<input_file> <filtration_type(ball_density or degree)>" << std::endl;
         return 1;
     }
     std::cout << "--------------------------------" << std::endl;
@@ -37,8 +36,7 @@ int main(int argc, char **argv) {
     size_t x_size, y_size;
     if (filtration_type == "degree") {
         GradeTable<double, int> grade_table;  // (x, y) is (radius, degree)
-        std::tie(ggraph, grade_table) =
-            build_degree_filtration_from_point_cloud<double>(file_name);
+        std::tie(ggraph, grade_table) = build_degree_filtration_from_point_cloud<double>(file_name);
         x_size = grade_table.get_x_size();
         y_size = grade_table.get_y_size();
     } else if (filtration_type == "ball_density") {
@@ -62,14 +60,13 @@ int main(int argc, char **argv) {
     // compute active grades size
     size_t active_grades_size = ggraph.get_size_of_active_grades();
     size_t total_grades_size = x_size * y_size;
-    std::cout << "Total grades size: (" << x_size << ", " << y_size
-              << ") = " << std::scientific << std::setprecision(2)
-              << total_grades_size / 1e6 << " M" << std::endl;
+    std::cout << "Total grades size: (" << x_size << ", " << y_size << ") = " << std::scientific
+              << std::setprecision(2) << total_grades_size / 1e6 << " M" << std::endl;
     std::cout << "Active grades size: " << std::scientific << std::setprecision(2)
               << active_grades_size / 1e6 << " M";
     // get the percentage of active grades
-    std::cout << " (" << static_cast<double>(active_grades_size) / total_grades_size * 100
-              << "%)" << std::endl;
+    std::cout << " (" << static_cast<double>(active_grades_size) / total_grades_size * 100 << "%)"
+              << std::endl;
 
 #if MPH0_TIMERS
     mph0::overall_timer.resume();

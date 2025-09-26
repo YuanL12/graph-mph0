@@ -9,10 +9,12 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "Compare.hpp"
 #include "Hash.hpp"
+#include "RIVET.hpp"
 #include "Types.hpp"
 
 // GradePoint: a point in the grid of grade Table with a partial order
@@ -40,9 +42,7 @@ struct GradePoint {
     bool greater_than(const GradePoint &other) const { return other.less_than(*this); }
 
     // equal to
-    bool operator==(const GradePoint &other) const {
-        return x == other.x && y == other.y;
-    }
+    bool operator==(const GradePoint &other) const { return x == other.x && y == other.y; }
 
     // not equal to
     bool operator!=(const GradePoint &other) const { return !(*this == other); }
@@ -122,8 +122,7 @@ class GradeTable {
     // print
     void print(bool xy_swap = false) const {
         if (!xy_swap) {
-            std::cout << "GradeTable(" << get_x_size() << ", " << get_y_size() << ")"
-                      << std::endl;
+            std::cout << "GradeTable(" << get_x_size() << ", " << get_y_size() << ")" << std::endl;
             std::cout << "x_coords: ";
             for (const auto &x : x_coords) {
                 std::cout << x << " ";
@@ -135,8 +134,7 @@ class GradeTable {
             }
             std::cout << std::endl;
         } else {
-            std::cout << "GradeTable(" << get_y_size() << ", " << get_x_size() << ")"
-                      << std::endl;
+            std::cout << "GradeTable(" << get_y_size() << ", " << get_x_size() << ")" << std::endl;
             std::cout << "x_coords: ";
             for (const auto &y : y_coords) {
                 std::cout << y << " ";
@@ -150,3 +148,11 @@ class GradeTable {
         }
     }
 };
+
+// GradeTableVariant: a variant type for different GradeTable types
+using GradeTableVariant =
+    std::variant<GradeTable<double, int>,                           // (radius, degree)
+                 GradeTable<double, double>,                        // (ball density, radius)
+                 GradeTable<int, rivet::ExactValue>,                // (degree, radius)
+                 GradeTable<rivet::ExactValue, rivet::ExactValue>,  // (ball density, radius)
+                 GradeTable<int, int>>;                             // firep (x_int, y_int)

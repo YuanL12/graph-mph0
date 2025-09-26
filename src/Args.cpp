@@ -8,7 +8,8 @@
 bool ProgramArgs::is_valid() const {
     return !input_file.empty() && !filtration_type.empty() &&
            (filtration_type == "degree" || filtration_type == "ball_density" ||
-            filtration_type == "degree_rational" || filtration_type == "ball_density_rational");
+            filtration_type == "degree_rational" || filtration_type == "ball_density_rational" ||
+            filtration_type == "firep");
 }
 
 void ProgramArgs::print_usage(const std::string& program_name) {
@@ -16,7 +17,7 @@ void ProgramArgs::print_usage(const std::string& program_name) {
     std::cout << "\nRequired arguments:\n";
     std::cout << "  input_file        Path to input point cloud file\n";
     std::cout << "  filtration_type   Type of filtration: degree, ball_density, degree_rational, "
-                 "ball_density_rational\n";
+                 "ball_density_rational, firep\n";
     std::cout << "\nOptional arguments:\n";
     std::cout << "  --output <file>   Save results to specified output file\n";
     std::cout << "  --swap_xy         Enable x-y axis swapping (default: swap disabled)\n";
