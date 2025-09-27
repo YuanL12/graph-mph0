@@ -29,6 +29,7 @@ classifiers = [
 minimum-version = "build-system.requires"
 build-dir = "build"
 wheel.packages = ["binding/python/abmph"]
+cmake.args = ["-DBUILD_PYTHON=ON"]
 
 [tool.cibuildwheel.pyodide]
 build-frontend = {name = "build", args = ["--exports", "whole_archive"]}

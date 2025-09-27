@@ -119,8 +119,7 @@ add_custom_target(run_tests
 )
 
 # ----------------- Python binding -----------------
-# option(BUILD_PYTHON "Build Python bindings with pybind11" OFF)
-# if(BUILD_PYTHON)
-#     add_subdirectory(binding)
-# endif()
-add_subdirectory(binding)
+option(BUILD_PYTHON "Build Python bindings with pybind11" OFF)
+if(BUILD_PYTHON)
+    add_subdirectory(binding)
+endif()
