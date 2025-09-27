@@ -30,19 +30,8 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)
-# Find Boost and Include Boost headers
-set(BOOST_ROOT /usr)
-set(Boost_NO_SYSTEM_PATHS ON)
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
-
 
 find_package(Boost REQUIRED)
-message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
-message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
-message(STATUS "Boost_VERSION: ${Boost_VERSION}")
-message(STATUS "Boost_FOUND: ${Boost_FOUND}")
 
 include_directories(${Boost_INCLUDE_DIRS})
 
