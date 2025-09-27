@@ -18,11 +18,14 @@ class BiFiltration {
     BiFiltration(const GGraph &ggraph, const GradeTableVariant &grade_table)
         : ggraph(ggraph), grade_table(grade_table) {}
     BiFiltration(const std::string &filtration_type, const std::string &path);
+    BiFiltration(const std::vector<std::vector<PointCloudType>> &points,
+                 const std::string &filtration_type);
     CoordsVariant get_x_coords() const;
     CoordsVariant get_y_coords() const;
 
    private:
-    BiFiltration make_from_point_cloud(const std::string &filtration_type, const std::string &path);
+    BiFiltration make_from_point_cloud(const std::vector<std::vector<PointCloudType>> &points,
+                                       const std::string &filtration_type);
     BiFiltration make_from_firep(const std::string &path);
 
     // Helper function to get the vectors in the grade table

@@ -60,6 +60,35 @@ void init_bifiltration(py::module& m) {
             py::init<const std::string&, const std::string&>(), py::arg("filtration_type"),
             py::arg("path"),
             "Initialize a BiFiltration reading from a file by providing a specific filtration type")
+        .def(py::init([](py::array_t<double> points_array, const std::string& filtration_type) {
+                 // Convert numpy array to std::vector<std::vector<double>>
+                 auto buf = points_array.request();
+                 if (buf.ndim != 2) {
+                     throw std::runtime_error(
+                         "Points array must be 2-dimensional (n_points, n_dimensions)");
+                 }
+
+                 size_t n_points = buf.shape[0];
+                 size_t n_dims = buf.shape[1];
+                 double* ptr = static_cast<double*>(buf.ptr);
+
+                 std::vector<std::vector<double>> points;
+                 points.reserve(n_points);
+
+                 for (size_t i = 0; i < n_points; ++i) {
+                     std::vector<double> point;
+                     point.reserve(n_dims);
+                     for (size_t j = 0; j < n_dims; ++j) {
+                         point.push_back(ptr[i * n_dims + j]);
+                     }
+                     points.push_back(std::move(point));
+                 }
+
+                 return new BiFiltration(points, filtration_type);
+             }),
+             py::arg("points"), py::arg("filtration_type"),
+             "Initialize a BiFiltration from a 2D numpy array of points (shape: n_points, "
+             "n_dimensions)")
         .def_readwrite("ggraph", &BiFiltration::ggraph, "Grade Graph")
         .def(
             "get_x_coords",

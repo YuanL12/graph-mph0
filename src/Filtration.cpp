@@ -26,18 +26,8 @@
 // The implementation of read_filtration_data_from_firep already exists in IO.hpp/IO.cpp context.
 // We just rely on the declaration from IO.hpp and link against it.
 
-BiFiltration BiFiltration::make_from_point_cloud(const std::string &filtration_type,
-                                                 const std::string &path) {
-// record the time to read the points
-#if MPH0_TIMERS
-    mph0::load_input_timer.resume();
-#endif
-    // read the points
-    auto points = read_points<PointCloudType>(path);
-#if MPH0_TIMERS
-    mph0::load_input_timer.stop();
-#endif
-
+BiFiltration BiFiltration::make_from_point_cloud(
+    const std::vector<std::vector<PointCloudType>> &points, const std::string &filtration_type) {
     if (filtration_type == "degree") {
         auto [g, gt] = point_cloud_to_degree_Rips_filtration<PointCloudType>(points);
         return BiFiltration{std::move(g), std::move(gt)};
@@ -64,8 +54,22 @@ BiFiltration::BiFiltration(const std::string &filtration_type, const std::string
     if (filtration_type == "firep") {
         *this = make_from_firep(path);
     } else {
-        *this = make_from_point_cloud(filtration_type, path);
+// record the time to read the points
+#if MPH0_TIMERS
+        mph0::load_input_timer.resume();
+#endif
+        // read the points
+        auto points = read_points<PointCloudType>(path);
+#if MPH0_TIMERS
+        mph0::load_input_timer.stop();
+#endif
+        *this = make_from_point_cloud(points, filtration_type);
     }
+}
+
+BiFiltration::BiFiltration(const std::vector<std::vector<PointCloudType>> &points,
+                           const std::string &filtration_type) {
+    *this = make_from_point_cloud(points, filtration_type);
 }
 
 CoordsVariant BiFiltration::get_x_coords() const {
