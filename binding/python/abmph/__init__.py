@@ -1,4 +1,11 @@
 from ._abmph import *
+from .visualize import (
+    convert_betti_numbers_to_2d_array,
+    compute_Hilbert_matrix,
+    map_graded_betti_numbers_to_filtration_values,
+    compute_approximated_Hilbert_matrix,
+    draw_Hilbert_matrix_of_degree_rips_filtration,
+)
 
 
 def compute_MPH0(ggraph: GGraph):
