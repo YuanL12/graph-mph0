@@ -88,6 +88,10 @@ add_executable(main test/cpp/main.cpp)
 target_include_directories(main PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
 
+add_executable(test_ball_density test/cpp/test_ball_density.cpp)
+target_include_directories(test_ball_density PRIVATE ${TOP_TREE_PATH})
+target_link_libraries(test_ball_density PRIVATE ${Boost_LIBRARIES} AbMPH)
+
 # add_executable(main main.cpp)
 # target_include_directories(main PRIVATE ${TOP_TREE_PATH})
 # target_link_libraries(main PRIVATE ${Boost_LIBRARIES} ST_Tree)
