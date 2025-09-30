@@ -65,8 +65,8 @@ inline void print_and_write_betti_result(std::vector<std::pair<int, int>> &raw_b
                                          std::vector<std::pair<int, int>> &raw_betti_2,
                                          std::vector<std::pair<int, int>> &raw_betti_0_1,
                                          bool x_y_swap = false, std::string file_name = "") {
-    std::cout << "Final Results: " << std::endl;
     if (x_y_swap) {
+        std::cout << "Swap x, y axis in print_and_write_betti_result" << std::endl;
         for (auto &b0 : raw_betti_0) {
             std::swap(b0.first, b0.second);
         }

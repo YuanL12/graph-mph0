@@ -545,8 +545,8 @@ point_cloud_to_degree_Rips_filtration_rational(const std::vector<std::vector<PT>
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             int v = i * n + j;
-            int x_rank = distance_to_index[sorted_dists[i][j].exact_value];
-            int y_rank = n - 1 - j;  // negative degree to positive rank
+            int x_rank = n - 1 - j;  // negative degree to positive rank
+            int y_rank = distance_to_index[sorted_dists[i][j].exact_value];
             vertex_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
     }
@@ -555,10 +555,10 @@ point_cloud_to_degree_Rips_filtration_rational(const std::vector<std::vector<PT>
     for (int i = 0; i < n; ++i) {
         int base = i * n;
         // Add edges from the same row e_j = (j, j+1), j = 0, 1, ..., n-2
-        // f(e_j) = (r_{j+1} , -j)
+        // f(e_j) = (-j, r_{j+1})
         for (int j = 0; j < n - 1; ++j) {
-            int x_rank = distance_to_index[sorted_dists[i][j + 1].exact_value];
-            int y_rank = n - 1 - j;
+            int x_rank = n - 1 - j;
+            int y_rank = distance_to_index[sorted_dists[i][j + 1].exact_value];
             edges.emplace_back(base + j, base + j + 1);
             edge_grades.emplace_back(GradePoint(x_rank, y_rank));
         }
@@ -584,8 +584,8 @@ point_cloud_to_degree_Rips_filtration_rational(const std::vector<std::vector<PT>
                 int ii = i * n + k;
                 int jj = j * n + k;
                 edges.emplace_back(ii, jj);
-                int x_rank = distance_to_index[max_r[k].exact_value];
-                int y_rank = n - 1 - k;
+                int x_rank = n - 1 - k;
+                int y_rank = distance_to_index[max_r[k].exact_value];
                 edge_grades.emplace_back(GradePoint(x_rank, y_rank));
             }
         }
