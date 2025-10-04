@@ -20,6 +20,7 @@ std::string exact_value_to_string(const rivet::ExactValue& ev) {
     oss << ev.exact_value;
     return oss.str();
 }
+
 // Helper function to convert 2D Python array to std::vector<std::vector<double>>
 std::vector<std::vector<double>> convert_2D_py_array(py::array_t<double> points_array) {
     auto buf = points_array.request();
@@ -34,16 +35,40 @@ std::vector<std::vector<double>> convert_2D_py_array(py::array_t<double> points_
     std::vector<std::vector<double>> points;
     points.reserve(n_points);
 
+    // Check if array is C-contiguous or F-contiguous
+    bool is_c_contiguous = points_array.flags() & py::array::c_style;
+
     for (size_t i = 0; i < n_points; ++i) {
         std::vector<double> point;
         point.reserve(n_dims);
         for (size_t j = 0; j < n_dims; ++j) {
-            point.push_back(ptr[i * n_dims + j]);
+            if (is_c_contiguous) {
+                // C-contiguous: row-major order
+                std::cout << "C-contiguous" << std::endl;
+                point.push_back(ptr[i * n_dims + j]);
+            } else {
+                // F-contiguous: column-major order
+                std::cout << "F-contiguous" << std::endl;
+                point.push_back(ptr[j * n_points + i]);
+            }
         }
         points.push_back(std::move(point));
     }
 
     return points;
+}
+
+// Helper function to convert 1D Python array to std::vector<double>
+std::vector<double> convert_1D_py_array(py::array_t<double> one_dim_array) {
+    auto buf = one_dim_array.request();
+    if (buf.ndim != 1) {
+        throw std::runtime_error("one_dim_array must be 1-dimensional");
+    }
+
+    size_t n_values = buf.shape[0];
+    double* ptr = static_cast<double*>(buf.ptr);
+    std::vector<double> values(ptr, ptr + n_values);
+    return values;  // no need to check if it is C-contiguous or F-contiguous
 }
 
 // Helper function to convert CoordsVariant to py::object
@@ -84,50 +109,18 @@ void init_bifiltration(py::module& m) {
     py::class_<BiFiltration>(m, "BiFiltration")
         .def(
             py::init<const std::string&, const std::string&>(), py::arg("filtration_type"),
-            py::arg("path"),
+            py::arg("file_path"),
             "Initialize a BiFiltration reading from a file by providing a specific filtration type")
-        .def(py::init([](py::array_t<double> points_array, const std::string& filtration_type) {
-                 // Convert numpy array to std::vector<std::vector<double>>
-                 auto points = convert_2D_py_array(points_array);
-                 return new BiFiltration(points, filtration_type);
-             }),
+        .def(py::init<const std::vector<std::vector<double>>&, const std::string&>(),
              py::arg("points"), py::arg("filtration_type"),
              "Initialize a BiFiltration from a 2D numpy array of points (shape: n_points, "
              "n_dimensions)")
-        .def(
-            py::init([](py::array_t<double> points_array, py::array_t<double> function_values_array,
-                        py::object max_function_value_obj = py::none(),
-                        py::object max_distance_obj = py::none()) {
-                // Convert numpy array to std::vector<std::vector<double>>
-                auto points = convert_2D_py_array(points_array);
-
-                // Convert function values array to std::vector<double>
-                auto func_buf = function_values_array.request();
-                if (func_buf.ndim != 1) {
-                    throw std::runtime_error("Function values array must be 1-dimensional");
-                }
-
-                size_t n_func_values = func_buf.shape[0];
-                double* func_ptr = static_cast<double*>(func_buf.ptr);
-                std::vector<double> function_values(func_ptr, func_ptr + n_func_values);
-
-                // Convert optional parameters
-                std::optional<double> max_function_value = std::nullopt;
-                if (!max_function_value_obj.is_none()) {
-                    max_function_value = max_function_value_obj.cast<double>();
-                }
-
-                std::optional<double> max_distance = std::nullopt;
-                if (!max_distance_obj.is_none()) {
-                    max_distance = max_distance_obj.cast<double>();
-                }
-
-                return new BiFiltration(points, function_values, max_function_value, max_distance);
-            }),
-            py::arg("points"), py::arg("function_values"),
-            py::arg("max_function_value") = py::none(), py::arg("max_distance") = py::none(),
-            "Initialize a Function-Rips BiFiltration from a 2D numpy array of points and function "
-            "values")
+        .def(py::init<const std::vector<std::vector<double>>&, std::vector<double>&,
+                      std::optional<double>, std::optional<double>>(),
+             py::arg("points"), py::arg("function_values"),
+             py::arg("max_function_value") = std::nullopt, py::arg("max_distance") = std::nullopt,
+             "Initialize a Function-Rips BiFiltration from a 2D numpy array of points and function "
+             "values")
         .def_readwrite("ggraph", &BiFiltration::ggraph, "Grade Graph")
         .def(
             "get_x_coords",
