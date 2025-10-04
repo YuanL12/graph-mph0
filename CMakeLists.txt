@@ -25,9 +25,6 @@ if(PERF_PROFILE)
     set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-# print the build type
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
 # Include all hpp files
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -36,7 +33,7 @@ find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 option(MPH0_TIMERS "Enable MPH0 timing code" OFF)
-find_package(Boost OPTIONAL_COMPONENTS timer)
+find_package(Boost REQUIRED OPTIONAL_COMPONENTS timer)
 if(Boost_TIMER_FOUND AND MPH0_TIMERS)
     add_compile_options(-DMPH0_TIMERS=1)
     link_libraries(Boost::timer)

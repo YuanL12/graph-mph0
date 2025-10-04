@@ -39,8 +39,8 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(
     std::iota(degrees.begin(), degrees.end(), 0);
 
     // create a vector of all distances
-    std::set<PT, Compare<PT>> all_distances;
-    // std::set<double, Compare<double, false>> // if you don't want fuzzy comparison,
+    // Use exact comparison to avoid numeric precision issues with large point clouds
+    std::set<PT, Compare<PT, false>> all_distances;
     all_distances.insert(0);
 
     // Compute distance matrix
@@ -81,7 +81,7 @@ std::tuple<GGraph, GradeTable<PT, int>> point_cloud_to_degree_Rips_filtration(
     // free the memory of all_distances and negative_degrees
     std::vector<PT>().swap(x_coords);
     std::vector<int>().swap(y_coords);
-    std::set<PT, Compare<PT>>().swap(all_distances);
+    std::set<PT, Compare<PT, false>>().swap(all_distances);
     std::set<int, Compare<int>>().swap(negative_degrees);
 
     // Create a copy of the distance matrix for sorting
@@ -196,7 +196,8 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_ball_density_Rips_filt
     }
 
     // Create distance set from vector and add 0.0 for self-distances
-    std::set<PT, Compare<PT>> distance_set(distances.begin(), distances.end());
+    // Use exact comparison to avoid numeric precision issues with large point clouds
+    std::set<PT, Compare<PT, false>> distance_set(distances.begin(), distances.end());
     distance_set.insert(0.0);
 
     // Create distance to index map
@@ -260,7 +261,7 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_ball_density_Rips_filt
     // free the memory
     std::vector<PT>().swap(x_coords);
     std::vector<PT>().swap(y_coords);
-    std::set<PT, Compare<PT>>().swap(distance_set);
+    std::set<PT, Compare<PT, false>>().swap(distance_set);
     std::set<double, Compare<double>>().swap(function_value_set);
 
     // Prepare for GGraph construction with exact sizes
@@ -339,7 +340,8 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_function_Rips_filtrati
     }
 
     // Create distance set from vector and add 0.0 for self-distances
-    std::set<PT, Compare<PT>> distance_set(distances.begin(), distances.end());
+    // Use exact comparison to avoid numeric precision issues with large point clouds
+    std::set<PT, Compare<PT, false>> distance_set(distances.begin(), distances.end());
     distance_set.insert(0.0);
 
     // Create distance to index map
@@ -368,7 +370,7 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_function_Rips_filtrati
     // free the memory
     std::vector<double>().swap(x_coords);
     std::vector<PT>().swap(y_coords);
-    std::set<PT, Compare<PT>>().swap(distance_set);
+    std::set<PT, Compare<PT, false>>().swap(distance_set);
     std::set<double>().swap(function_value_set);
 
     // Prepare for GGraph construction with exact sizes
@@ -430,7 +432,8 @@ std::tuple<GGraph, GradeTable<double, PT>> point_cloud_to_ball_density_Rips_filt
     }
 
     // Create distance set from vector and add 0.0 for self-distances
-    std::set<PT, Compare<PT>> distance_set(distances.begin(), distances.end());
+    // Use exact comparison to avoid numeric precision issues with large point clouds
+    std::set<PT, Compare<PT, false>> distance_set(distances.begin(), distances.end());
     distance_set.insert(0.0);
 
     // Set radius threshold

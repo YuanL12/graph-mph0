@@ -16,7 +16,7 @@ inline void pretty_print_timer(const std::string& label, const boost::timer::cpu
     double percent = (seconds / total_seconds) * 100;
 
     std::cout << std::left << std::setw(50) << label  // left-aligned label, 30 characters wide
-              << std::right << std::fixed << std::setw(8) << std::setprecision(3) << seconds << " s"
+              << std::right << std::fixed << std::setw(8) << std::setprecision(4) << seconds << " s"
               << "   ( " << std::setw(6) << std::setprecision(2) << percent << " % )" << std::endl;
 }
 
@@ -69,7 +69,7 @@ inline void print_timers(double total = double(overall_timer.elapsed().wall) / s
     pretty_print_timer("Main Loop(visit grades lexicographically):", grades_iteration_timer, total);
 
     double load_input_time = double(load_input_timer.elapsed().wall) / std::pow(10, 9);
-    std::cout << "Total time: " << total << " s" << std::endl;
-    std::cout << "Total time minus load input: " << total - load_input_time << " s" << std::endl;
+    std::cout << std::fixed << std::setprecision(4) << "Total time: " << total << " s" << std::endl;
+    std::cout << std::fixed << std::setprecision(4) << "Total time minus load input: " << total - load_input_time << " s" << std::endl;
 }
 }  // namespace mph0
