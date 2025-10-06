@@ -73,45 +73,6 @@ def map_graded_betti_numbers_to_filtration_values(
     return graded_betti_numbers_in_filtration_values
 
 
-def compute_approximated_Hilbert_matrix(
-    matrix_shape: tuple[int, int],
-    row_range: tuple[float, float],
-    column_range: tuple[float, float],
-    betti0s: np.ndarray,
-    betti1s: np.ndarray,
-    betti2s: np.ndarray,
-):
-    """
-    Compute the approximated Hilbert function (dimension of H_0) on a pre-defined grid.
-    The formula is: H_0(s, k) = b_0(s, k) - b_1(s, k) + b_2(s, k)
-    Args:
-        matrix_shape (tuple): the shape of the matrix
-        row_range (tuple): row value range
-        column_range (tuple): column value range
-        betti0s (2D np.ndarray ): betti0s, each row is a betti number in the format of (s, k)
-        betti1s (2D np.ndarray): betti1s, each row is a betti number
-        betti2s (2D np.ndarray): betti2s, each row is a betti number
-    Returns:
-        H0_values (np.ndarray): H_0 values
-    """
-    m, n = matrix_shape
-    # setup the meshgrid
-    xs = np.linspace(row_range[0], row_range[1], m)
-    ys = np.linspace(column_range[0], column_range[1], n)
-    H0_meshgrid = np.meshgrid(xs, ys, indexing="ij")
-
-    # loop over the meshgrid to compute the H_0 value
-    H0_values = np.zeros((m, n), dtype=np.int32)
-    for i in range(m):
-        for j in range(n):
-            s, k = H0_meshgrid[0][i][j], H0_meshgrid[1][i][j]
-            b0 = np.sum((betti0s[:, 0] <= s) & (betti0s[:, 1] <= k))
-            b1 = np.sum((betti1s[:, 0] <= s) & (betti1s[:, 1] <= k))
-            b2 = np.sum((betti2s[:, 0] <= s) & (betti2s[:, 1] <= k))
-            H0_values[i][j] = b0 - b1 + b2
-    return H0_values
-
-
 def draw_discrete_matrix(
     mat, x_axis_range=None, y_axis_range=None, origin="upper", discrete_colorbar=True
 ):
@@ -151,54 +112,8 @@ def draw_discrete_matrix(
         cbar = plt.colorbar(ticks=np.arange(np.min(mat), np.max(mat) + 1))
     else:
         cbar = plt.colorbar()
-    cbar.set_label("$H_0$ values")
-    return plt
-
-
-def draw_Hilbert_matrix_of_degree_rips_filtration(
-    res: dict[str, list[tuple[int, int]]],
-    table_x_coords: list[float],
-    table_y_coords: list[float],
-    matrix_shape: tuple[int, int] = (50, 50),
-    degree_threshold: int = 3,
-):
-    # convert the graded betti numbers in indices to filtration values
-    graded_betti_numbers_in_filtration_values = {}
-    for name in ["b_0", "b_1", "b_2"]:
-        graded_betti_numbers_in_filtration_values[name] = (
-            map_graded_betti_numbers_to_filtration_values(
-                res[name], table_x_coords, table_y_coords
-            )
-        )
-
-    # compute the H_0 values on a grid
-    H_0_values = compute_approximated_Hilbert_matrix(
-        matrix_shape=matrix_shape,
-        row_range=(np.min(table_x_coords), np.max(table_x_coords)),
-        column_range=(np.min(table_y_coords), np.max(table_y_coords)),
-        betti0s=np.array(graded_betti_numbers_in_filtration_values["b_0"]),
-        betti1s=np.array(graded_betti_numbers_in_filtration_values["b_1"]),
-        betti2s=np.array(graded_betti_numbers_in_filtration_values["b_2"]),
-    )
-
-    # mask the H_0 values that are less than degree_threshold
-    H_0_values_masked = np.where(H_0_values >= degree_threshold, -1, H_0_values)
-
-    # when drawing in Eucledian space, the matrix should be transposed
-    H_0_values_masked = H_0_values_masked.T
-
-    # reverse the degree axis
-    H_0_values_masked = np.flip(H_0_values_masked, axis=0)
-
-    # draw the H_0 values
-    discrete_plot = draw_discrete_matrix(
-        H_0_values_masked,
-        x_axis_range=(np.min(table_x_coords), np.max(table_x_coords)),
-        y_axis_range=(-np.max(table_y_coords), -np.min(table_y_coords)),
-        discrete_colorbar=True,
-        origin="lower",
-    )
-    return discrete_plot
+    # cbar.set_label("$H_0$ values")
+    return plt, cbar
 
 
 if __name__ == "__main__":

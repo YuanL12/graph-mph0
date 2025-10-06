@@ -5,6 +5,7 @@ from .visualize import (
     map_graded_betti_numbers_to_filtration_values,
     compute_approximated_Hilbert_matrix,
     draw_Hilbert_matrix_of_degree_rips_filtration,
+    draw_discrete_matrix,
 )
 
 
