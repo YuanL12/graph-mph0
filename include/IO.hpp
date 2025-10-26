@@ -442,9 +442,9 @@ inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
                                      std::to_string(i));
         }
         std::stringstream ss(line);
-        int x_rank, y_rank, v0, v1;
+        int x, y, v0, v1;
         char semicolon;
-        ss >> x_rank >> y_rank >> semicolon >> v0 >> v1;
+        ss >> x >> y >> semicolon >> v0 >> v1;
 
         if (ss.fail() || semicolon != ';') {
             throw std::runtime_error("Invalid format in edge line " + std::to_string(i + 4) + ": " +
@@ -459,9 +459,9 @@ inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
         }
 
         edges.emplace_back(v0, v1);
-        edge_grades.emplace_back(x_rank, y_rank);
-        x_coords.push_back(x_rank);
-        y_coords.push_back(y_rank);
+        edge_grades.emplace_back(x, y);
+        x_coords.push_back(x);
+        y_coords.push_back(y);
     }
 
     // then read the graded vertices
@@ -471,18 +471,18 @@ inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
                                      std::to_string(i));
         }
         std::stringstream ss(line);
-        int x_rank, y_rank;
+        int x, y;
         char semicolon;
-        ss >> x_rank >> y_rank >> semicolon;
+        ss >> x >> y >> semicolon;
 
         if (ss.fail() || semicolon != ';') {
             throw std::runtime_error("Invalid format in vertex line " + std::to_string(i + 4 + nE) +
                                      ": " + line);
         }
 
-        vertex_grades.emplace_back(x_rank, y_rank);
-        x_coords.push_back(x_rank);
-        y_coords.push_back(y_rank);
+        vertex_grades.emplace_back(x, y);
+        x_coords.push_back(x);
+        y_coords.push_back(y);
     }
 
 #if MPH0_TIMERS
@@ -495,12 +495,32 @@ inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
     std::sort(y_coords.begin(), y_coords.end());
     y_coords.erase(std::unique(y_coords.begin(), y_coords.end()), y_coords.end());
 
+    // Give each x and y coordinate a unique index/rank
+    std::unordered_map<int, int> x_rank_map;
+    std::unordered_map<int, int> y_rank_map;
+    for (int i = 0; i < x_coords.size(); ++i) {
+        x_rank_map[x_coords[i]] = i;
+    }
+    for (int i = 0; i < y_coords.size(); ++i) {
+        y_rank_map[y_coords[i]] = i;
+    }
+
     // Construct a GradeTable with x and y coordinates
     GradeTable<int, int> grade_table(x_coords, y_coords);
 
     // free the memory
     std::vector<int>().swap(x_coords);
     std::vector<int>().swap(y_coords);
+
+    // Convert the grades to ranks
+    for (int i = 0; i < vertex_grades.size(); ++i) {
+        vertex_grades[i].x = x_rank_map[vertex_grades[i].x];
+        vertex_grades[i].y = y_rank_map[vertex_grades[i].y];
+    }
+    for (int i = 0; i < edge_grades.size(); ++i) {
+        edge_grades[i].x = x_rank_map[edge_grades[i].x];
+        edge_grades[i].y = y_rank_map[edge_grades[i].y];
+    }
 
     // Create a GGraph
     GGraph ggraph(nV, vertex_grades, edges, edge_grades);
