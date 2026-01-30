@@ -49,11 +49,11 @@ add_library(ST_Tree STATIC
 # Ensure -fPIC is used for the static library
 set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# Add AbMPH library
-file(GLOB_RECURSE AbMPH_SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
-add_library(AbMPH STATIC ${AbMPH_SRC_FILES})
+# Add Graph_MPH cpp library
+file(GLOB_RECURSE Graph_MPH_SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+add_library(Graph_MPH STATIC ${Graph_MPH_SRC_FILES})
 # Ensure -fPIC is used for the static library
-set_target_properties(AbMPH PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(Graph_MPH PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # use the top tree library
 # define its include path
@@ -63,31 +63,31 @@ set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 # Add the cpp executables
 add_executable(time_point_cloud test/cpp/time_point_cloud.cpp)
 target_include_directories(time_point_cloud PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(time_point_cloud PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(time_point_cloud PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(time_firep test/cpp/time_firep.cpp)
 target_include_directories(time_firep PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(time_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(time_firep PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(write_to_firep test/cpp/write_to_firep.cpp)
 target_include_directories(write_to_firep PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(write_to_firep PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(read_firep test/cpp/read_firep.cpp)
 target_include_directories(read_firep PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(read_firep PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(read_firep PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(rational test/cpp/rational.cpp)
 target_include_directories(rational PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(rational PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(rational PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(main test/cpp/main.cpp)
 target_include_directories(main PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(main PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(main PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 add_executable(test_ball_density test/cpp/test_ball_density.cpp)
 target_include_directories(test_ball_density PRIVATE ${TOP_TREE_PATH})
-target_link_libraries(test_ball_density PRIVATE ${Boost_LIBRARIES} AbMPH)
+target_link_libraries(test_ball_density PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
 # add_executable(main main.cpp)
 # target_include_directories(main PRIVATE ${TOP_TREE_PATH})
