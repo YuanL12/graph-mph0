@@ -1,6 +1,35 @@
+## 10.25
+```bash
+(base) yluo@UHome:graph-mph0$ /home/yluo/Documents/rivet/build/rivet_console experiment/data/rivet/figure1_data_for_rivet.firep --minpre
+x-grades(size: 5)
+1
+2
+3
+5
+6
+
+y-grades(size: 5)
+1
+2
+3
+5
+6
+
+MINIMAL PRESENTATION:
+Number of rows:2
+Row bigrades:
+| (1,0) (0,2) |
+Number of columns:2
+Column bigrades:
+| (3,2) (2,3) |
+0 1 
+0 1 
+```
+
+
 ## 6.12
 
-```
+```bash
 $ ./topTree_out ../experiment/data/PointCloud/annulus_800.txt 
 --------------------------------
 Testing degree Rips Filtration

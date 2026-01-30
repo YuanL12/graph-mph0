@@ -125,17 +125,3 @@ exact approx(double x)
 ```cpp
 double_value = numerator(e).convert_to<double>() / denominator(e).convert_to<double>();
 ```
-
-
-### Splay Tree
-Tarjan and Sleator showed that:
-
-Any sequence of m operations on an n-node splay tree takes at most O(mlogn) time total.
-
-➡️ So, average cost = O(log n) per operation — amortized complexity.
-
-### Reference
-[Stanford Course Note](https://web.stanford.edu/class/archive/cs/cs166/cs166.1146/lectures/08/Slides08.pdf) includes Splay Tree. 
-
-[MIT Course Note](https://ocw.mit.edu/courses/6-854j-advanced-algorithms-fall-2008/resources/lec6/) includes Splay Tree and Dynamic Tree.
-
