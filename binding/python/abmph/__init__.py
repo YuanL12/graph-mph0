@@ -1,4 +1,4 @@
-from ._abmph import *
+from ._graph_mph import *
 from .visualize import (
     convert_betti_numbers_to_2d_array,
     compute_Hilbert_matrix,
@@ -26,7 +26,7 @@ def compute_MPH0(ggraph: GGraph):
             b_0_1: bett_1(H_0)
 
     Examples:
-        >>> result = abmph.compute_MPH0_DTree(G)
+        >>> result = graph_mph.compute_MPH0_DTree(G)
         >>> print(result)
 
     Notes:

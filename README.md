@@ -18,14 +18,14 @@ make -j4
 ```
 then you will have the executable `main`.
 
-Install the Python package `abmph` if you want to run the notebooks under `tutorial` folder.
+Install the Python package `graph_mph` if you want to run the notebooks under `tutorial` folder.
 ```Shell
 pip install pybind11 # this is necessary 
 pip install .
 ```
 Uninstall you don't want to use our package any more
 ```bash
-pip uninstall abmph
+pip uninstall graph_mph
 ```
 
 

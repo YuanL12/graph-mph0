@@ -134,9 +134,9 @@ void init_bifiltration(py::module& m) {
             "Get the y coordinates of the grade table (converts rivet::ExactValue to strings)");
 }
 
-PYBIND11_MODULE(_abmph, m) {
+PYBIND11_MODULE(_graph_mph, m) {
     m.doc() =
-        "abmph Python package(version 0.0.1)\n"
+        "graph_mph Python package(version 0.0.1)\n"
         "This package provides utilities for computing absolute 2-parameter absolute Betti numbers "
         "on graphs ";
 

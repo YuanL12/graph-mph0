@@ -8,7 +8,7 @@ requires = [
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "abmph"
+name = "graph_mph"
 version = "0.0.1"
 description = "Library for computing absolute Betti numbers on graphs"
 authors = [{name = "Yuan Luo", email = "luoyuan9809@gmail.com"}]
@@ -28,7 +28,7 @@ classifiers = [
 [tool.scikit-build]
 minimum-version = "build-system.requires"
 build-dir = "build"
-wheel.packages = ["binding/python/abmph"]
+wheel.packages = ["binding/python/graph_mph"]
 cmake.args = ["-DBUILD_PYTHON=ON"]
 
 [tool.cibuildwheel.pyodide]
