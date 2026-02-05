@@ -305,7 +305,7 @@ int test_ball_density_filtrations() {
     try {
         // Read points from the annulus_200.txt file
         std::string filename =
-            "/home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt";
+            "~/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt";
         auto points_real = read_points<double>(filename);
 
         std::cout << "Loaded " << points_real.size() << " points from " << filename << std::endl;

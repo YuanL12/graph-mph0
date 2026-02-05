@@ -69,16 +69,16 @@ def read_our_betti(file_path):
 if __name__ == "__main__":
     # Example usage
     rivet_output_paths = [
-        "/home/yluo/Documents/graph-mph0/annulus_200_ball_density_output_rivet.txt",
-        "/home/yluo/Documents/graph-mph0/annulus_400_ball_density_output_rivet.txt",
-        "/home/yluo/Documents/graph-mph0/annulus_200_degree_output_rivet.txt",
-        "/home/yluo/Documents/graph-mph0/annulus_400_degree_output_rivet.txt",
+        "~/Documents/graph-mph0/annulus_200_ball_density_output_rivet.txt",
+        "~/Documents/graph-mph0/annulus_400_ball_density_output_rivet.txt",
+        "~/Documents/graph-mph0/annulus_200_degree_output_rivet.txt",
+        "~/Documents/graph-mph0/annulus_400_degree_output_rivet.txt",
     ]
     our_output_paths = [
-        "/home/yluo/Documents/graph-mph0/build/annulus_200_ball_density_exact_our_out.txt",
-        "/home/yluo/Documents/graph-mph0/build/annulus_400_ball_density_exact_our_out.txt",
-        "/home/yluo/Documents/graph-mph0/build/annulus_200_degree_exact_our_out.txt",
-        "/home/yluo/Documents/graph-mph0/build/annulus_400_degree_exact_our_out.txt",
+        "~/Documents/graph-mph0/build/annulus_200_ball_density_exact_our_out.txt",
+        "~/Documents/graph-mph0/build/annulus_400_ball_density_exact_our_out.txt",
+        "~/Documents/graph-mph0/build/annulus_200_degree_exact_our_out.txt",
+        "~/Documents/graph-mph0/build/annulus_400_degree_exact_our_out.txt",
     ]
 
     for rivet_output_path, our_output_path in zip(rivet_output_paths, our_output_paths):
