@@ -49,3 +49,6 @@ sydney-urban-objects-dataset
 
 # format config
 .clang-format
+
+*.npy
+*.firep
