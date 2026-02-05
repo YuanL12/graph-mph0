@@ -51,6 +51,7 @@ set(TOP_TREE_PATH ${CMAKE_SOURCE_DIR}/toptreelib)
 
 # -------------------------------------------------
 # Add the cpp executables
+# (if you want to build similar cpp executables, you can look at the following cpp files) 
 add_executable(time_point_cloud test/cpp/time_point_cloud.cpp)
 target_include_directories(time_point_cloud PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(time_point_cloud PRIVATE ${Boost_LIBRARIES} Graph_MPH)
@@ -84,10 +85,10 @@ target_link_libraries(test_ball_density PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 # Add test target that runs the 4 commands and Python comparison
 add_custom_target(run_tests
     COMMAND ${CMAKE_COMMAND} -E echo "Running test commands..."
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rational --output annulus_200_ball_density_exact_our_out.txt
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt ball_density_rational --output annulus_400_ball_density_exact_our_out.txt 
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rational --output annulus_200_degree_exact_our_out.txt
-    COMMAND ${CMAKE_BINARY_DIR}/main /home/yluo/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rational --output annulus_400_degree_exact_our_out.txt
+    COMMAND ${CMAKE_BINARY_DIR}/main ~/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt ball_density_rational --output annulus_200_ball_density_exact_our_out.txt
+    COMMAND ${CMAKE_BINARY_DIR}/main ~/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt ball_density_rational --output annulus_400_ball_density_exact_our_out.txt 
+    COMMAND ${CMAKE_BINARY_DIR}/main ~/Documents/graph-mph0/experiment/data/PointCloud/annulus_200.txt degree_rational --output annulus_200_degree_exact_our_out.txt
+    COMMAND ${CMAKE_BINARY_DIR}/main ~/Documents/graph-mph0/experiment/data/PointCloud/annulus_400.txt degree_rational --output annulus_400_degree_exact_our_out.txt
     COMMAND ${CMAKE_COMMAND} -E echo "Running Python comparison script..."
     COMMAND python3 ${CMAKE_SOURCE_DIR}/test/python/read_and_compare_rivet.py
     DEPENDS main
