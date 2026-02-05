@@ -39,16 +39,6 @@ if(Boost_TIMER_FOUND AND MPH0_TIMERS)
     link_libraries(Boost::timer)
 endif()
 
-# Use Dynamic Tree
-# Add the submodule's source directory to the include path
-include_directories(${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src)
-add_library(ST_Tree STATIC
-    ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/ST_Tree.cpp
-    ${CMAKE_SOURCE_DIR}/DynamicTrees_NF/ST_Tree/src/visualise.cpp
-)
-# Ensure -fPIC is used for the static library
-set_target_properties(ST_Tree PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
 # Add Graph_MPH cpp library
 file(GLOB_RECURSE Graph_MPH_SRC_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
 add_library(Graph_MPH STATIC ${Graph_MPH_SRC_FILES})
@@ -89,9 +79,6 @@ add_executable(test_ball_density test/cpp/test_ball_density.cpp)
 target_include_directories(test_ball_density PRIVATE ${TOP_TREE_PATH})
 target_link_libraries(test_ball_density PRIVATE ${Boost_LIBRARIES} Graph_MPH)
 
-# add_executable(main main.cpp)
-# target_include_directories(main PRIVATE ${TOP_TREE_PATH})
-# target_link_libraries(main PRIVATE ${Boost_LIBRARIES} ST_Tree)
 
 # -------------------------------------------------
 # Add test target that runs the 4 commands and Python comparison

@@ -28,6 +28,14 @@ Uninstall you don't want to use our package any more
 pip uninstall graph_mph
 ```
 
+If you prefer to use uv, here is a full installation command lines that has been tested working on a linux machine 
+```bash
+uv venv --python 3.13
+source .venv/bin/activate
+uv pip install ipykernel matplotlib
+uv pip install .
+``` 
+That's all you need to run the jupyter notebook `compute_mph_firep.ipynb` under tutorial folder. 
 
 ### Input
 We support the following two types input

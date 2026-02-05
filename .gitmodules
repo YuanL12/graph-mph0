@@ -1,6 +1,3 @@
-[submodule "DynamicTrees_NF"]
-	path = DynamicTrees_NF
-	url = https://github.com/YuanL12/DynamicTrees_NF.git
 [submodule "toptreelib"]
 	path = toptreelib
 	url = https://github.com/ondracek-lukas/toptreelib.git
