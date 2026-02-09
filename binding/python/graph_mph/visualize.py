@@ -121,6 +121,10 @@ def compute_cumulative_sum_of_betti_numbers(
     table_x_coords: list[float],
     table_y_coords: list[float],
     target_matrix_shape: tuple[int, int],
+    x_coord_min: float,
+    x_coord_max: float,
+    y_coord_min: float,
+    y_coord_max: float,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Compute the cumulative sum of the betti numbers.
@@ -152,8 +156,8 @@ def compute_cumulative_sum_of_betti_numbers(
     b_2_values = np.array(b_2_values)
 
     target_m, target_n = target_matrix_shape
-    xs = np.linspace(table_x_coords[0], table_x_coords[-1], target_m)
-    ys = np.linspace(table_y_coords[0], table_y_coords[-1], target_n)
+    xs = np.linspace(x_coord_min, x_coord_max, target_m)
+    ys = np.linspace(y_coord_min, y_coord_max, target_n)
     matrix_meshgrid = np.meshgrid(xs, ys, indexing="ij")
 
     cumsum_b_0 = np.zeros((target_m, target_n), dtype=np.int32)
@@ -175,6 +179,10 @@ def compute_clipped_Hilbert_matrix(
     table_x_coords: list[float],
     table_y_coords: list[float],
     target_matrix_shape: tuple[int, int],
+    x_coord_min: float = None,
+    x_coord_max: float = None,
+    y_coord_min: float = None,
+    y_coord_max: float = None,
     clip_min: int = 0,
     clip_max: int = 25,
 ) -> np.ndarray:
@@ -190,8 +198,23 @@ def compute_clipped_Hilbert_matrix(
     Returns:
         approximated Hilbert matrix
     """
+    if x_coord_min is None:
+        x_coord_min = table_x_coords[0]
+    if x_coord_max is None:
+        x_coord_max = table_x_coords[-1]
+    if y_coord_min is None:
+        y_coord_min = table_y_coords[0]
+    if y_coord_max is None:
+        y_coord_max = table_y_coords[-1]
     cum_0, cum_1, cum_2 = compute_cumulative_sum_of_betti_numbers(
-        res, table_x_coords, table_y_coords, target_matrix_shape
+        res,
+        table_x_coords,
+        table_y_coords,
+        target_matrix_shape,
+        x_coord_min,
+        x_coord_max,
+        y_coord_min,
+        y_coord_max,
     )
     approx_hilbert_matrix = cum_0 - cum_1 + cum_2
     # map the value greater to 4 to 4
