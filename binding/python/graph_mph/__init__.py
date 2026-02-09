@@ -4,6 +4,7 @@ from .visualize import (
     compute_Hilbert_matrix,
     map_graded_betti_numbers_to_filtration_values,
     draw_discrete_matrix,
+    compute_clipped_Hilbert_matrix,
 )
 
 

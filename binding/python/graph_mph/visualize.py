@@ -116,6 +116,89 @@ def draw_discrete_matrix(
     return plt, cbar
 
 
+def compute_cumulative_sum_of_betti_numbers(
+    res: dict[str, list[tuple[int, int]]],
+    table_x_coords: list[float],
+    table_y_coords: list[float],
+    target_matrix_shape: tuple[int, int],
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Compute the cumulative sum of the betti numbers.
+
+    Args:
+        res: dictionary of graded betti numbers (indices of the lists of x, y coordinates)
+        table_x_coords: list of x coordinates
+        table_y_coords: list of y coordinates
+        target_matrix_shape: tuple of the target matrix shape
+
+    Returns:
+        tuple of the cumulative sum of the betti numbers, e.g.,
+            cum_0[i, j] = the number of elements (x, y) in b_0_values that satisfy
+            table_x_coords[x] <= matrix_meshgrid[i] and table_y_coords[y] <= matrix_meshgrid[j]
+
+    """
+    # convert the graded betti numbers in indices to filtration values
+    b_0_values = map_graded_betti_numbers_to_filtration_values(
+        res["b_0"], table_x_coords, table_y_coords
+    )
+    b_0_values = np.array(b_0_values)
+    b_1_values = map_graded_betti_numbers_to_filtration_values(
+        res["b_1"], table_x_coords, table_y_coords
+    )
+    b_1_values = np.array(b_1_values)
+    b_2_values = map_graded_betti_numbers_to_filtration_values(
+        res["b_2"], table_x_coords, table_y_coords
+    )
+    b_2_values = np.array(b_2_values)
+
+    target_m, target_n = target_matrix_shape
+    xs = np.linspace(table_x_coords[0], table_x_coords[-1], target_m)
+    ys = np.linspace(table_y_coords[0], table_y_coords[-1], target_n)
+    matrix_meshgrid = np.meshgrid(xs, ys, indexing="ij")
+
+    cumsum_b_0 = np.zeros((target_m, target_n), dtype=np.int32)
+    cumsum_b_1 = np.zeros((target_m, target_n), dtype=np.int32)
+    cumsum_b_2 = np.zeros((target_m, target_n), dtype=np.int32)
+    for i in range(target_m):
+        for j in range(target_n):
+            s, k = matrix_meshgrid[0][i][j], matrix_meshgrid[1][i][j]
+            # counts the number of rows (x,y) in b_0_values that satisfy x <= s and y <= k
+            cumsum_b_0[i, j] = np.sum((b_0_values[:, 0] <= s) & (b_0_values[:, 1] <= k))
+            cumsum_b_1[i, j] = np.sum((b_1_values[:, 0] <= s) & (b_1_values[:, 1] <= k))
+            cumsum_b_2[i, j] = np.sum((b_2_values[:, 0] <= s) & (b_2_values[:, 1] <= k))
+
+    return cumsum_b_0, cumsum_b_1, cumsum_b_2
+
+
+def compute_clipped_Hilbert_matrix(
+    res: dict[str, list[tuple[int, int]]],
+    table_x_coords: list[float],
+    table_y_coords: list[float],
+    target_matrix_shape: tuple[int, int],
+    clip_min: int = 0,
+    clip_max: int = 25,
+) -> np.ndarray:
+    """
+    Compute the approximated Hilbert matrix.
+    Args:
+        res: dictionary of graded betti numbers (indices of the lists of x, y coordinates)
+        table_x_coords: list of x coordinates
+        table_y_coords: list of y coordinates
+        target_matrix_shape: tuple of the target matrix shape
+        clip_min: minimum value of the matrix
+        clip_max: maximum value of the matrix
+    Returns:
+        approximated Hilbert matrix
+    """
+    cum_0, cum_1, cum_2 = compute_cumulative_sum_of_betti_numbers(
+        res, table_x_coords, table_y_coords, target_matrix_shape
+    )
+    approx_hilbert_matrix = cum_0 - cum_1 + cum_2
+    # map the value greater to 4 to 4
+    approx_hilbert_matrix = np.clip(approx_hilbert_matrix, clip_min, clip_max)
+    return approx_hilbert_matrix
+
+
 if __name__ == "__main__":
     # # example usage
     # res = {
