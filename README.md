@@ -101,7 +101,7 @@ The output results stored in a dict use the indices of the above coordinates:
  'M': [(1, 1, -1), (2, 1, 1), (1, 2, -1), (2, 2, 1)]}
 ```
 
-This tells us that two connected components are born at $(x[0],y[2]) = (1,3)$ and $(x[1],y[0]) = (2,1)$ from `b_0`, and they merge at $(x[2], y[3])$ and $(x[3], y[2])$ from `b_1`. `b_2` tells us that one of the two elements of `b_1` is redundant at $(x[3],y[3])$. These information can also be retrieved in $M$. 
+This tells us that two connected components are born at `(xs[0],ys[2]) = (1,3)` and `(xs[1],ys[0]) = (2,1)` from `b_0`, and they merge at `(xs[2], ys[3])` and `(xs[3], ys[2])` from `b_1`. `b_2` tells us that one of the two elements of `b_1` is redundant at `(xs[3],ys[3])`. These information can also be retrieved in $M$. 
 
 Additionally, `b_0_1` tells us the birth time of $H_1$.
 
