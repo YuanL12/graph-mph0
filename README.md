@@ -1,5 +1,5 @@
 # graph-mph0
-This is a project about computing absolute betti numbers at dimension 0 for a bi-filtered graph based on [Computing Betti tables and minimal presentations of zero-dimensional persistent homology](https://arxiv.org/abs/2410.22242). 
+This is a project about computing absolute Betti numbers at dimension 0 for a bi-filtered graph based on [Computing Betti tables and minimal presentations of zero-dimensional persistent homology](https://arxiv.org/abs/2410.22242). 
 
 ## User Guide 
 ### Install 
@@ -16,9 +16,9 @@ mkdir build && cd build
 cmake ..
 make -j4
 ```
-then you will have the executable `main`.
+Then you will have the executable `main`.
 
-Install the Python package `graph_mph` if you want to run the notebooks under `tutorial` folder.
+Install the Python package `graph_mph` if you want to run the notebooks under the `tutorial` folder.
 ```Shell
 pip install pybind11 # this is necessary 
 pip install .
@@ -28,14 +28,14 @@ Uninstall if you don't want to use our package anymore
 pip uninstall graph_mph
 ```
 
-If you prefer to use uv, here is a full installation command lines that has been tested working on a linux machine 
+If you prefer to use `uv`, here is a full installation command line that has been tested working on a Linux machine 
 ```bash
 uv venv --python 3.13
 source .venv/bin/activate
 uv pip install ipykernel matplotlib
 uv pip install .
 ``` 
-That's all you need to run the Jupyter notebook `compute_mph_firep.ipynb` under tutorial folder. 
+That's all you need to run the Jupyter notebook `compute_mph_firep.ipynb` under the tutorial folder. 
 
 ### Input
 We support the following two types of input
@@ -56,14 +56,14 @@ grade_x_of_v_0 grade_y_of_v_0 ;
 - `b_1`: $\beta_1(H_0)$
 - `b_2`: $\beta_2(H_0)$
 - `b_0_1`: $\beta_0(H_1)$
-- `M`: minimal presentation--a list of triples (i, j, v) representing value v at at row i and column j, where i represents the ith element of `b_0` and j represents the jth element of `b_1` (1-indexed). 
+- `M`: minimal presentation--a list of triples (i, j, v) representing value v at row i and column j, where i represents the ith element of `b_0` and j represents the jth element of `b_1` (1-indexed). 
 
 
 ### Example
 Consider the bifiltered graph
 ![graded-graph](tutorial/graded-graph.png)
 
-There are 8 edges and 6 vertices, so the forth line of our `.firep` file is `8 6 0`. Next, for each edge, we specify its grade and then two boundary vertices. After that, list the grades of vertices. Note that the edge boundary indices should follow the vertex order. 
+There are 8 edges and 6 vertices, so the fourth line of our `.firep` file is `8 6 0`. Next, for each edge, we specify its grade and then two boundary vertices. After that, list the grades of vertices. Note that the edge boundary indices should follow the vertex order. 
 
 ```bash
 firep
@@ -101,9 +101,17 @@ The output results stored in a dict use the indices of the above coordinates:
  'M': [(1, 1, -1), (2, 1, 1), (1, 2, -1), (2, 2, 1)]}
 ```
 
-This tells us that two connected components are born at `(xs[0],ys[2]) = (1,3)` and `(xs[1],ys[0]) = (2,1)` from `b_0`, and they merge at `(xs[2], ys[3])` and `(xs[3], ys[2])` from `b_1`. `b_2` tells us that one of the two elements of `b_1` is redundant at `(xs[3],ys[3])`. These information can also be retrieved in $M$. 
+This tells us that two connected components are born at `(xs[0], ys[2]) = (1,3)` and `(xs[1], ys[0]) = (2,1)` from `b_0`, and they merge at `(xs[2], ys[3])` and `(xs[3], ys[2])` from `b_1`. `b_2` tells us that one of the two elements of `b_1` is redundant at `(xs[3], ys[3])`. This information can also be retrieved in $M$. 
 
 Additionally, `b_0_1` tells us the birth time of $H_1$.
 
 ## Citation
-To be added
+@misc{luo2026computingbettitablesminimal,
+      title={Computing Betti tables and minimal presentations of zero-dimensional persistent homology}, 
+      author={Yuan Luo and Dmitriy Morozov and Luis Scoccola},
+      year={2026},
+      eprint={2410.22242},
+      archivePrefix={arXiv},
+      primaryClass={cs.CG},
+      url={https://arxiv.org/abs/2410.22242}, 
+}
