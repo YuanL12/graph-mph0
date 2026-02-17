@@ -106,6 +106,7 @@ This tells us that two connected components are born at `(xs[0], ys[2]) = (1,3)`
 Additionally, `b_0_1` tells us the birth time of $H_1$.
 
 ## Citation
+```
 @misc{luo2026computingbettitablesminimal,
       title={Computing Betti tables and minimal presentations of zero-dimensional persistent homology}, 
       author={Yuan Luo and Dmitriy Morozov and Luis Scoccola},
@@ -115,3 +116,4 @@ Additionally, `b_0_1` tells us the birth time of $H_1$.
       primaryClass={cs.CG},
       url={https://arxiv.org/abs/2410.22242}, 
 }
+```
