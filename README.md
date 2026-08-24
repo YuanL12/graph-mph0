@@ -117,3 +117,7 @@ Additionally, `b_0_1` tells us the birth time of $H_1$.
       url={https://arxiv.org/abs/2410.22242}, 
 }
 ```
+
+## Acknowledgements
+
+This work was supported by the National Science Foundation, award DMS-2324632.
