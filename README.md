@@ -32,7 +32,7 @@ If you prefer to use `uv`, here is a full installation command line that has bee
 ```bash
 uv venv --python 3.13
 source .venv/bin/activate
-uv pip install ipykernel matplotlib
+uv pip install pybind11 ipykernel matplotlib 
 uv pip install .
 ``` 
 That's all you need to run the Jupyter notebook `compute_mph_firep.ipynb` under the tutorial folder. 
