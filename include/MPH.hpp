@@ -123,8 +123,8 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
         bool check_minimal = true;
         for (const auto& eid : g.get_adj(v_idx)) {
             GEdge e = g.get_gedge(eid);
-            GVertex u = (e.get_v0() == v_idx) ? g.get_gvertex(e.get_v1())
-                                              : g.get_gvertex(e.get_v0());
+            GVertex u =
+                (e.get_v0() == v_idx) ? g.get_gvertex(e.get_v1()) : g.get_gvertex(e.get_v0());
             GradePoint fe = e.get_grade();
             GradePoint fu = u.get_grade();
             if (fe == fv && fe > fu) {  // v is not minimal
@@ -188,12 +188,14 @@ void collapse_to_vertex_minimal_Grade_Version(GGraph& g) {
 #endif
 }
 
-// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
-// Return: 4 Betti tables, 1 sparse Matrix as presentation
+/// Algorithm 4: Betti tables and minimal presentation of R2-filtered graph
+/// @param collapse whether to collapse the graph to vertex minimal (many bifiltrations
+///     are already minimal, e.g. ball-density-rips and Delaunay)
+/// @return 4 Betti tables and 1 sparse matrix as presentation
 std::tuple<std::vector<std::pair<int, int>>, std::vector<std::pair<int, int>>,
            std::vector<std::pair<int, int>>, std::vector<std::pair<int, int>>,
            std::vector<std::tuple<size_t, size_t, int>>>
-compute_MPH0(GGraph& g) {
+compute_MPH0(GGraph& g, bool collapse = true) {
     // set all vertices flags to true before remove them in the later collapse process
     g.initialize_active_vertices_flags();
 
@@ -207,8 +209,10 @@ compute_MPH0(GGraph& g) {
     std::vector<std::tuple<size_t, size_t, int>> M;
     std::unordered_map<VertexId, size_t> row_idx;
 
-    // Collapse to vertex minimal
-    collapse_to_vertex_minimal_Grade_Version(g);
+    // Collapse to vertex minimal unless the input was prevalidated as vertex-minimal.
+    if (collapse) {
+        collapse_to_vertex_minimal_Grade_Version(g);
+    }
 
     // collect all grade points for iteration
     std::vector<std::tuple<int, int>> grades_collection;
@@ -255,9 +259,8 @@ compute_MPH0(GGraph& g) {
 
     // loop over all GradePoint in lexicographical ordering
     for (const auto& gg : grades_collection) {
-        GradePoint gd_point = std::get<0>(gg) == 0
-                                  ? g.get_gvertex(std::get<1>(gg)).get_grade()
-                                  : g.get_gedge(std::get<1>(gg)).get_grade();
+        GradePoint gd_point = std::get<0>(gg) == 0 ? g.get_gvertex(std::get<1>(gg)).get_grade()
+                                                   : g.get_gedge(std::get<1>(gg)).get_grade();
         // get the grade point and its x,y ranks
         int x = gd_point.get_x();
         int y = gd_point.get_y();
@@ -280,14 +283,12 @@ compute_MPH0(GGraph& g) {
             // find the merge time (i.e. the smallest weight in the connected component)
             auto s = DT.time_of_merge(e_0, e_1);  // y-coordinate
             if (s <= y) {
-                betti_0_1.emplace_back(
-                    x, y);  // The edge is deletable, so it only affects H1
+                betti_0_1.emplace_back(x, y);  // The edge is deletable, so it only affects H1
             } else {  // Edge is not deletable, so belongs to relations in resolution
                 DT.merge_at_time(e_0, e_1, y);
                 betti_1.emplace_back(x, y);
-                M.emplace_back(
-                    std::make_tuple(row_idx[e_0], betti_1.size(),
-                                    -1));  // TODO: check if the index has repetition.
+                M.emplace_back(std::make_tuple(row_idx[e_0], betti_1.size(),
+                                               -1));  // TODO: check if the index has repetition.
                 M.emplace_back(std::make_tuple(row_idx[e_1], betti_1.size(), 1));
                 // if (s < FT::CoordinateMax){ // The edge is cycle-creating
                 if (s < DT.max_edge_weight) {  // The edge is cycle-creating

@@ -1,3 +1,8 @@
+import argparse
+from collections import Counter
+from itertools import islice
+from pathlib import Path
+
 def read_rivet_output(file_path):
     xi_0_data = []
     xi_1_data = []
@@ -65,9 +70,99 @@ def read_our_betti(file_path):
 
     return betti_0_data, betti_1_data, betti_2_data
 
+def read_firep_ranks(file_path):
+    with Path(file_path).open() as stream:
+        if stream.readline().strip() != "firep":
+            raise ValueError("expected a FIRep file")
+        stream.readline()
+        stream.readline()
+        n_edges, n_vertices, _ = map(int, stream.readline().split())
+        grades = (tuple(map(int, line.split(";", 1)[0].split()))
+                  for line in islice(stream, n_edges + n_vertices) if line.strip())
+        xs, ys = set(), set()
+        for x, y in grades:
+            xs.add(x)
+            ys.add(y)
+    return ({value: rank for rank, value in enumerate(sorted(xs))},
+            {value: rank for rank, value in enumerate(sorted(ys))})
+
+
+def read_mpfree_resolution(file_path, input_path):
+    x_rank, y_rank = read_firep_ranks(input_path)
+    lines = [line.strip() for line in Path(file_path).read_text().splitlines() if line.strip()]
+    if len(lines) < 3 or lines[:2] != ["scc2020", "2"]:
+        raise ValueError("expected a 2-parameter SCC2020 resolution")
+    counts = [int(value) for value in lines[2].split()]
+    if counts[-1] != 0 or len(lines[3:]) != sum(counts[:-1]):
+        raise ValueError("invalid SCC2020 resolution counts")
+
+    sections = []
+    offset = 3
+    for count in counts[:-1]:
+        grades = Counter()
+        for line in lines[offset : offset + count]:
+            x, y = (int(value) for value in line.split(";", 1)[0].split())
+            grade = x_rank[x], y_rank[y]
+            grades[grade] += 1
+        sections.append(sorted((*grade, multiplicity) for grade, multiplicity in grades.items()))
+        offset += count
+    sections.reverse()
+    return tuple((sections + [[], [], []])[:3])
+
+
+def compare_outputs(our_output_path, rivet_output_path):
+    ours = tuple(sorted(section) for section in read_our_betti(our_output_path))
+    rivet = tuple(sorted(section) for section in read_rivet_output(rivet_output_path))
+    labels = ("beta_0", "beta_1", "beta_2")
+    mismatches = [label for label, our, ref in zip(labels, ours, rivet) if our != ref]
+    if mismatches:
+        raise ValueError(f"mismatch in {', '.join(mismatches)}")
+
+def compare_mpfree(our_output_path, mpfree_output_path, input_path):
+    ours = tuple(sorted(section) for section in read_our_betti(our_output_path))
+    if ours != read_mpfree_resolution(mpfree_output_path, input_path):
+        raise ValueError("mismatch in mpfree resolution Betti grades")
+
+
 
 if __name__ == "__main__":
     # Example usage
+    parser = argparse.ArgumentParser()
+    parser.add_argument("our", nargs="?")
+    parser.add_argument("rivet", nargs="?")
+    parser.add_argument("mpfree", nargs="?")
+    parser.add_argument("firep", nargs="?")
+    parser.add_argument("--mpfree-only", nargs=2, metavar=("MPFREE", "FIREP"))
+    parser.add_argument("--ours-only", metavar="OTHER")
+    args = parser.parse_args()
+    if args.ours_only:
+        if args.rivet or args.mpfree or args.firep or args.mpfree_only:
+            parser.error("use OUR --ours-only OTHER")
+        ours = tuple(sorted(section) for section in read_our_betti(args.our))
+        other = tuple(sorted(section) for section in read_our_betti(args.ours_only))
+        if ours != other:
+            raise ValueError("mismatch between canonical Betti outputs")
+        print(f"PASS: {args.our} == {args.ours_only}")
+        raise SystemExit
+    if args.mpfree_only:
+        if not args.our or args.rivet or args.mpfree or args.firep:
+            parser.error("use OUR --mpfree-only MPFREE FIREP")
+        compare_mpfree(args.our, *args.mpfree_only)
+        print(f"PASS: {args.our} == {args.mpfree_only[0]}")
+        raise SystemExit
+    if bool(args.our) != bool(args.rivet):
+        parser.error("provide both OUR and RIVET outputs")
+    if args.our:
+        compare_outputs(args.our, args.rivet)
+        references = [args.rivet]
+        if args.mpfree:
+            if not args.firep:
+                parser.error("FIREP is required with MPFREE")
+            compare_mpfree(args.our, args.mpfree, args.firep)
+            references.append(args.mpfree)
+        print(f"PASS: {args.our} == {' == '.join(references)}")
+        raise SystemExit
+
     rivet_output_paths = [
         "~/Documents/graph-mph0/annulus_200_ball_density_output_rivet.txt",
         "~/Documents/graph-mph0/annulus_400_ball_density_output_rivet.txt",
@@ -84,6 +179,8 @@ if __name__ == "__main__":
     for rivet_output_path, our_output_path in zip(rivet_output_paths, our_output_paths):
         try:
             # Start reading the results
+            our_output_path = Path(our_output_path).expanduser()
+            rivet_output_path = Path(rivet_output_path).expanduser()
             betti_0, betti_1, betti_2 = read_our_betti(our_output_path)
 
             # Print the results
@@ -98,24 +195,7 @@ if __name__ == "__main__":
             print("rivet betti_1 len:", len(xi_1))
             print("rivet betti_2 len:", len(xi_2))
 
-            # compare the two results
-            for i in range(len(xi_0)):
-                if xi_0[i] != betti_0[i]:
-                    raise ValueError(
-                        f"i = {i:3d}, \trivet = {xi_0[i]}, \tours = {betti_0[i]}"
-                    )
-
-            for i in range(len(xi_1)):
-                if xi_1[i] != betti_1[i]:
-                    raise ValueError(
-                        f"i = {i:3d}, \trivet = {xi_1[i]}, \tours = {betti_1[i]}"
-                    )
-
-            for i in range(len(xi_2)):
-                if xi_2[i] != betti_2[i]:
-                    raise ValueError(
-                        f"i = {i:3d}, \trivet = {xi_2[i]}, \tours = {betti_2[i]}"
-                    )
+            compare_outputs(our_output_path, rivet_output_path)
             print(f"✅ Compare {rivet_output_path} and {our_output_path} passed")
             print("--------------------------------")
         except Exception as e:

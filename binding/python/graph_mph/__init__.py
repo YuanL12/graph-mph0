@@ -8,7 +8,7 @@ from .visualize import (
 )
 
 
-def compute_MPH0(ggraph: GGraph):
+def compute_MPH0(ggraph: GGraph, collapse: bool = True):
     """
     Compute the absolute 2-parameter persistence homology by Dynamic Tree, Return a dictionary
 
@@ -18,6 +18,8 @@ def compute_MPH0(ggraph: GGraph):
     Args:
         ggraph (GGraph): The input graph for which the MPH0 is to be computed. This should be a
             graph object which can constructed by ambph.graph()
+        collapse (bool): If True (default), collapse the graph to a vertex-minimal form first.
+            Set False when the input is already known to be vertex-minimal, e.g. ball-density-rips and Delaunay.
 
     Returns:
         MPH0_DTree (dict): A dictionary containing the results of the MPH0 computation, including
@@ -33,5 +35,5 @@ def compute_MPH0(ggraph: GGraph):
     Notes:
         Assumption of the graph:....
     """
-    b_0, b_1, b_2, b_0_1, M = compute_MPH0_CXX(ggraph)
+    b_0, b_1, b_2, b_0_1, M = compute_MPH0_CXX(ggraph, collapse)
     return {"b_0": b_0, "b_1": b_1, "b_2": b_2, "b_0_1": b_0_1, "M": M}

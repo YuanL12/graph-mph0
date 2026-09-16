@@ -146,5 +146,5 @@ PYBIND11_MODULE(_graph_mph, m) {
 
     // functions
     m.def("subtract", [](int i, int j) { return i - j; });
-    m.def("compute_MPH0_CXX", &compute_MPH0);
+    m.def("compute_MPH0_CXX", &compute_MPH0, py::arg("g"), py::arg("collapse") = true);
 }

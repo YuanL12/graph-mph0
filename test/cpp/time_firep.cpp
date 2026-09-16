@@ -11,15 +11,28 @@
 #include "Timer.hpp"
 
 int main(int argc, char **argv) {
-    if (argc != 2) {
+    if (argc < 2) {
         std::cout << "--------------------------------" << std::endl;
-        std::cout << "Need 1 arguments: " << std::endl;
-        std::cout << "<input_firep_file>" << std::endl;
+        std::cout << "Usage: " << argv[0]
+                  << " <input_firep_file> [--skip-collapse] [--output <file>]" << std::endl;
         return 1;
     }
     std::cout << "--------------------------------" << std::endl;
     std::string file_name = argv[1];
     std::cout << "input file_name: " << file_name << std::endl;
+    bool skip_collapse = false;
+    std::string output_file;
+    for (int i = 2; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--skip-collapse") {
+            skip_collapse = true;
+        } else if (arg == "--output" && i + 1 < argc) {
+            output_file = argv[++i];
+        } else {
+            std::cerr << "Unknown or incomplete argument: " << arg << std::endl;
+            return 1;
+        }
+    }
 
 #if MPH0_TIMERS
     mph0::initialize_timers();
@@ -56,7 +69,12 @@ int main(int argc, char **argv) {
 #endif
 
     // compute betti numbers
-    auto [raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = compute_MPH0(ggraph);
+    auto result = compute_MPH0(ggraph, !skip_collapse);
+    auto &[raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1, M] = result;
+    if (!output_file.empty()) {
+        print_and_write_betti_result(raw_betti_0, raw_betti_1, raw_betti_2, raw_betti_0_1,
+                                     false, output_file);
+    }
 
 #if MPH0_TIMERS
     mph0::overall_timer.stop();

@@ -294,36 +294,31 @@ point_cloud_to_1_critical_filtration(const std::vector<std::vector<PT>> &points,
 inline void write_filtration_data_to_firep_without_header(const GGraph &G, std::ofstream &file) {
     const auto &gedges = G.get_gedges();
     const auto &gvertices = G.get_gvertices();
-    int nV = gvertices.size();
-    int nE = gedges.size();
 
     // give each vertex a unique index starting from 0
     std::unordered_map<VertexId, size_t> vertex_2_idx;
-    std::unordered_map<size_t, VertexId> idx_2_vertex;
-    size_t idx = 0;
-    for (const auto &gv : gvertices) {
-        assert(gv.get_id() != -1 &&
-               "Vertex id is -1 (removed), which is not allowed when writing out");
-        vertex_2_idx[gv.get_id()] = idx;
-        idx_2_vertex[idx] = gv.get_id();
-        idx++;
-    }
+    for (const auto &gv : gvertices)
+        if (gv.get_id() != -1) vertex_2_idx[gv.get_id()] = vertex_2_idx.size();
 
-    file << nE << " " << nV << " " << 0 << std::endl;
+    size_t nE = std::count_if(gedges.begin(), gedges.end(), [](const GEdge &ge) {
+        return ge.get_id() != -1 && ge.get_v0() != ge.get_v1();
+    });
+    file << nE << " " << vertex_2_idx.size() << " " << 0 << std::endl;
     for (const auto &ge : gedges) {
+        if (ge.get_id() == -1 || ge.get_v0() == ge.get_v1()) continue;
         VertexId v0 = ge.get_v0();
-        size_t v0_idx = vertex_2_idx[v0];
+        size_t v0_idx = vertex_2_idx.at(v0);
         VertexId v1 = ge.get_v1();
-        size_t v1_idx = vertex_2_idx[v1];
+        size_t v1_idx = vertex_2_idx.at(v1);
         // get ranks
         int x = ge.get_grade().get_x();
         int y = ge.get_grade().get_y();
         file << x << " " << y << " ; " << v0_idx << " " << v1_idx << " " << std::endl;
     }
-    for (size_t i = 0; i < nV; ++i) {
-        VertexId v = idx_2_vertex[i];
-        int x = gvertices[v].get_grade().get_x();
-        int y = gvertices[v].get_grade().get_y();
+    for (const auto &gv : gvertices) {
+        if (gv.get_id() == -1) continue;
+        int x = gv.get_grade().get_x();
+        int y = gv.get_grade().get_y();
         file << x << " " << y << " ; " << std::endl;
     }
 
@@ -407,12 +402,21 @@ inline std::tuple<GGraph, GradeTable<int, int>> read_filtration_data_from_firep(
         throw std::runtime_error("File is not a firep file: " + filename);
     }
 
-    // skip the first three lines
     std::string line;
-    std::getline(file, line);  // line 1: "firep"
-    std::getline(file, line);  // line 2: "first parameter"
-    std::getline(file, line);  // line 3: "second parameter"
-    std::getline(file, line);  // line 4: "#_of_edges #_of_vertices 0"
+    std::getline(file, line);
+    if (line == "firep") {         // skip the first 3 lines
+        std::getline(file, line);  // x label
+        std::getline(file, line);  // y label
+        std::getline(file, line);  // counts
+    } else if (line == "--datatype firep") {
+        while (std::getline(file, line) && line != "# data") {
+        }
+        if (!std::getline(file, line)) {
+            throw std::runtime_error("Missing FIRep cell counts");
+        }
+    } else {
+        throw std::runtime_error("Unrecognized FIRep header: " + line);
+    }
     std::stringstream ss(line);
     int int_zero = 0;
     ss >> nE >> nV >> int_zero;
