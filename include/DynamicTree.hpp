@@ -49,7 +49,8 @@ public:
         if (forest.sameComponent(TTvertices[vert2node[v]], TTvertices[vert2node[w]])){
             throw std::runtime_error("try to conenct v and w in the same component, it is not allowed in a tree");
         }
-        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], -time);
+        auto e0 = TTvertices[vert2node[v]], e1 = TTvertices[vert2node[w]];
+        forest.link(e0, e1, ClusterMinEdgeData(-time, e0, e1));
     }
 
     T time_of_merge(VertexType v, VertexType w){
@@ -69,7 +70,8 @@ public:
         if (forest.sameComponent(TTvertices[vert2node[v]], TTvertices[vert2node[w]])){
             cutMinEdge(v, w);
         }
-        forest.link(TTvertices[vert2node[v]], TTvertices[vert2node[w]], -time);
+        auto e0 = TTvertices[vert2node[v]], e1 = TTvertices[vert2node[w]];
+        forest.link(e0, e1, ClusterMinEdgeData(-time, e0, e1));
     }
 
 private:
@@ -78,20 +80,19 @@ private:
     void cutMinEdge(VertexType v, VertexType w){
         // expose the path from v to w
         forest.expose(TTvertices[vert2node[v]], TTvertices[vert2node[w]]);
-        // search for minimal edge in the path from v to w
-        forest.pathSearch([](auto eventData) {
-            return eventData.children[0].minWeight > eventData.children[1].minWeight;
-        });
-        // locate the two end points of the minimal edge
-        auto [e0, e1] = forest.getBoundary();
+        // Copy the minimum edge's endpoints before cut changes the exposed data.
+        // This avoids pathSearch selecting a non-minimal edge when weights tie.
+        auto [e0, e1] = forest.getExposedData().minEdge;
         // cut it 
         forest.cut(e0, e1);
     }
 
     struct ClusterMinEdgeData {
         int minWeight; // minimal weight on path (or weight of an edge)
+        std::pair<TopTreeVertex, TopTreeVertex> minEdge; // endpoints attaining minWeight
 
-        ClusterMinEdgeData(int weight) : minWeight(weight) {}
+        ClusterMinEdgeData(int weight, TopTreeVertex v, TopTreeVertex w)
+            : minWeight(weight), minEdge(v, w) {}
         ClusterMinEdgeData() = default;
 
         // Increase weights of all edges on the path (to be propagated later)
@@ -103,13 +104,12 @@ private:
         static void join(TopTreeEventData<ClusterMinEdgeData> eventData) {
             if (eventData.type == TopTreeClusterType::COMPRESS) {
 
-                eventData.parent.minWeight =
-                    std::min(eventData.children[0].minWeight,
-                        eventData.children[1].minWeight);
+                eventData.parent = eventData.children[
+                    eventData.children[0].minWeight > eventData.children[1].minWeight];
 
             } else { // TopTreeClusterType::RAKE
 
-                eventData.parent.minWeight = eventData.children[0].minWeight;
+                eventData.parent = eventData.children[0];
 
             }
         }
